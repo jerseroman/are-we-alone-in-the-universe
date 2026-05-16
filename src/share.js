@@ -1,5 +1,5 @@
 /*
-Are We Alone? · Galactic Habitability Calculator
+Are We Alone in the Universe? Earth-like Planet Estimator
 Author: Roman Jerše
 Website: https://www.arewealoneintheuniverse.com/
 Version: 2.12
