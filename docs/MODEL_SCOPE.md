@@ -1,12 +1,14 @@
 # Model Scope
 
-This calculator is a conceptual and probabilistic modelling tool for exploring assumptions related to galactic habitability, technological civilizations, detectability, and uncertainty.
+This estimator is a browser-based probabilistic modelling tool for exploring how astrophysical assumptions influence estimates of potentially Earth-like planets across the Milky Way and the observable universe.
 
 It should not be interpreted as:
+
 - a deterministic prediction,
-- an empirical census of civilizations,
-- proof of extraterrestrial life,
-- proof of absence of extraterrestrial life,
+- an empirical census of planets,
+- an observational exoplanet catalogue,
+- evidence for or against extraterrestrial life,
+- a substitute for peer-reviewed exoplanet surveys or mission-based astronomical datasets,
 - a settled scientific consensus.
 
-The calculator is intended to make assumptions visible, adjustable, and inspectable.
+The estimator is intended to make assumptions, uncertainty, and scale visible, adjustable, and inspectable.
