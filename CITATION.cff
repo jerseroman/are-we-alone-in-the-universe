@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+title: "Are We Alone? · Galactic Habitability Calculator"
+message: "If you use, cite, review, or discuss this project, please cite it as below."
+type: software
+authors:
+  - family-names: "Jerše"
+    given-names: "Roman"
+url: "https://www.arewealoneintheuniverse.com/"
+repository-code: "ADD_GITHUB_REPOSITORY_URL_HERE"
+version: "2.12"
+date-released: "ADD_RELEASE_DATE_HERE"
+license: "Custom source-available attribution license"

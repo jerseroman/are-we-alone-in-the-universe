@@ -1,0 +1,2133 @@
+<!DOCTYPE html>
+<!--
+Are We Alone? · Galactic Habitability Calculator
+Author: Roman Jerše
+Website: https://www.arewealoneintheuniverse.com/
+Version: 2.12
+License: Custom source-available attribution license. See LICENSE.md.
+-->
+<html lang="en">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>
+   Are We Alone? · Galactic Habitability Calculator · Calculator version 2.12
+  </title>
+  <script async crossorigin="anonymous" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"></script>
+  <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/apexcharts@5.12.0"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&amp;family=Nunito:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+  <link crossorigin="anonymous" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet"/>
+  <link href="src/styles.css" rel="stylesheet">
+ </head>
+ <body>
+<canvas id="starfield">
+  </canvas>
+  <div class="page">
+   <header class="header">
+    <div class="header-eyebrow">
+     Galactic Earth Analog Calculator
+     <span class="version-badge">
+      v2.12
+     </span>
+    </div>
+    <div class="header-inner">
+     <div class="header-logo-wrap">
+      <img alt="Logo" src="https://static.wixstatic.com/media/313d4b_66bb920e17f3482a9a091b858d62bad3~mv2.webp"/>
+     </div>
+     <div class="header-text">
+      <h1>
+       Are We
+       <span class="accent">
+        Alone
+       </span>
+       <br/>
+       in the
+       <span class="accent2">
+        Universe?
+       </span>
+      </h1>
+      <div class="header-sub">
+       A Drake-Inspired Multifactor Model for Earth-Analog Occurrence and Poisson Distance Estimation
+      </div>
+      <div class="header-tagline">
+       CALCULATE COSMIC POSSIBILITIES
+      </div>
+      <div class="top-link-row">
+       <a class="top-link-btn paper" href="https://www.arewealoneintheuniverse.com/paper" rel="noopener noreferrer" target="_blank">Read paper</a>
+       <a class="top-link-btn report" href="https://m.me/jerseroman" rel="noopener noreferrer" target="_blank">Report problem</a>
+      </div>
+     </div>
+    </div>
+   </header>
+   <div class="panel">
+    <div class="eq-label">
+     Extended Habitability Formula
+    </div>
+    <div id="equation-latex">
+     \[
+      N = N_{\mathrm{GHZ}}\,f_{\odot}\,f_{\mathrm{age}}\,N_p\,f_{\mathrm{rocky}}\,f_{\mathrm{HZ}}\,f_{\mathrm{stab}}\,f_B\,f_{\mathrm{moon}}\,f_{\mathrm{size}}\,f_{\omega}\,f_{\varepsilon}\,f_{H_2O}\,f_{\mathrm{CHNOPS}}\,f_{\mathrm{life}}\,f_x
+      \]
+      \[
+      d = \frac{\Gamma(1+1/3)}{\left(\frac{N}{A\cdot h}\cdot\frac{4\pi}{3}\right)^{1/3}}
+      \]
+    </div>
+   </div>
+   <div class="panel desc-panel">
+  <h2>
+    Introduction
+   </h2>
+
+  <div class="collapsible-section">
+    <div class="collapsible-preview">
+              <p>
+          Theoretically, it is entirely possible that the evolution of life, including intelligent forms of life, has already occurred and concluded around other stars long before our Sun formed. The age of our galaxy, the Milky Way, has allowed enough time for older stellar and planetary systems to form, in which worlds with their own life histories could have emerged, evolved, and disappeared. Evidence of these potential worlds may be forever lost, either through destructive astrophysical processes or through sheer inaccessibility across space and time.
+        </p>
+    </div>
+
+    <div class="collapsible-body">
+            <p>
+        Current estimates suggest that there are approximately 10²² to 2 × 10²³ stars in the observable universe. To put this into perspective: the lower estimate of 10²² stars corresponds to about 1.25 trillion human populations, each consisting of approximately 8 billion people. The upper estimate of 2 × 10²³ stars would correspond to about 25 trillion such populations.
+      </p>
+
+      <p>
+        In addition, many older generations of massive stars have already existed and ended their lives. Some collapsed into neutron stars or black holes, others exploded as supernovae, while less massive stars ended as white dwarfs. Through these processes, interstellar space was enriched with heavier elements, the raw material for new star systems, planets, and even ourselves.
+      </p>
+
+      <p>
+        Hypothetically, if each galaxy hosted, on average, one civilization, intelligent life would be a common feature of the universe rather than a rare anomaly, although this remains unconfirmed. In this view, the visible cosmic structure of galaxies, stars, and planets is not merely a physical formation, but a potential carrier of consciousness. Considering that the number of galaxies ranges from about 200 billion to 2 trillion, the possible number of civilizations could be of the same order of magnitude, with each galaxy serving as a potential incubator for biological, technological, and other forms of complexity.
+      </p>
+
+      <p>
+        Yet such abundance does not guarantee contact: vast distances, relativistic time effects, different stages of development, and the finite speed of light create formidable barriers to information exchange. The likely result is that the isolation of civilizations in space and time is the rule, not the exception.
+      </p>
+
+      <p>
+        Within this broader cosmic framework, this calculator offers a structured and explicitly conditional way of estimating how many potentially Earth-like planets may exist in a selected galaxy under a transparent, user-adjustable multiplicative habitability model. It does not claim that such planets are known to exist in those numbers, nor does it directly estimate the number of communicative civilizations. Instead, it examines how astrophysical, geophysical, biochemical, and speculative filters compound under uncertainty.
+      </p>
+
+      <p>
+        In this sense, the model is inspired by Drake-style reasoning, but is narrower in scope: it is concerned primarily with the possible occurrence of Earth-like worlds, not with confirming the actual prevalence of intelligence, technology, or interstellar communication. Its purpose is therefore exploratory and comparative rather than predictive in any absolute sense.
+      </p>
+
+      <p>
+        By combining observationally constrained parameters with more weakly constrained planetary and biological conditions, the calculator functions as a quantitative tool for probing the boundaries of probability, or reasoned plausibility. It is best understood not as a machine for producing certainty, but as a disciplined framework for asking what follows if particular assumptions are accepted.
+      </p>
+
+      <p>
+        <a href="https://doi.org/10.1017/CBO9781139020739" rel="noopener noreferrer" target="_blank">
+          Matteucci 2012
+          <img
+            src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png"
+            alt="↗"
+            class="link-icon"
+          >
+        </a>
+        ·
+        <a href="https://doi.org/10.3847/0004-637X/830/2/83" rel="noopener noreferrer" target="_blank">
+          Conselice et al. 2016
+          <img
+            src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png"
+            alt="↗"
+            class="link-icon"
+          >
+        </a>
+        ·
+        <a href="https://doi.org/10.1007/s10701-018-0170-6" rel="noopener noreferrer" target="_blank">
+          Ćirković 2018
+          <img
+            src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png"
+            alt="↗"
+            class="link-icon"
+          >
+        </a>
+        ·
+        <a href="https://arxiv.org/abs/1806.02404" rel="noopener noreferrer" target="_blank">
+          Sandberg et al. 2018
+          <img
+            src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png"
+            alt="↗"
+            class="link-icon"
+          >
+        </a>
+        ·
+        <a href="https://www.seti.org/drake-equation" rel="noopener noreferrer" target="_blank">
+          Drake 1965
+          <img
+            src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png"
+            alt="↗"
+            class="link-icon"
+          >
+        </a>
+      </p>
+    </div>
+
+    <button class="read-more-btn" onclick="toggleSection(this)">
+      Read more ↓
+    </button>
+  </div>
+
+  <h3>About the Calculator</h3>
+  <div class="collapsible-section">
+    <div class="collapsible-preview">
+      <p>
+        The calculator combines astrophysical parameters, biological or geophysical plausibility filters, and optional speculative factors into a single multiplicative estimate of the number of Earth-like planets. Some parameters are observationally constrained, others are only weakly constrained, and some are explicitly hypothetical.
+      </p>
+    </div>
+    <div class="collapsible-body">
+      <p>
+        Inputs can be treated either as fixed point estimates or as uncertain quantities with literature-inspired minimum and maximum bounds. Optional factors such as surface water, CHNOPS availability, complex life, and a wildcard factor can be included or excluded from the calculation.
+      </p>
+    </div>
+    <button class="read-more-btn" onclick="toggleSection(this)">
+      Read more ↓
+    </button>
+  </div>
+
+  <h3>Observational Priors and Scenario Presets</h3>
+  <div class="collapsible-section">
+    <div class="collapsible-preview">
+      <p>
+        The calculator includes two observational parameter epochs: <strong>Pre-JWST (≤2021)</strong> and <strong>Post-JWST (2022~2025)</strong>. These mainly affect observational priors such as the rocky-planet fraction and habitable-zone occurrence, while the scenario cards load broader literature-style combinations of assumptions.
+      </p>
+    </div>
+    <div class="collapsible-body">
+      <p>
+        These should be interpreted as parameter presets, not as a formal Bayesian posterior inference engine. In addition to the epoch toggle, the calculator provides named scenario presets such as <strong>Consensus</strong>, <strong>Optimist</strong>, <strong>Pessimist</strong>, and <strong>JWST</strong>, each paired with a short provenance note so the user can see which literature framing or interpretive stance is being loaded.
+      </p>
+    </div>
+    <button class="read-more-btn" onclick="toggleSection(this)">
+      Read more ↓
+    </button>
+  </div>
+
+  <h3>Stochastic Approach (Monte Carlo)</h3>
+  <div class="collapsible-section">
+    <div class="collapsible-preview">
+      <p>
+        The Monte Carlo simulation estimates how uncertainty propagates through the full multiplicative model. For each enabled parameter, the simulation samples values according to the user-selected distribution: log-normal, normal, or uniform. The default engine is standard Monte Carlo, with optional Latin Hypercube sampling for more even coverage of the parameter space.
+      </p>
+    </div>
+    <div class="collapsible-body">
+      <p>
+        When no interval is defined, the parameter remains fixed at its mean value. The current model also includes an optional heuristic correlation scaffold between selected parameters, or it can be run in an independent-factor mode. In particular, larger suitable-size values slightly increase the sampled magnetic-field term, and higher lunar-stability values slightly increase the sampled tilt term when the heuristic mode is active. In addition to the output distribution itself, the calculator can now report a convergence diagnostic for the running mean, a parameterwise robust interval envelope, and a sensitivity summary highlighting the strongest positive and negative log-sensitivity drivers.
+      </p>
+    </div>
+    <button class="read-more-btn" onclick="toggleSection(this)">
+      Read more ↓
+    </button>
+  </div>
+
+  <h3>Distance Estimation ("Where is Everyone?")</h3>
+  <div class="collapsible-section">
+    <div class="collapsible-preview">
+      <p>
+        After a Monte Carlo run, the calculator estimates the expected distance to the nearest Earth-like planet using a Poisson nearest-neighbor framework under selectable spatial assumptions: a 2D GHZ annulus, a 3D GHZ disk, and a 3D shell-style reference model.
+      </p>
+    </div>
+    <div class="collapsible-body">
+      <p>
+        These distance estimates are derived from the estimated number density of Earth-like planets under the selected geometry. When custom galaxy settings are enabled, the geometry can be rescaled to alternative galaxy presets or user-defined diameters and thicknesses. For external galaxies, the current implementation still uses the Earth-to-galaxy value as a reference distance rather than estimating the nearest planet inside that target galaxy, and the Fermi contextualisation panel can be viewed in either Monte Carlo or deterministic mode for comparison.
+      </p>
+    </div>
+    <button class="read-more-btn" onclick="toggleSection(this)">
+      Read more ↓
+    </button>
+  </div>
+
+  <h3>Output Data</h3>
+  <div class="collapsible-section">
+    <div class="collapsible-preview">
+      <p>
+        The calculator reports the deterministic point estimate, the Monte Carlo mean, the empirical 95% interval based on q2.5~q97.5, and the simulation-output charts. When relevant, it also surfaces configuration alerts, nearest-distance estimates, and catalogue-based Fermi contextualisation.
+      </p>
+    </div>
+    <div class="collapsible-body">
+      <p>
+        The output area combines the histogram and empirical kernel density estimate (KDE) with convergence diagnostics, top-driver sensitivity summaries, and model-health warnings for edge cases such as disabled distance models or normalized host fractions. These visualizations and notices are intended to help users interpret the result, not just read a single headline number.
+      </p>
+    </div>
+    <button class="read-more-btn" onclick="toggleSection(this)">
+      Read more ↓
+    </button>
+  </div>
+</div>
+   <div class="panel">
+  <div class="panel-title">
+    Input Parameters
+    <span style="margin-left:auto;font-size:9px;font-weight:600;color:var(--text-dim);">
+      <span style="color:var(--accent);">■</span> Astrophysical
+      <span style="color:var(--orange);">■</span> Biological
+      <span style="color:var(--accent3);">■</span> Hypothetical
+    </span>
+  </div>
+
+  <div class="preset-hub">
+    <div class="preset-section">
+      <div class="preset-section-title">
+        Scientific Scenario Presets
+      </div>
+      <div class="preset-helper">
+        Select a published scenario to load literature values:
+      </div>
+      <div class="preset-grid">
+        <button class="preset-btn consensus" data-preset="consensus" onclick="loadPreset('consensus')" type="button">
+          <strong>Consensus · Lineweaver</strong>
+          <span>Lineweaver 2004</span>
+          <small>Moderate, empirically anchored baseline.</small>
+        </button>
+        <button class="preset-btn optimist" data-preset="optimist" onclick="loadPreset('optimist')" type="button">
+          <strong>Optimist · Dissolving Fermi</strong>
+          <span>Sandberg et al. 2018</span>
+          <small>High-habitability assumptions across the chain.</small>
+        </button>
+        <button class="preset-btn pessimist" data-preset="pessimist" onclick="loadPreset('pessimist')" type="button">
+          <strong>Pessimist · Great Filter</strong>
+          <span>Hart 1975 / Rare Earth</span>
+          <small>Strong filters and low biological success rates.</small>
+        </button>
+        <button class="preset-btn jwst" data-preset="jwst" onclick="loadPreset('jwst')" type="button">
+          <strong>Post-JWST · 2023~2025</strong>
+          <span>Bryson + JWST Data</span>
+          <small>Updated rocky and habitable-zone fractions.</small>
+        </button>
+      </div>
+
+      <div class="preset-description" id="preset-description">
+        <strong>Consensus · Lineweaver.</strong> <em>Moderate literature values across the full chain, giving a middle estimate compatible with both common-life and rare-life readings.</em>
+      </div>
+    </div>
+
+    <div class="preset-section">
+      <div class="preset-section-title">
+        Observational Prior Preset <span>Parameter Epoch</span>
+      </div>
+      <div class="bayes-row">
+        <span class="epoch-label">Active preset:</span>
+        <button class="bayes-btn" id="bayes-pre" onclick="setBayesian('pre')" type="button">Pre-JWST (≤2021)</button>
+        <button class="bayes-btn" id="bayes-post" onclick="setBayesian('post')" type="button">Post-JWST (2022~2025)</button>
+        <span class="bayes-note" id="bayes-note">
+          Pre-JWST literature values for f_HZ and f_rocky.
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+    <span style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);">
+      Show literature intervals:
+    </span>
+    <button class="scale-btn" id="global-interval-btn" onclick="toggleAllIntervals()">
+      Show ±min/max
+    </button>
+    <span style="font-size:10px;color:var(--text-dim);">
+      Expand each card to set min/max bounds used in Monte Carlo sampling
+    </span>
+  </div>
+
+  <div class="param-section-header">
+    <span class="section-dot physical"></span>
+    Astrophysical Parameters
+    <span style="font-size:9px;font-weight:500;margin-left:6px;color:var(--text-dim);">
+      observationally constrained
+    </span>
+  </div>
+
+  <div class="input-grid">
+    
+    <div class="input-card physical" id="card-N_GHZ">
+      <div class="card-icons">
+        <div class="tooltip">
+          <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
+          <span class="tooltiptext">
+            <strong>Stars in GHZ (N_GHZ)</strong><br>
+            Stars in the galactic habitable zone ∼ not too close to galactic center (supernovae, radiation) nor too far (insufficient metals).<br>
+            <span class="lit">
+              Literature: 1×10¹⁰ ~ 1×10¹¹<br>
+              Lineweaver 2004: ~5×10⁹<br>
+              Gaia/migration models: up to 10¹¹
+            </span>
+          </span>
+        </div>
+        <a href="https://science.sciencemag.org/content/303/5654/59" target="_blank" rel="noopener noreferrer">
+          <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
+        </a>
+      </div>
+
+      <label>Stars in GHZ</label>
+      <div class="param-inputs">
+        <div class="param-mean-row">
+          <input id="N_GHZ" min="0" step="1000000" type="number" value="100000000000">
+          <button class="interval-toggle" onclick="toggleInterval('N_GHZ')">±</button>
+        </div>
+        <div class="interval-row" id="interval-N_GHZ">
+          <span class="interval-label">min</span>
+          <input id="N_GHZ_min" min="0" step="1000000" type="number" value="5000000000">
+          <span class="interval-label">max</span>
+          <input id="N_GHZ_max" min="0" step="1000000" type="number" value="200000000000">
+        </div>
+      </div>
+      <div class="input-note">Estimated stars in the galactic habitable zone.</div>
+      <div class="lit-range">Lit. range: 5×10⁹ ~ 2×10¹¹ · Lineweaver 2004</div>
+    </div>
+
+    
+    <div class="input-card physical" id="card-f_sun_type">
+      <div class="card-icons">
+        <div class="tooltip">
+          <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
+          <span class="tooltiptext">
+            <strong>Sun-like stars (f_⊙)</strong><br>
+            Fraction of G-type stars. Gaia DR3 confirms ~7~8% of MW stars are G-type. K-type stars are increasingly considered viable, which can raise the effective host fraction toward ~20%.<br>
+            <span class="lit">
+              Henry et al. 2006: 0.07<br>
+              Gaia DR3 2022: 0.076<br>
+              G+K combined: up to 0.20
+            </span>
+          </span>
+        </div>
+        <a href="https://iopscience.iop.org/article/10.1086/507268" target="_blank" rel="noopener noreferrer">
+          <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
+        </a>
+      </div>
+
+      <label>Sun-like Stars (f_⊙)</label>
+      <div class="param-inputs">
+        <div class="param-mean-row">
+          <input id="f_sun_type" max="1" min="0" step="0.01" type="number" value="0.08">
+          <button class="interval-toggle" onclick="toggleInterval('f_sun_type')">±</button>
+        </div>
+        <div class="interval-row" id="interval-f_sun_type">
+          <span class="interval-label">min</span>
+          <input id="f_sun_type_min" max="1" min="0" step="0.01" type="number" value="0.07">
+          <span class="interval-label">max</span>
+          <input id="f_sun_type_max" max="1" min="0" step="0.01" type="number" value="0.20">
+        </div>
+      </div>
+      <div class="input-note">Fraction of G-type stars in the base model.</div>
+      <div class="lit-range">Lit. range: 0.07 ~ 0.20 · Henry 2006, Gaia 2022</div>
+    </div>
+
+    
+    <div class="input-card physical" id="card-f_sun_age">
+      <div class="card-icons">
+        <div class="tooltip">
+          <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
+          <span class="tooltiptext">
+            <strong>Old enough stars (f_age)</strong><br>
+            Stars must be sufficiently old for long biological evolution; a common reference threshold is ~4 Gyr, loosely Earth-analog in spirit.<br>
+            <span class="lit">
+              Lineweaver 2004: 0.75<br>
+              Prantzos 2008: 0.65~0.80
+            </span>
+          </span>
+        </div>
+        <a href="https://science.sciencemag.org/content/303/5654/59" target="_blank" rel="noopener noreferrer">
+          <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
+        </a>
+      </div>
+
+      <label>Old Enough Stars (f_age)</label>
+      <div class="param-inputs">
+        <div class="param-mean-row">
+          <input id="f_sun_age" max="1" min="0" step="0.01" type="number" value="0.70">
+          <button class="interval-toggle" onclick="toggleInterval('f_sun_age')">±</button>
+        </div>
+        <div class="interval-row" id="interval-f_sun_age">
+          <span class="interval-label">min</span>
+          <input id="f_sun_age_min" max="1" min="0" step="0.01" type="number" value="0.60">
+          <span class="interval-label">max</span>
+          <input id="f_sun_age_max" max="1" min="0" step="0.01" type="number" value="0.80">
+        </div>
+      </div>
+      <div class="input-note">Fraction old enough for long biological evolution.</div>
+      <div class="lit-range">Lit. range: 0.60 ~ 0.80 · Lineweaver 2004</div>
+    </div>
+
+    
+    <div class="input-card physical" id="card-N_p_star">
+      <div class="card-icons">
+        <div class="tooltip">
+          <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
+          <span class="tooltiptext">
+            <strong>Planets per star (N_p)</strong><br>
+            Average number of planets per suitable stellar host, interpreted here as a broad planetary multiplicity term in the habitability chain.<br>
+            <span class="lit">
+              Petigura 2013: 1.6<br>
+              Hsu et al. 2019: 1.4~2.0<br>
+              Later estimates often remain in roughly this range
+            </span>
+          </span>
+        </div>
+        <a href="https://www.pnas.org/doi/10.1073/pnas.1319909110" target="_blank" rel="noopener noreferrer">
+          <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
+        </a>
+      </div>
+
+      <label>Planets per Star (N_p)</label>
+      <div class="param-inputs">
+        <div class="param-mean-row">
+          <input id="N_p_star" min="0" step="0.1" type="number" value="1.5">
+          <button class="interval-toggle" onclick="toggleInterval('N_p_star')">±</button>
+        </div>
+        <div class="interval-row" id="interval-N_p_star">
+          <span class="interval-label">min</span>
+          <input id="N_p_star_min" min="0" step="0.1" type="number" value="1.0">
+          <span class="interval-label">max</span>
+          <input id="N_p_star_max" min="0" step="0.1" type="number" value="2.5">
+        </div>
+      </div>
+      <div class="input-note">Average planets per star.</div>
+      <div class="lit-range">Lit. range: 1.0 ~ 2.5 · Petigura 2013, Hsu 2019</div>
+    </div>
+
+    
+    <div class="input-card physical" id="card-f_composition">
+      <div class="card-icons">
+        <div class="tooltip">
+          <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
+          <span class="tooltiptext">
+            <strong>Rocky planets (f_rocky)</strong><br>
+            Fraction with radius/composition consistent with rocky terrestrial planets rather than volatile-rich sub-Neptunes.<br>
+            <span class="lit">
+              Dressing &amp; Charbonneau 2015: ~0.20<br>
+              Rogers 2015: ~0.17~0.25<br>
+              Later revisions can push higher
+            </span>
+          </span>
+        </div>
+        <a href="https://iopscience.iop.org/article/10.1088/0004-637X/807/1/45" target="_blank" rel="noopener noreferrer">
+          <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
+        </a>
+      </div>
+
+      <label>Rocky Planets (f_rocky)</label>
+      <div class="param-inputs">
+        <div class="param-mean-row">
+          <input id="f_composition" max="1" min="0" step="0.01" type="number" value="0.20">
+          <button class="interval-toggle" onclick="toggleInterval('f_composition')">±</button>
+        </div>
+        <div class="interval-row" id="interval-f_composition">
+          <span class="interval-label">min</span>
+          <input id="f_composition_min" max="1" min="0" step="0.01" type="number" value="0.15">
+          <span class="interval-label">max</span>
+          <input id="f_composition_max" max="1" min="0" step="0.01" type="number" value="0.35">
+        </div>
+      </div>
+      <div class="input-note">Fraction of rocky planets in the base model.</div>
+      <div class="lit-range">Lit. range: 0.15 ~ 0.35 · Dressing 2015, Rogers 2015</div>
+    </div>
+
+    
+    <div class="input-card physical" id="card-f_orbit">
+      <div class="card-icons">
+        <div class="tooltip">
+          <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
+          <span class="tooltiptext">
+            <strong>Habitable zone orbit (f_HZ)</strong><br>
+            Fraction of rocky planets in the liquid-water habitable zone, understood here as a broad orbital habitability prior.<br>
+            <span class="lit">
+              Petigura 2013: 0.10~0.15<br>
+              Bryson et al. 2021: ~0.18<br>
+              Kopparapu et al.: ~0.12~0.21
+            </span>
+          </span>
+        </div>
+        <a href="https://www.pnas.org/doi/10.1073/pnas.1319909110" target="_blank" rel="noopener noreferrer">
+          <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
+        </a>
+      </div>
+
+      <label>Habitable Zone (f_HZ)</label>
+      <div class="param-inputs">
+        <div class="param-mean-row">
+          <input id="f_orbit" max="1" min="0" step="0.01" type="number" value="0.20">
+          <button class="interval-toggle" onclick="toggleInterval('f_orbit')">±</button>
+        </div>
+        <div class="interval-row" id="interval-f_orbit">
+          <span class="interval-label">min</span>
+          <input id="f_orbit_min" max="1" min="0" step="0.01" type="number" value="0.10">
+          <span class="interval-label">max</span>
+          <input id="f_orbit_max" max="1" min="0" step="0.01" type="number" value="0.40">
+        </div>
+      </div>
+      <div class="input-note">Fraction of rocky planets inside the habitable zone.</div>
+      <div class="lit-range">Lit. range: 0.10 ~ 0.40 · Bryson 2021, Kopparapu</div>
+    </div>
+
+    
+    <div class="input-card physical" id="card-f_stability">
+      <div class="card-icons">
+        <div class="tooltip">
+          <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
+          <span class="tooltiptext">
+            <strong>Orbital stability (f_stab)</strong><br>
+            Fraction of systems with long-term stable, non-disruptive orbital architectures compatible with sustained climate stability.<br>
+            <span class="lit">
+              Zink &amp; Hansen 2019: 0.40~0.60<br>
+              Chambers 1999: ~0.50
+            </span>
+          </span>
+        </div>
+        <a href="https://academic.oup.com/mnras/article/487/1/246/5480568" target="_blank" rel="noopener noreferrer">
+          <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
+        </a>
+      </div>
+
+      <label>Orbital Stability (f_stab)</label>
+      <div class="param-inputs">
+        <div class="param-mean-row">
+          <input id="f_stability" max="1" min="0" step="0.01" type="number" value="0.50">
+          <button class="interval-toggle" onclick="toggleInterval('f_stability')">±</button>
+        </div>
+        <div class="interval-row" id="interval-f_stability">
+          <span class="interval-label">min</span>
+          <input id="f_stability_min" max="1" min="0" step="0.01" type="number" value="0.30">
+          <span class="interval-label">max</span>
+          <input id="f_stability_max" max="1" min="0" step="0.01" type="number" value="0.70">
+        </div>
+      </div>
+      <div class="input-note">Fraction of systems with stable orbits.</div>
+      <div class="lit-range">Lit. range: 0.30 ~ 0.70 · Zink &amp; Hansen 2019</div>
+    </div>
+  </div>
+
+  <div class="param-section-header" style="margin-top:10px;">
+    <span class="section-dot biological"></span>
+    Biological / Geophysical Parameters
+    <span style="font-size:9px;font-weight:500;margin-left:6px;color:var(--text-dim);">
+      partially constrained
+    </span>
+  </div>
+
+  <div class="input-grid">
+    
+    <div class="input-card biological" id="card-f_magnetosphere">
+      <div class="card-icons">
+        <div class="tooltip">
+          <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
+          <span class="tooltiptext">
+            <strong>Magnetic field (f_B)</strong><br>
+            Fraction retaining a long-term planetary magnetosphere, used here as a proxy for atmospheric shielding against stellar wind erosion.<br>
+            <span class="lit">
+              Zuluaga et al. 2013: ~0.50<br>
+              Driscoll &amp; Bercovici 2014: 0.30~0.60
+            </span>
+          </span>
+        </div>
+        <a href="https://iopscience.iop.org/article/10.1088/0004-637X/770/1/23" target="_blank" rel="noopener noreferrer">
+          <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
+        </a>
+      </div>
+
+      <label>Magnetic Field (f_B)</label>
+      <div class="param-inputs">
+        <div class="param-mean-row">
+          <input id="f_magnetosphere" max="1" min="0" step="0.01" type="number" value="0.50">
+          <button class="interval-toggle" onclick="toggleInterval('f_magnetosphere')">±</button>
+        </div>
+        <div class="interval-row" id="interval-f_magnetosphere">
+          <span class="interval-label">min</span>
+          <input id="f_magnetosphere_min" max="1" min="0" step="0.01" type="number" value="0.20">
+          <span class="interval-label">max</span>
+          <input id="f_magnetosphere_max" max="1" min="0" step="0.01" type="number" value="0.70">
+        </div>
+      </div>
+      <div class="input-note">Long-term magnetosphere retention.</div>
+      <div class="lit-range">Lit. range: 0.20 ~ 0.70 · Zuluaga 2013</div>
+    </div>
+
+    
+    <div class="input-card biological" id="card-f_lunar_stability">
+      <div class="card-icons">
+        <div class="tooltip">
+          <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
+          <span class="tooltiptext">
+            <strong>Lunar stabilizer (f_moon)</strong><br>
+            Large moon or equivalent stabilizing architecture may reduce large obliquity chaos, though the necessity of a large moon remains debated.<br>
+            <span class="lit">
+              Ćuk &amp; Stewart 2012: 0.30~0.60<br>
+              Lissauer et al. 2012: may be much less restrictive
+            </span>
+          </span>
+        </div>
+        <a href="https://www.science.org/doi/10.1126/science.1225542" target="_blank" rel="noopener noreferrer">
+          <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
+        </a>
+      </div>
+
+      <label>Lunar Stabilizer (f_moon)</label>
+      <div class="param-inputs">
+        <div class="param-mean-row">
+          <input id="f_lunar_stability" max="1" min="0" step="0.01" type="number" value="0.50">
+          <button class="interval-toggle" onclick="toggleInterval('f_lunar_stability')">±</button>
+        </div>
+        <div class="interval-row" id="interval-f_lunar_stability">
+          <span class="interval-label">min</span>
+          <input id="f_lunar_stability_min" max="1" min="0" step="0.01" type="number" value="0.20">
+          <span class="interval-label">max</span>
+          <input id="f_lunar_stability_max" max="1" min="0" step="0.01" type="number" value="0.80">
+        </div>
+      </div>
+      <div class="input-note">Large moon or equivalent stabilizer.</div>
+      <div class="lit-range">Lit. range: 0.20 ~ 0.80 · Ćuk 2012, Lissauer 2012</div>
+    </div>
+
+    
+    <div class="input-card biological" id="card-f_size">
+      <div class="card-icons">
+        <div class="tooltip">
+          <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
+          <span class="tooltiptext">
+            <strong>Suitable size (f_size)</strong><br>
+            Planetary radius/mass window compatible with terrestrial composition and long-term atmosphere retention without crossing into sub-Neptune territory.<br>
+            <span class="lit">
+              Rogers 2015: 0.40~0.60<br>
+              Fulton et al. 2017 radius valley supports a restricted rocky window
+            </span>
+          </span>
+        </div>
+        <a href="https://iopscience.iop.org/article/10.1088/0004-637X/801/1/41" target="_blank" rel="noopener noreferrer">
+          <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
+        </a>
+      </div>
+
+      <label>Suitable Size (f_size)</label>
+      <div class="param-inputs">
+        <div class="param-mean-row">
+          <input id="f_size" max="1" min="0" step="0.01" type="number" value="0.50">
+          <button class="interval-toggle" onclick="toggleInterval('f_size')">±</button>
+        </div>
+        <div class="interval-row" id="interval-f_size">
+          <span class="interval-label">min</span>
+          <input id="f_size_min" max="1" min="0" step="0.01" type="number" value="0.30">
+          <span class="interval-label">max</span>
+          <input id="f_size_max" max="1" min="0" step="0.01" type="number" value="0.65">
+        </div>
+      </div>
+      <div class="input-note">Earth-like size window in the base model.</div>
+      <div class="lit-range">Lit. range: 0.30 ~ 0.65 · Rogers 2015, Fulton 2017</div>
+    </div>
+
+    
+    <div class="input-card biological" id="card-f_rotation">
+      <div class="card-icons">
+        <div class="tooltip">
+          <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
+          <span class="tooltiptext">
+            <strong>Suitable rotation (f_ω)</strong><br>
+            Rotation-related climate and dynamo suitability; very slow or tidally locked cases can become more problematic depending on host star and atmosphere.<br>
+            <span class="lit">
+              Dobos et al. 2021: 0.20~0.35<br>
+              G-star analog estimates often center near ~0.27
+            </span>
+          </span>
+        </div>
+        <a href="https://www.aanda.org/articles/aa/full_html/2021/09/aa40791-21/aa40791-21.html" target="_blank" rel="noopener noreferrer">
+          <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
+        </a>
+      </div>
+
+      <label>Suitable Rotation (f_ω)</label>
+      <div class="param-inputs">
+        <div class="param-mean-row">
+          <input id="f_rotation" max="1" min="0" step="0.01" type="number" value="0.27">
+          <button class="interval-toggle" onclick="toggleInterval('f_rotation')">±</button>
+        </div>
+        <div class="interval-row" id="interval-f_rotation">
+          <span class="interval-label">min</span>
+          <input id="f_rotation_min" max="1" min="0" step="0.01" type="number" value="0.15">
+          <span class="interval-label">max</span>
+          <input id="f_rotation_max" max="1" min="0" step="0.01" type="number" value="0.40">
+        </div>
+      </div>
+      <div class="input-note">Rotation-related climate and dynamo suitability.</div>
+      <div class="lit-range">Lit. range: 0.15 ~ 0.40 · Dobos 2021</div>
+    </div>
+
+    
+    <div class="input-card biological" id="card-f_tilt">
+      <div class="card-icons">
+        <div class="tooltip">
+          <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
+          <span class="tooltiptext">
+            <strong>Favorable axial tilt (f_ε)</strong><br>
+            Low-to-moderate obliquity is usually treated as more climate-stable than extreme tilt regimes, though exact habitability dependence is model-sensitive.<br>
+            <span class="lit">
+              Linsenmeier et al. 2015: ~0.50<br>
+              Williams &amp; Pollard 2003: 0.40~0.60
+            </span>
+          </span>
+        </div>
+        <a href="https://www.sciencedirect.com/science/article/pii/S0012821X15003510" target="_blank" rel="noopener noreferrer">
+          <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
+        </a>
+      </div>
+
+      <label>Favorable Tilt (f_ε)</label>
+      <div class="param-inputs">
+        <div class="param-mean-row">
+          <input id="f_tilt" max="1" min="0" step="0.01" type="number" value="0.50">
+          <button class="interval-toggle" onclick="toggleInterval('f_tilt')">±</button>
+        </div>
+        <div class="interval-row" id="interval-f_tilt">
+          <span class="interval-label">min</span>
+          <input id="f_tilt_min" max="1" min="0" step="0.01" type="number" value="0.30">
+          <span class="interval-label">max</span>
+          <input id="f_tilt_max" max="1" min="0" step="0.01" type="number" value="0.65">
+        </div>
+      </div>
+      <div class="input-note">Obliquity-related climate suitability.</div>
+      <div class="lit-range">Lit. range: 0.30 ~ 0.65 · Linsenmeier 2015</div>
+    </div>
+
+    
+    <div class="input-card biological" id="card-f_H2O">
+      <div class="toggle-row">
+        <span class="toggle-box enabled" id="H2O-toggle"></span>
+        <span class="toggle-label-text">Include in calculation</span>
+      </div>
+
+      <div class="card-icons">
+        <div class="tooltip">
+          <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
+          <span class="tooltiptext">
+            <strong>Surface water (f_H₂O)</strong><br>
+            Fraction of otherwise suitable planets with sufficient long-term liquid surface water, treated as a broad volatile-delivery/retention filter.<br>
+            <span class="lit">
+              Morbidelli et al. 2012: ~0.10~0.30<br>
+              Solar-system style volatile-delivery arguments often motivate low-to-moderate values
+            </span>
+          </span>
+        </div>
+        <a href="https://doi.org/10.1146/annurev-earth-042711-105319" target="_blank" rel="noopener noreferrer">
+          <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
+        </a>
+      </div>
+
+      <label>Surface Water (f_H₂O)</label>
+      <div class="param-inputs">
+        <div class="param-mean-row">
+          <input id="f_H2O" max="1" min="0" step="0.01" type="number" value="0.10">
+          <button class="interval-toggle" onclick="toggleInterval('f_H2O')">±</button>
+        </div>
+        <div class="interval-row" id="interval-f_H2O">
+          <span class="interval-label">min</span>
+          <input id="f_H2O_min" max="1" min="0" step="0.01" type="number" value="0.05">
+          <span class="interval-label">max</span>
+          <input id="f_H2O_max" max="1" min="0" step="0.01" type="number" value="0.30">
+        </div>
+      </div>
+      <div class="input-note">Surface liquid water filter.</div>
+      <div class="lit-range">Lit. range: 0.05 ~ 0.30 · Morbidelli 2012</div>
+    </div>
+
+    
+    <div class="input-card biological" id="card-f_CHNOPS">
+      <div class="toggle-row">
+        <span class="toggle-box enabled" id="CHNOPS-toggle"></span>
+        <span class="toggle-label-text">Include in calculation</span>
+      </div>
+
+      <div class="card-icons">
+        <div class="tooltip">
+          <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
+          <span class="tooltiptext">
+            <strong>CHNOPS elements (f_CHNOPS)</strong><br>
+            Availability of the six canonical biogenic elements in sufficient local abundance and accessible form for Earth-like chemistry.<br>
+            <span class="lit">
+              Asplund et al. 2009 solar abundances<br>
+              Planetary accessibility remains much more uncertain than stellar abundance itself
+            </span>
+          </span>
+        </div>
+        <a href="https://doi.org/10.1146/annurev.astro.46.060407.145222" target="_blank" rel="noopener noreferrer">
+          <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
+        </a>
+      </div>
+
+      <label>CHNOPS Elements (f_CHNOPS)</label>
+      <div class="param-inputs">
+        <div class="param-mean-row">
+          <input id="f_CHNOPS" max="1" min="0" step="0.01" type="number" value="0.10">
+          <button class="interval-toggle" onclick="toggleInterval('f_CHNOPS')">±</button>
+        </div>
+        <div class="interval-row" id="interval-f_CHNOPS">
+          <span class="interval-label">min</span>
+          <input id="f_CHNOPS_min" max="1" min="0" step="0.01" type="number" value="0.05">
+          <span class="interval-label">max</span>
+          <input id="f_CHNOPS_max" max="1" min="0" step="0.01" type="number" value="0.50">
+        </div>
+      </div>
+      <div class="input-note">Essential biochemistry availability.</div>
+      <div class="lit-range">Lit. range: 0.05 ~ 0.50 · Asplund 2009, speculative planetary availability</div>
+    </div>
+  </div>
+
+  <div class="param-section-header" style="margin-top:10px;">
+    <span class="section-dot hypothetical"></span>
+    Hypothetical Parameters
+    <span style="font-size:9px;font-weight:500;margin-left:6px;color:var(--text-dim);">
+      speculative
+    </span>
+  </div>
+
+  <div class="input-grid">
+    
+    <div class="input-card hypothetical" id="card-f_complex_life">
+      <div class="toggle-row">
+        <span class="toggle-box" id="complex-life-toggle"></span>
+        <span class="toggle-label-text">Include in calculation</span>
+      </div>
+
+      <div class="card-icons">
+        <div class="tooltip">
+          <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
+          <span class="tooltiptext">
+            <strong>Complex life (f_life)</strong><br>
+            Probability that life actually emerges and reaches sustained multicellular complexity. This term is highly uncertain and philosophically load-bearing in the whole model.<br>
+            <span class="lit">
+              Rare Earth arguments: extremely low<br>
+              Sandberg et al. 2018: broad uncertainty, potentially much higher
+            </span>
+          </span>
+        </div>
+        <a href="https://arxiv.org/abs/1806.02404" target="_blank" rel="noopener noreferrer">
+          <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
+        </a>
+      </div>
+
+      <label>Complex Life (f_life)</label>
+      <div class="param-inputs">
+        <div class="param-mean-row">
+          <input id="f_complex_life" max="1" min="0" step="0.001" type="number" value="0.01">
+          <button class="interval-toggle" onclick="toggleInterval('f_complex_life')">±</button>
+        </div>
+        <div class="interval-row" id="interval-f_complex_life">
+          <span class="interval-label">min</span>
+          <input id="f_complex_life_min" max="1" min="0" step="0.000000001" type="number" value="0.000000001">
+          <span class="interval-label">max</span>
+          <input id="f_complex_life_max" max="1" min="0" step="0.01" type="number" value="1.0">
+        </div>
+      </div>
+      <div class="input-note">P(complex life | habitable planet).</div>
+      <div class="lit-range">Lit. range: 10⁻⁹ ~ 1.0 · Sandberg 2018, Rare Earth debate</div>
+    </div>
+
+    
+    <div class="input-card hypothetical" id="card-f_x">
+      <div class="toggle-row">
+        <span class="toggle-box" id="x-toggle"></span>
+        <span class="toggle-label-text">Include in calculation</span>
+      </div>
+
+      <div class="card-icons">
+        <div class="tooltip">
+          <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
+          <span class="tooltiptext">
+            <strong>Wildcard factor (f_x)</strong><br>
+            Catch-all multiplicative factor for unknown or omitted filters. Neutral default is 1.0. This is explicitly user-defined and not tied to a single literature source.<br>
+            <span class="lit">No fixed literature source ∼ methodological placeholder</span>
+          </span>
+        </div>
+      </div>
+
+      <label>Wildcard Factor (f_x)</label>
+      <div class="param-inputs">
+        <div class="param-mean-row">
+          <input id="f_x" max="1" min="0" step="0.01" type="number" value="1">
+          <button class="interval-toggle" onclick="toggleInterval('f_x')">±</button>
+        </div>
+        <div class="interval-row" id="interval-f_x">
+          <span class="interval-label">min</span>
+          <input id="f_x_min" max="1" min="0" step="0.01" type="number" value="0.5">
+          <span class="interval-label">max</span>
+          <input id="f_x_max" max="1" min="0" step="0.01" type="number" value="1.0">
+        </div>
+      </div>
+      <div class="input-note">Catch-all factor for unknown filters.</div>
+      <div class="lit-range">Lit. range: User defined · no fixed literature source</div>
+    </div>
+
+    
+    <div class="input-card hypothetical" id="card-iterations">
+      <label>Monte Carlo Iterations</label>
+      <div class="param-inputs">
+        <div class="param-mean-row">
+          <input id="iterations" max="20000" min="1000" step="100" type="number" value="2000">
+        </div>
+      </div>
+      <div class="input-note">Number of simulation draws.</div>
+      <div class="input-note">Max: 20,000. Higher input is automatically clamped to 20,000.</div>
+    </div>
+
+    
+    <div class="input-card hypothetical" id="card-sampling-uncertainty">
+      <label>Uncertainty (%)</label>
+      <div class="param-inputs">
+        <div class="param-mean-row">
+          <input id="sampling_uncertainty" max="100" min="1" step="1" type="number" value="50">
+        </div>
+      </div>
+      <div class="input-note">Controls sampling spread around the input values. Default: 50%.</div>
+    </div>
+
+    
+    <div class="input-card hypothetical" id="card-distribution">
+      <label>Sampling Distribution</label>
+      <select id="distribution">
+        <option selected value="lognormal">Log-normal (recommended)</option>
+        <option value="normal">Normal (symmetric)</option>
+        <option value="uniform">Uniform (from min/max)</option>
+      </select>
+      <div class="input-note">Log-normal is usually more appropriate for multiplicative uncertainty.</div>
+    </div>
+
+    <div class="input-card hypothetical input-card-wide" id="card-sim-options">
+      <label>Advanced Simulation Options</label>
+      <div class="sim-options-grid">
+        <div class="sim-option-field">
+          <div class="sim-option-shell">
+            <div class="sim-option-label">Sampling Engine</div>
+            <select class="sim-control-input" id="simulation-engine">
+              <option selected value="standard">Standard Monte Carlo</option>
+              <option value="lhs">Latin Hypercube Sampling</option>
+            </select>
+          </div>
+        </div>
+        <div class="sim-option-field">
+          <div class="sim-option-shell">
+            <div class="sim-option-label">Correlation Model</div>
+            <select class="sim-control-input" id="correlation-model">
+              <option selected value="heuristic">Heuristic correlation scaffold</option>
+              <option value="independent">Independent factors</option>
+            </select>
+          </div>
+        </div>
+        <div class="sim-option-field">
+          <div class="sim-option-shell">
+            <div class="sim-option-label">Bounds Analysis</div>
+            <label class="sim-control-check" for="robust-bounds">
+              <input class="sim-control-hidden" id="robust-bounds" type="checkbox">
+              <span class="toggle-box" aria-hidden="true"></span>
+              <span class="sim-control-text">Enable robust interval envelope</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="input-note">These options affect Monte Carlo sampling and diagnostics only. The deterministic calculation remains unchanged.</div>
+    </div>
+  </div>
+</div>
+   <div class="panel" id="adv-panel">
+    <div class="panel-title">
+     Additional Scientific Modules
+     <span style="font-size:9px;font-weight:500;color:var(--text-dim);">
+      optional · advanced
+     </span>
+    </div>
+    <div class="toggle-row">
+     <span class="toggle-box" id="adv-master-toggle">
+     </span>
+     <span class="toggle-label-text" style="font-size:11px;">
+      Enable advanced modules
+     </span>
+    </div>
+    <div id="adv-options" style="display:none; margin-top:10px;">
+     <div style="font-size:10px;color:var(--text-dim);margin:0 0 16px;line-height:1.6;">
+      When disabled, the calculator behaves exactly like the base model. When enabled, only the modules you explicitly switch on modify the chain.
+     </div>
+     <div class="adv-module-card" id="adv-hostChannels">
+      <div class="adv-module-header">
+       <span class="toggle-box" id="toggle-hostChannels">
+       </span>
+       <span class="adv-module-title">
+        G/K/M Host Star Channels
+       </span>
+       <span class="adv-module-badge">
+        replaces f_⊙
+       </span>
+      </div>
+      <div class="adv-module-body" id="body-hostChannels">
+       <p class="adv-desc">
+        Replaces the single Sun-like-star fraction with a weighted sum of G, K and M host channels. Fractions below are interpreted as fractions of all stellar hosts, not pre-filtered subsets.
+       </p>
+       <div class="adv-grid">
+        <div class="adv-field">
+         <label>
+          G-type fraction
+         </label>
+         <input id="adv_f_G" max="1" min="0" step="0.001" type="number" value="0.076"/>
+         <span class="adv-note">
+          Fraction of all stars
+         </span>
+        </div>
+        <div class="adv-field">
+         <label>
+          G-type HZ weight
+         </label>
+         <input id="adv_w_G_hz" max="2" min="0" step="0.01" type="number" value="1.00"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          G-type activity penalty
+         </label>
+         <input id="adv_w_G_act" max="1" min="0" step="0.01" type="number" value="0.95"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          K-type fraction
+         </label>
+         <input id="adv_f_K" max="1" min="0" step="0.001" type="number" value="0.121"/>
+         <span class="adv-note">
+          Fraction of all stars
+         </span>
+        </div>
+        <div class="adv-field">
+         <label>
+          K-type HZ weight
+         </label>
+         <input id="adv_w_K_hz" max="2" min="0" step="0.01" type="number" value="1.15"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          K-type activity penalty
+         </label>
+         <input id="adv_w_K_act" max="1" min="0" step="0.01" type="number" value="0.85"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          M-type fraction
+         </label>
+         <input id="adv_f_M" max="1" min="0" step="0.001" type="number" value="0.703"/>
+         <span class="adv-note">
+          Fraction of all stars
+         </span>
+        </div>
+        <div class="adv-field">
+         <label>
+          M-type HZ weight
+         </label>
+         <input id="adv_w_M_hz" max="2" min="0" step="0.01" type="number" value="0.80"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          M-type activity penalty
+         </label>
+         <input id="adv_w_M_act" max="1" min="0" step="0.01" type="number" value="0.30"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          M-type tidal-lock penalty
+         </label>
+         <input id="adv_w_M_lock" max="1" min="0" step="0.01" type="number" value="0.55"/>
+        </div>
+       </div>
+       <div class="lit-range">
+        Henry 2006 · Gaia DR3 2022 · Dressing &amp; Charbonneau 2015 · Shields et al. 2016
+       </div>
+      </div>
+     </div>
+     <div class="adv-module-card" id="adv-atmRet">
+      <div class="adv-module-header">
+       <span class="toggle-box" id="toggle-atmRet">
+       </span>
+       <span class="adv-module-title">
+        Atmospheric Retention (f_atm_ret)
+       </span>
+       <span class="adv-module-badge">
+        new factor
+       </span>
+      </div>
+      <div class="adv-module-body" id="body-atmRet">
+       <p class="adv-desc">
+        Explicit atmospheric-retention factor for secondary atmospheres on Gyr timescales.
+       </p>
+       <div class="adv-grid">
+        <div class="adv-field">
+         <label>
+          f_atm_ret
+         </label>
+         <input id="adv_f_atm_ret" max="1" min="0" step="0.01" type="number" value="0.50"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          min
+         </label>
+         <input id="adv_f_atm_ret_min" max="1" min="0" step="0.01" type="number" value="0.10"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          max
+         </label>
+         <input id="adv_f_atm_ret_max" max="1" min="0" step="0.01" type="number" value="0.80"/>
+        </div>
+       </div>
+       <div class="lit-range">
+        Owen &amp; Wu 2017 · Johnstone et al. 2018
+       </div>
+      </div>
+     </div>
+     <div class="adv-module-card" id="adv-volatileSplit">
+      <div class="adv-module-header">
+       <span class="toggle-box" id="toggle-volatileSplit">
+       </span>
+       <span class="adv-module-title">
+        Volatile Delivery + Water Retention
+       </span>
+       <span class="adv-module-badge">
+        replaces f_H₂O
+       </span>
+      </div>
+      <div class="adv-module-body" id="body-volatileSplit">
+       <p class="adv-desc">
+        Splits surface-water probability into delivery and long-term retention.
+       </p>
+       <div class="adv-grid">
+        <div class="adv-field">
+         <label>
+          f_volatile_delivery
+         </label>
+         <input id="adv_f_vol_del" max="1" min="0" step="0.01" type="number" value="0.40"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          min
+         </label>
+         <input id="adv_f_vol_del_min" max="1" min="0" step="0.01" type="number" value="0.15"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          max
+         </label>
+         <input id="adv_f_vol_del_max" max="1" min="0" step="0.01" type="number" value="0.70"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          f_water_retention
+         </label>
+         <input id="adv_f_wat_ret" max="1" min="0" step="0.01" type="number" value="0.35"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          min
+         </label>
+         <input id="adv_f_wat_ret_min" max="1" min="0" step="0.01" type="number" value="0.10"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          max
+         </label>
+         <input id="adv_f_wat_ret_max" max="1" min="0" step="0.01" type="number" value="0.60"/>
+        </div>
+       </div>
+       <div class="adv-inline-note" id="adv-vol-note">
+       </div>
+       <div class="lit-range">
+        Morbidelli et al. 2012 · Raymond et al. 2004 · Tian 2015
+       </div>
+      </div>
+     </div>
+     <div class="adv-module-card" id="adv-longterm">
+      <div class="adv-module-header">
+       <span class="toggle-box" id="toggle-longterm">
+       </span>
+       <span class="adv-module-title">
+        Long-term Geodynamic Stability
+       </span>
+       <span class="adv-module-badge">
+        new factor
+       </span>
+      </div>
+      <div class="adv-module-body" id="body-longterm">
+       <p class="adv-desc">
+        Aggregates tectonics, radiogenic heat, and long-term climate feedback into a single geodynamic factor.
+       </p>
+       <div class="adv-grid">
+        <div class="adv-field">
+         <label>
+          f_tectonics
+         </label>
+         <input id="adv_f_tect" max="1" min="0" step="0.01" type="number" value="0.15"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          min
+         </label>
+         <input id="adv_f_tect_min" max="1" min="0" step="0.01" type="number" value="0.03"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          max
+         </label>
+         <input id="adv_f_tect_max" max="1" min="0" step="0.01" type="number" value="0.35"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          f_radiogenic
+         </label>
+         <input id="adv_f_radio" max="1" min="0" step="0.01" type="number" value="0.70"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          min
+         </label>
+         <input id="adv_f_radio_min" max="1" min="0" step="0.01" type="number" value="0.40"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          max
+         </label>
+         <input id="adv_f_radio_max" max="1" min="0" step="0.01" type="number" value="0.90"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          f_climate_feedback
+         </label>
+         <input id="adv_f_clim" max="1" min="0" step="0.01" type="number" value="0.50"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          min
+         </label>
+         <input id="adv_f_clim_min" max="1" min="0" step="0.01" type="number" value="0.20"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          max
+         </label>
+         <input id="adv_f_clim_max" max="1" min="0" step="0.01" type="number" value="0.75"/>
+        </div>
+       </div>
+       <div class="adv-inline-note" id="adv-long-note">
+       </div>
+       <div class="lit-range">
+        Foley &amp; Smye 2018 · Korenaga 2010 · Noack &amp; Breuer 2014
+       </div>
+      </div>
+     </div>
+     <div class="adv-module-card" id="adv-spinObliquity">
+      <div class="adv-module-header">
+       <span class="toggle-box" id="toggle-spinObliquity">
+       </span>
+       <span class="adv-module-title">
+        Spin~Obliquity~Tide Module
+       </span>
+       <span class="adv-module-badge">
+        replaces f_ω + f_ε
+       </span>
+      </div>
+      <div class="adv-module-body" id="body-spinObliquity">
+       <p class="adv-desc">
+        Replaces separate rotation and tilt factors with a host-dependent spin-climate factor. To avoid double counting, lunar stabilization is folded into this module when enabled.
+       </p>
+       <div class="adv-grid">
+        <div class="adv-field">
+         <label>
+          f_spin_climate (G-host)
+         </label>
+         <input id="adv_f_spin_G" max="1" min="0" step="0.01" type="number" value="0.35"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          f_spin_climate (K-host)
+         </label>
+         <input id="adv_f_spin_K" max="1" min="0" step="0.01" type="number" value="0.25"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          f_spin_climate (M-host)
+         </label>
+         <input id="adv_f_spin_M" max="1" min="0" step="0.01" type="number" value="0.08"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          Moon boost factor
+         </label>
+         <input id="adv_moon_boost" max="3" min="1" step="0.05" type="number" value="1.40"/>
+        </div>
+       </div>
+       <div class="lit-range">
+        Barnes 2017 · Lissauer et al. 2012 · Leconte et al. 2015
+       </div>
+      </div>
+     </div>
+     <div class="adv-module-card" id="adv-radiusValley">
+      <div class="adv-module-header">
+       <span class="toggle-box" id="toggle-radiusValley">
+       </span>
+       <span class="adv-module-title">
+        Radius-Valley Rocky Prior
+       </span>
+       <span class="adv-module-badge">
+        replaces f_rocky × f_size
+       </span>
+      </div>
+      <div class="adv-module-body" id="body-radiusValley">
+       <p class="adv-desc">
+        Replaces the separate composition and size filters with an observationally informed rocky-planet prior.
+       </p>
+       <div class="adv-grid">
+        <div class="adv-field">
+         <label>
+          P_rocky_true
+         </label>
+         <input id="adv_P_rocky" max="1" min="0" step="0.01" type="number" value="0.12"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          min
+         </label>
+         <input id="adv_P_rocky_min" max="1" min="0" step="0.01" type="number" value="0.06"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          max
+         </label>
+         <input id="adv_P_rocky_max" max="1" min="0" step="0.01" type="number" value="0.25"/>
+        </div>
+       </div>
+       <div class="adv-inline-note">
+        Base comparison: f_rocky × f_size = 0.20 × 0.50 = 0.10.
+       </div>
+       <div class="lit-range">
+        Fulton et al. 2017 · Rogers 2015 · Berger et al. 2020
+       </div>
+      </div>
+     </div>
+     <div class="adv-module-card" id="adv-radialGHZ">
+      <div class="adv-module-header">
+       <span class="toggle-box" id="toggle-radialGHZ">
+       </span>
+       <span class="adv-module-title">
+        Radial GHZ Integrator
+       </span>
+       <span class="adv-module-badge">
+        replaces N_GHZ
+       </span>
+      </div>
+      <div class="adv-module-body" id="body-radialGHZ">
+       <p class="adv-desc">
+        Computes N_GHZ by integrating an exponential stellar disk over radial annuli. This implementation uses the correct annulus weighting \(2\pi R\Sigma(R)\,dR\).
+       </p>
+       <div class="adv-grid">
+        <div class="adv-field">
+         <label>
+          Total stars in galaxy
+         </label>
+         <input id="adv_N_total_stars" min="0" step="1000000000" type="number" value="200000000000"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          Scale length (kpc)
+         </label>
+         <input id="adv_scale_length" max="10" min="0.5" step="0.1" type="number" value="2.6"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          Inner GHZ boundary (kpc)
+         </label>
+         <input id="adv_ghz_inner" max="20" min="0" step="0.5" type="number" value="4.0"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          Outer GHZ boundary (kpc)
+         </label>
+         <input id="adv_ghz_outer" max="30" min="0" step="0.5" type="number" value="13.0"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          Metallicity threshold [Fe/H]
+         </label>
+         <input id="adv_met_thresh" max="1" min="-3" step="0.1" type="number" value="-1.0"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          Radial bins
+         </label>
+         <input id="adv_radial_bins" max="500" min="20" step="10" type="number" value="100"/>
+        </div>
+       </div>
+       <div class="adv-inline-note" id="adv-ghz-result">
+       </div>
+       <div class="lit-range">
+        Lineweaver et al. 2004 · Prantzos 2008 · Gowanlock et al. 2011
+       </div>
+      </div>
+     </div>
+     <div class="adv-module-card" id="adv-spaceWeather">
+      <div class="adv-module-header">
+       <span class="toggle-box" id="toggle-spaceWeather">
+       </span>
+       <span class="adv-module-title">
+        Space Weather (f_XUV_quiet)
+       </span>
+       <span class="adv-module-badge">
+        new factor
+       </span>
+      </div>
+      <div class="adv-module-body" id="body-spaceWeather">
+       <p class="adv-desc">
+        Surface-habitability penalty due to sustained XUV flux, flares and CMEs.
+       </p>
+       <div class="adv-grid">
+        <div class="adv-field">
+         <label>
+          f_XUV_quiet
+         </label>
+         <input id="adv_f_xuv" max="1" min="0" step="0.01" type="number" value="0.60"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          min
+         </label>
+         <input id="adv_f_xuv_min" max="1" min="0" step="0.01" type="number" value="0.15"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          max
+         </label>
+         <input id="adv_f_xuv_max" max="1" min="0" step="0.01" type="number" value="0.90"/>
+        </div>
+       </div>
+       <div class="lit-range">
+        Tilley et al. 2019 · Segura et al. 2010
+       </div>
+      </div>
+     </div>
+     <div class="adv-module-card" id="adv-prebioticUV">
+      <div class="adv-module-header">
+       <span class="toggle-box" id="toggle-prebioticUV">
+       </span>
+       <span class="adv-module-title">
+        Prebiotic UV Window (f_uv)
+       </span>
+       <span class="adv-module-badge">
+        new factor
+       </span>
+      </div>
+      <div class="adv-module-body" id="body-prebioticUV">
+       <p class="adv-desc">
+        Bell-shaped photochemical window for prebiotic UV flux.
+       </p>
+       <div class="adv-grid">
+        <div class="adv-field">
+         <label>
+          f_uv
+         </label>
+         <input id="adv_f_uv" max="1" min="0" step="0.01" type="number" value="0.45"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          min
+         </label>
+         <input id="adv_f_uv_min" max="1" min="0" step="0.01" type="number" value="0.10"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          max
+         </label>
+         <input id="adv_f_uv_max" max="1" min="0" step="0.01" type="number" value="0.70"/>
+        </div>
+       </div>
+       <div class="lit-range">
+        Rimmer et al. 2018 · Ranjan &amp; Sasselov 2016
+       </div>
+      </div>
+     </div>
+     <div class="adv-module-card" id="adv-binary">
+      <div class="adv-module-header">
+       <span class="toggle-box" id="toggle-binary">
+       </span>
+       <span class="adv-module-title">
+        Binary Star Filter (f_binary)
+       </span>
+       <span class="adv-module-badge">
+        new factor
+       </span>
+      </div>
+      <div class="adv-module-body" id="body-binary">
+       <p class="adv-desc">
+        Fraction of systems permitting stable habitable-zone orbits in binaries or multiples.
+       </p>
+       <div class="adv-grid">
+        <div class="adv-field">
+         <label>
+          f_binary
+         </label>
+         <input id="adv_f_binary" max="1" min="0" step="0.01" type="number" value="0.65"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          min
+         </label>
+         <input id="adv_f_binary_min" max="1" min="0" step="0.01" type="number" value="0.40"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          max
+         </label>
+         <input id="adv_f_binary_max" max="1" min="0" step="0.01" type="number" value="0.80"/>
+        </div>
+       </div>
+       <div class="lit-range">
+        Raghavan et al. 2010 · Eggl et al. 2012
+       </div>
+      </div>
+     </div>
+     <div class="adv-module-card" id="adv-radiation">
+      <div class="adv-module-header">
+       <span class="toggle-box" id="toggle-radiation">
+       </span>
+       <span class="adv-module-title">
+        GRB/SN Radiation Survival (f_rad)
+       </span>
+       <span class="adv-module-badge">
+        new factor
+       </span>
+      </div>
+      <div class="adv-module-body" id="body-radiation">
+       <p class="adv-desc">
+        Fraction surviving lethal GRB/SN exposure over multi-Gyr timescales.
+       </p>
+       <div class="adv-grid">
+        <div class="adv-field">
+         <label>
+          f_rad
+         </label>
+         <input id="adv_f_rad" max="1" min="0" step="0.01" type="number" value="0.90"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          min
+         </label>
+         <input id="adv_f_rad_min" max="1" min="0" step="0.01" type="number" value="0.75"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          max
+         </label>
+         <input id="adv_f_rad_max" max="1" min="0" step="0.01" type="number" value="0.95"/>
+        </div>
+       </div>
+       <div class="lit-range">
+        Piran &amp; Jiménez 2014 · Lingam &amp; Loeb 2019
+       </div>
+      </div>
+     </div>
+     <div class="adv-module-card" id="adv-ard">
+      <div class="adv-module-header">
+       <span class="toggle-box" id="toggle-ard">
+       </span>
+       <span class="adv-module-title">
+        Atmospheric Retention Distance (ARD)
+       </span>
+       <span class="adv-module-badge">
+        post-processing
+       </span>
+      </div>
+      <div class="adv-module-body" id="body-ard">
+       <p class="adv-desc">
+        Post-processing diagnostic of what fraction of the habitable zone is atmosphere-safe.
+       </p>
+       <div class="adv-grid">
+        <div class="adv-field">
+         <label>
+          Stellar mass (M☉)
+         </label>
+         <input id="adv_ard_mass" max="2.0" min="0.1" step="0.1" type="number" value="1.0"/>
+        </div>
+        <div class="adv-field">
+         <label>
+          Atmosphere type
+         </label>
+         <select id="adv_ard_atm">
+          <option value="co2">
+           CO₂-dominated
+          </option>
+          <option value="n2">
+           N₂-dominated
+          </option>
+         </select>
+        </div>
+        <div class="adv-field">
+         <label>
+          System age (Gyr)
+         </label>
+         <input id="adv_ard_age" max="12" min="0.5" step="0.5" type="number" value="4.6"/>
+        </div>
+       </div>
+       <div class="adv-inline-note" id="adv-ard-result">
+       </div>
+       <div class="lit-range">
+        Ribas et al. 2005 · Van Looveren et al. 2025
+       </div>
+      </div>
+     </div>
+     <div class="adv-module-card" id="adv-sensitivity">
+      <div class="adv-module-header">
+       <span class="toggle-box" id="toggle-sensitivity">
+       </span>
+       <span class="adv-module-title">
+        Sensitivity Analysis (Tornado)
+       </span>
+       <span class="adv-module-badge">
+        diagnostic
+       </span>
+      </div>
+      <div class="adv-module-body" id="body-sensitivity">
+       <p class="adv-desc">
+        Computes Pearson correlations in log-space between sampled parameters and log₁₀(N).
+       </p>
+       <div id="adv-tornado-container" style="min-height:50px;">
+       </div>
+      </div>
+     </div>
+     <div class="adv-module-card" id="adv-temporal">
+      <div class="adv-module-header">
+       <span class="toggle-box" id="toggle-temporal">
+       </span>
+       <span class="adv-module-title">
+        Temporal Habitability Window
+       </span>
+       <span class="adv-module-badge">
+        timeline
+       </span>
+      </div>
+      <div class="adv-module-body" id="body-temporal">
+       <p class="adv-desc">
+        Displays a simple galactic-habitability timeline as a function of galactocentric radius.
+       </p>
+       <div class="adv-grid">
+        <div class="adv-field">
+         <label>
+          Galactocentric R (kpc)
+         </label>
+         <input id="adv_temporal_R" max="20" min="1" step="0.5" type="number" value="8.0"/>
+        </div>
+       </div>
+       <div id="adv-temporal-timeline" style="margin-top:10px;">
+       </div>
+       <div class="adv-inline-note" id="adv-temporal-text">
+       </div>
+       <div class="lit-range">
+        Lineweaver et al. 2004 · Gowanlock et al. 2011
+       </div>
+      </div>
+     </div>
+    </div>
+   </div>
+   <div class="panel">
+    <div class="panel-title">
+     Galaxy Settings
+     <span style="font-size:9px;font-weight:500;color:var(--text-dim);">
+      optional
+     </span>
+    </div>
+    <div class="toggle-row">
+     <span class="toggle-box" id="enable-galaxy-settings">
+     </span>
+     <span class="toggle-label-text" style="font-size:11px;">
+      Enable custom galaxy settings
+     </span>
+    </div>
+    <div id="galaxy-options" style="display:none; margin-top:10px;">
+     <div class="galaxy-inner-grid">
+      <div class="input-card physical">
+       <label>
+        Diameter (light years)
+       </label>
+       <div class="param-inputs">
+        <div class="param-mean-row">
+         <input id="galaxy-diameter" min="0" step="1000" type="number" value="100000"/>
+        </div>
+       </div>
+      </div>
+      <div class="input-card physical">
+       <label>
+        Disk Thickness (light years)
+       </label>
+       <div class="param-inputs">
+        <div class="param-mean-row">
+         <input id="galaxy-thickness" min="0" step="100" type="number" value="1000"/>
+        </div>
+       </div>
+      </div>
+      <div class="input-card physical">
+       <label>
+        Galaxy Preset
+       </label>
+       <select id="galaxy-preset">
+        <option value="mw">
+         Milky Way (MW)
+        </option>
+        <option value="m31">
+         Andromeda (M31)
+        </option>
+        <option value="m81">
+         Bode's (M81)
+        </option>
+        <option value="ngc5128">
+         Centaurus A (NGC 5128)
+        </option>
+        <option value="custom">
+         Custom Galaxy X
+        </option>
+       </select>
+      </div>
+      <div class="input-card physical">
+       <label>
+        Distance from Earth (light years)
+       </label>
+       <div class="param-inputs">
+        <div class="param-mean-row">
+         <input id="galaxy-earth-distance" min="0" step="1000" type="number" value="0"/>
+        </div>
+       </div>
+       <div class="input-note">
+        Optional reference distance for external or custom galaxies.
+       </div>
+      </div>
+     </div>
+     <div class="distance-models-title">
+      Distance Models
+     </div>
+     <div class="distance-models-row">
+      <label class="distance-model-option" for="model-2d">
+       <input checked="" id="model-2d" type="checkbox"/>
+       <span class="toggle-label-text">
+        2D disk model
+       </span>
+      </label>
+      <label class="distance-model-option" for="model-3d-disk">
+       <input checked="" id="model-3d-disk" type="checkbox"/>
+       <span class="toggle-label-text">
+        3D disk model
+       </span>
+      </label>
+      <label class="distance-model-option" for="model-3d-sphere">
+       <input checked="" id="model-3d-sphere" type="checkbox"/>
+       <span class="toggle-label-text">
+        3D spherical model
+       </span>
+      </label>
+     </div>
+    </div>
+   </div>
+   <div class="results-panel">
+   <h2>
+     Results
+    </h2>
+    <div class="alerts-box" id="config-alerts">
+     <div class="alerts-title">
+      Configuration Alerts
+     </div>
+     <div id="config-alerts-body">
+     </div>
+    </div>
+    <p class="result-line" id="deterministicResult">
+    </p>
+    <p class="result-line" id="monteCarloResult">
+    </p>
+    <p class="result-line" id="stats">
+    </p>
+    <div class="status-box result-reality-check" id="result-reality-check">
+     <div class="status-title">
+      ⚠ Earth Reality Check
+     </div>
+     <div class="status-copy" id="result-reality-copy">
+     </div>
+    </div>
+    <p class="result-line" id="simulationModel" style="display:none;">
+    </p>
+    <p class="result-line" id="robustEnvelopeResult" style="display:none;">
+    </p>
+    <p class="result-line" id="distance">
+    </p>
+    <div class="fermi-box" id="fermi-box">
+     <div class="fermi-head">
+      <div class="fermi-title">
+       ⚡ Interpretation &amp; Fermi Context
+      </div>
+      <div class="fermi-toggle" id="fermi-toggle">
+       <button class="fermi-toggle-btn active" id="fermi-mode-mc" type="button">
+        MC Result
+       </button>
+       <button class="fermi-toggle-btn" id="fermi-mode-dt" type="button">
+       DT Result
+       </button>
+      </div>
+     </div>
+     <div class="fermi-body" id="fermi-copy-source">
+      <div class="fermi-summary" id="fermi-summary">
+      </div>
+      <div class="fermi-content" id="fermi-content">
+      </div>
+      <div class="fermi-tail" id="fermi-tail">
+      </div>
+     </div>
+     <div class="fermi-actions" id="fermi-actions">
+     </div>
+    </div>
+    <div id="loading">
+     <div class="loader-dots">
+      <span>
+      </span>
+      <span>
+      </span>
+      <span>
+      </span>
+     </div>
+    </div>
+    <div class="btn-row">
+     <button class="btn btn-primary" id="calculateBtn">
+      <i class="fas fa-calculator">
+      </i>
+      1 · Calculate
+     </button>
+     <button class="btn btn-primary" id="monteCarloBtn">
+      <i class="fas fa-random">
+      </i>
+      2 · Monte Carlo
+     </button>
+     <button class="btn btn-primary" disabled="" id="whereAreTheyBtn">
+      <i class="fas fa-map-marker-alt">
+      </i>
+      3 · Where is Everyone?
+     </button>
+     <button class="btn btn-ghost" id="showHistory">
+      <i class="fas fa-history">
+      </i>
+      History
+     </button>
+    </div>
+    <div class="share-row" id="share-buttons">
+     <a href="https://www.arewealoneintheuniverse.com" id="share-twitter" rel="noopener noreferrer" target="_blank" aria-label="Share on X">
+      <i class="fab fa-twitter">
+      </i>
+     </a>
+     <a href="https://www.arewealoneintheuniverse.com" id="share-reddit" rel="noopener noreferrer" target="_blank" aria-label="Share on Reddit">
+      <i class="fab fa-reddit">
+      </i>
+     </a>
+     <a href="https://www.arewealoneintheuniverse.com" id="share-facebook" rel="noopener noreferrer" target="_blank" aria-label="Share on Facebook">
+      <i class="fab fa-facebook">
+      </i>
+     </a>
+     <a href="https://www.arewealoneintheuniverse.com" id="share-linkedin" rel="noopener noreferrer" target="_blank" aria-label="Share on LinkedIn">
+      <i class="fab fa-linkedin">
+      </i>
+     </a>
+     <a href="https://www.arewealoneintheuniverse.com" id="share-whatsapp" rel="noopener noreferrer" target="_blank" aria-label="Share on WhatsApp">
+      <i class="fab fa-whatsapp">
+      </i>
+     </a>
+     <a href="mailto:?subject=Are%20We%20Alone%3F%20Galactic%20Habitability%20Calculator&body=https%3A%2F%2Fwww.arewealoneintheuniverse.com" id="share-email" aria-label="Share by email">
+      <i class="fas fa-envelope">
+      </i>
+     </a>
+    </div>
+   </div>
+   <div class="charts-panel">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+     <span class="panel-title" style="margin-bottom:0;border:none;padding:0;">
+      Simulation Output
+     </span>
+     <div class="scale-toggle-row" style="margin-left:auto;">
+      <span class="scale-label">
+       Scale:
+      </span>
+      <button class="scale-btn" id="scale-linear" onclick="setScale('linear')">
+       Linear
+      </button>
+      <button class="scale-btn active" id="scale-log" onclick="setScale('log')">
+      Log
+      </button>
+     </div>
+    </div>
+    <div class="status-box" id="convergence-box">
+     <div class="status-title">
+      Monte Carlo Convergence
+     </div>
+     <div class="convergence-intro">
+     <strong>What this means:</strong> Monte Carlo convergence shows whether the running average settles as more simulation draws are added. If the curve flattens and tail drift stays low, the estimate is numerically stable; if not, the simulation may need more iterations.
+     </div>
+     <div class="convergence-alert" id="convergence-alert">
+     </div>
+     <div class="status-copy" id="convergence-status">
+     </div>
+     <div class="convergence-chart" id="convergence-chart">
+     </div>
+     <div class="convergence-meta" id="convergence-meta">
+     </div>
+    </div>
+    <div class="charts-grid">
+     <div id="monteCarloChart">
+     </div>
+     <div id="gaussianChart">
+     </div>
+    </div>
+   </div>
+
+   <div class="panel" id="calc-console-panel">
+    <div class="panel-title">
+     Calculation Console
+     <span>· Live model trace</span>
+    </div>
+  <div class="calc-console-intro">
+    This console updates from the current form values and shows the active symbolic equation, derived module definitions, numerical substitution, and live previews of the detection and distance math. It is meant to expose how the model is operating right now, not just the final number.
+  </div>
+    <div class="calc-console" id="calc-console">
+    </div>
+   </div>
+
+   
+   <div class="panel" id="sobol-panel" style="display:none;">
+    <div class="panel-title">
+     Which Parameters Matter Most?
+     <span>· Sensitivity Analysis (Sobol / Saltelli 2010)</span>
+     <span style="margin-left:auto;font-size:9px;color:var(--text-dim);" id="sobol-N-label"></span>
+    </div>
+    <div class="sobol-intro">
+     <strong>What this shows 〰 in plain terms:</strong> Think of the calculator as a mixing board with many knobs. This chart reveals which knobs actually matter. Turn a knob that scores high here and the final result changes dramatically. Turn a knob that scores near zero and almost nothing happens 〰 you could set it to any value and the outcome would barely budge.<br><br>
+     <strong>The blue bar</strong> shows how much a parameter matters <em>on its own</em> 〰 independently of everything else.<br>
+     <strong>The green bar</strong> shows how much it matters <em>including its interactions</em> with other parameters 〰 its total influence on the result.<br><br>
+     A large green bar with a tiny blue bar means: this parameter does not drive the result alone, but it amplifies or suppresses the effect of other parameters. A large blue bar means: this one factor almost single-handedly determines how large N ends up being.<br><br>
+     <strong>Why does this matter?</strong> It tells you where scientific uncertainty actually bites. Parameters with near-zero bars can be set loosely 〰 the result is insensitive to them. Parameters with large bars are the ones where better data or better theory would change the answer most.
+     <span style="display:block;margin-top:6px;font-size:9px;color:var(--text-dim);">Method: variance-based global sensitivity (Saltelli et al. 2010, <em>Computer Physics Communications</em>), more rigorous than local derivatives because it scans the full parameter range, not just a single point.</span>
+    </div>
+    <div class="sobol-legend">
+     <span><span class="sobol-legend-dot" style="background:#1a5fd4;"></span> Direct effect (S₁ 〰 how much this parameter alone moves the result)</span>
+     <span><span class="sobol-legend-dot" style="background:#39ff8a;"></span> Total effect (T<sub>i</sub> 〰 including all interactions with other parameters)</span>
+    </div>
+    <div id="sobol-bars"></div>
+    <div style="font-size:9.5px;color:var(--text-dim);margin-top:10px;line-height:1.6;border-top:1px solid var(--border);padding-top:8px;" id="sobol-note"></div>
+   </div>
+
+   
+   <div class="panel" id="temporal-nt-panel" style="display:none;">
+    <div class="panel-title">
+     When Could These Planets Have Formed?
+     <span>· Galaxy History Model (Lineweaver 2004 · Madau &amp; Dickinson 2014)</span>
+    </div>
+    <div class="nt-intro">
+     <strong>What this shows 〰 in plain terms:</strong> The galaxy is about 13.5 billion years old 〰 almost three times the age of our Sun. This chart shows how the population of potentially habitable planets grew over that vast stretch of time. The answer is far from uniform.<br><br>
+     In the very early galaxy, rocky Earth-like planets simply <em>could not exist</em>. The heavy elements needed to build them 〰 iron, silicon, magnesium, carbon 〰 had not yet been forged inside stars and scattered by supernovae. The universe started almost entirely as hydrogen and helium. Only after billions of years of stellar generations did enough "cosmic ingredients" accumulate for rocky planets to form.<br><br>
+     <strong style="color:rgba(224,92,92,0.85);">Red region (left) = pre-metallicity era.</strong> Too early. Rocky planets could not yet form in sufficient numbers.<br>
+     <strong style="color:rgba(78,204,163,0.85);">Green region (right) = biological window.</strong> Enough heavy elements exist; conditions are suitable.<br>
+     <strong style="color:#d4a843;">Yellow dashed line = when our Sun was born</strong> (~8.9 billion years after the Big Bang).<br><br>
+     <strong>The key insight:</strong> A significant fraction of potentially habitable planets formed <em>before</em> our Solar System even existed. If life arose on any of them, it had a multi-billion-year head start on us. This makes the silence we observe in the universe all the more striking 〰 and all the more in need of explanation.
+     <span style="display:block;margin-top:6px;font-size:9px;color:var(--text-dim);">The curve models star formation rate × metallicity build-up. It does not predict the number of civilisations 〰 only the physical opportunity window for Earth-like planet formation.</span>
+    </div>
+    <div class="nt-chart-wrap" id="nt-chart-svg-wrap"></div>
+    <div class="nt-meta" id="nt-meta"></div>
+   </div>
+
+   
+   <div class="panel" id="detection-panel" style="display:none;">
+    <div class="panel-title">
+     Could We Actually Detect Them?
+     <span>· Detection Horizon &amp; Timing Filter</span>
+    </div>
+   <div class="nt-intro">
+     <strong>The problem in plain terms:</strong> The calculator tells you how many Earth-like planets <em>may exist</em>. But existence is not the same as detectability. Even if a million civilisations are out there, most of them are invisible to us 〰 either too far away, or transmitting at the wrong time in history.<br><br>
+     There are two separate barriers working against detection:<br><br>
+     <strong>1 · The distance barrier.</strong> Signals travel at the speed of light 〰 1 light-year per year. If a civilisation is 10,000 light-years away, their signal needs 10,000 years to reach us. So we can only hear from civilisations within a certain range, determined by how long they have been transmitting. That range is called the <em>detection horizon</em>.<br><br>
+     <strong>2 · The timing barrier.</strong> Even a civilisation within range is only detectable if it happens to be transmitting <em>right now</em>. The galaxy is 13.5 billion years old. If a civilisation transmits for only 1,000 years and then goes quiet, the odds that their broadcast window overlaps with ours today is roughly 1,000 ÷ 13,500,000,000 〰 about one in thirteen million.<br><br>
+     <strong>Both barriers multiply together.</strong> A civilisation must be close enough <em>and</em> transmitting at the same time as us. This is why the detectable number is often drastically smaller than the raw count of habitable planets.<br><br>
+     <strong>One more assumption is needed:</strong> the calculator itself estimates Earth-like planets, not confirmed transmitting societies. The <strong>f_tx</strong> control below is an explicit conversion factor: the share of Earth-like planets you assume eventually produce a detectable transmitter. Setting <strong>f_tx = 1</strong> is an intentionally optimistic upper bound.<br><br>
+     <strong>How to use the controls below:</strong> Set <strong>L</strong> to your assumed detectable-lifetime in years and <strong>f_tx</strong> to your civilisation/transmitter prior. Try different values 〰 both assumptions have a very large effect on the answer.
+    </div>
+    <div class="det-input-row">
+     <label for="detection-L">How long does a civilisation remain detectable? L =</label>
+     <input type="number" id="detection-L" value="30000" min="1" max="10000000000" step="100" style="width:130px;padding:5px 8px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'Nunito',sans-serif;font-size:12px;">
+     <span style="font-size:10px;color:var(--text-dim);">years</span>
+     <label for="detection-f_tx" style="margin-left:10px;">Transmitter fraction f_tx =</label>
+     <input type="number" id="detection-f_tx" value="0.01" min="0" max="1" step="0.0001" style="width:110px;padding:5px 8px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'Nunito',sans-serif;font-size:12px;">
+     <span style="font-size:10px;color:var(--text-dim);">share of Earth-like planets that reach detectable signalling</span>
+     <button class="btn" id="recomputeDetBtn" type="button" style="padding:5px 10px;font-size:10px;">Recompute</button>
+    </div>
+    <div class="det-preset-row">
+     <span class="det-preset-label">Quick presets</span>
+     <button class="det-mini-btn" data-detection-preset="pessimistic" data-tone="pessimistic" id="det-preset-pessimistic" type="button">Pessimistic</button>
+     <button class="det-mini-btn" data-detection-preset="optimistic" data-tone="optimistic" id="det-preset-optimistic" type="button">Optimistic</button>
+     <span style="font-size:9.5px;color:var(--text-dim);">Pessimistic = L 3,000 and f_tx 0.0001 · Optimistic = L 30,000 and f_tx 0.01</span>
+    </div>
+    <div id="detection-results"></div>
+   </div>
+
+   
+   <div class="panel" id="export-panel">
+    <div class="panel-title">
+     Save &amp; Share Your Results
+     <span>· JSON · LaTeX · BibTeX</span>
+    </div>
+    <div class="nt-intro">
+     These buttons let you save everything about your current calculation so you can reuse it, share it, or cite it properly. Run the full simulation (steps 1~3) before exporting to include all computed results.
+    </div>
+    <div class="export-btn-row">
+     <button class="export-btn" onclick="exportJSON()"><i class="fas fa-code"></i>&nbsp; JSON 〰 full data file</button>
+     <button class="export-btn" onclick="exportLatex()"><i class="fas fa-file-alt"></i>&nbsp; LaTeX 〰 ready-to-paste table</button>
+     <button class="export-btn" onclick="exportBibtex()"><i class="fas fa-book"></i>&nbsp; BibTeX 〰 reference list</button>
+    </div>
+    <div class="export-note" style="margin-top:12px;line-height:1.7;">
+     <strong style="color:var(--text-bright);">JSON</strong> 〰 A complete snapshot of the current calculator state, including base inputs, advanced-module controls, galaxy settings, detection assumptions, and numeric results. Use it to recreate the same run later, share it with a collaborator, or feed it into your own analysis scripts.<br>
+     <strong style="color:var(--text-bright);">LaTeX</strong> 〰 A formatted parameter table ready to paste directly into a scientific paper or report. No reformatting needed.<br>
+     <strong style="color:var(--text-bright);">BibTeX</strong> 〰 All scientific sources cited in this calculator (Drake, Lineweaver, Sandberg, Saltelli, Madau &amp; Dickinson, and others) in a format that works with any reference manager (Zotero, Mendeley, Overleaf).
+    </div>
+   </div>
+
+   <div id="history" style="display:none;">
+    <h3>
+     Simulation History
+    </h3>
+    <table>
+     <thead>
+      <tr>
+       <th>
+        Date
+       </th>
+       <th>
+        Scenario
+       </th>
+       <th>
+        Galaxy
+       </th>
+       <th>
+        Average
+       </th>
+       <th>
+        95% CI Low
+       </th>
+       <th>
+        95% CI High
+       </th>
+       <th>
+        Dist. 2D (ly)
+       </th>
+      </tr>
+     </thead>
+     <tbody id="history-body">
+     </tbody>
+    </table>
+    <div style="margin-top:10px;">
+     <button class="btn btn-ghost" id="clearHistory" style="font-size:10px;">
+      <i class="fas fa-trash">
+      </i>
+      Clear History
+     </button>
+    </div>
+   </div>
+   <div class="footer">
+    <span>Are We Alone? · Galactic Habitability Calculator · © Roman Jerše · https://www.arewealoneintheuniverse.com/</span>
+   </div>
+  </div>
+  <div id="copy-tooltip">
+   Copied!
+  </div>
+  <script src="src/calculator-core.js"></script>
+<script src="src/charts.js"></script>
+<script src="src/share.js"></script>
+<script src="src/accessibility.js"></script>
+<script src="src/app.js"></script>
+ </body>
+</html>
