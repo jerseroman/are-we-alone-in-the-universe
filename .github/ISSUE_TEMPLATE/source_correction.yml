@@ -1,0 +1,51 @@
+name: Source correction
+description: Report an outdated, broken, or questionable source.
+title: "[Source]: "
+labels: ["sources"]
+body:
+  - type: input
+    id: affected_section_or_parameter
+    attributes:
+      label: Affected section or parameter
+      description: Identify where the source is used.
+    validations:
+      required: true
+  - type: input
+    id: current_source_or_link
+    attributes:
+      label: Current source or link
+      description: Paste the current source, citation, or URL if available.
+    validations:
+      required: true
+  - type: textarea
+    id: problem_with_source
+    attributes:
+      label: Problem with the source
+      description: Explain whether the source is broken, outdated, questionable, or otherwise unsuitable.
+    validations:
+      required: true
+  - type: input
+    id: suggested_replacement_source
+    attributes:
+      label: Suggested replacement source
+      description: Provide a replacement citation or URL if available.
+    validations:
+      required: false
+  - type: textarea
+    id: why_replacement_is_better
+    attributes:
+      label: Why the replacement is better
+      description: Explain why the replacement is more current, reliable, direct, or relevant.
+    validations:
+      required: false
+  - type: dropdown
+    id: recalibration_impact
+    attributes:
+      label: Correction type
+      description: Indicate whether this is only source metadata or would affect assumptions.
+      options:
+        - Source metadata correction only
+        - Would require recalibration of assumptions
+        - Not sure
+    validations:
+      required: true

@@ -1,12 +1,12 @@
 cff-version: 1.2.0
-title: "Are We Alone in the Universe? Earth-like Planet Estimator"
+title: "Are We Alone in the Universe? Earth-like Planet Calculator"
 message: "If you use, cite, review, or discuss this project, please cite it as below."
 type: software
 authors:
   - family-names: "Jerše"
     given-names: "Roman"
 url: "https://www.arewealoneintheuniverse.com/"
-repository-code: "ADD_GITHUB_REPOSITORY_URL_HERE"
+repository-code: "https://github.com/jerseroman/are-we-alone-in-the-universe"
 version: "2.12"
-date-released: "ADD_RELEASE_DATE_HERE"
+date-released: "2026-05-16"
 license: "Custom source-available attribution license"

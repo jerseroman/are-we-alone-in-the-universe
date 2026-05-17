@@ -1,0 +1,55 @@
+name: Model or methodology issue
+description: Report a concern about model assumptions, methodology, interpretation, or formulas.
+title: "[Model]: "
+labels: ["model", "methodology"]
+body:
+  - type: input
+    id: affected_section_or_parameter
+    attributes:
+      label: Affected section or parameter
+      description: Identify the section, control, parameter, formula, or scenario preset involved.
+    validations:
+      required: true
+  - type: dropdown
+    id: concern_type
+    attributes:
+      label: Type of concern
+      options:
+        - interpretation
+        - parameter
+        - assumption
+        - uncertainty
+        - source
+        - formula
+        - scenario preset
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: explanation
+    attributes:
+      label: Explanation of concern
+      description: Describe the concern clearly and specifically.
+    validations:
+      required: true
+  - type: textarea
+    id: why_it_matters
+    attributes:
+      label: Why it matters
+      description: Explain the effect on interpretation, assumptions, or outputs.
+    validations:
+      required: true
+  - type: textarea
+    id: suggested_correction
+    attributes:
+      label: Suggested correction
+      description: Suggest a wording, parameter, formula, or documentation correction if possible.
+    validations:
+      required: false
+  - type: textarea
+    id: supporting_source_or_reasoning
+    attributes:
+      label: Supporting source or reasoning
+      description: Add citations, links, calculations, or reasoning that support the concern.
+    validations:
+      required: false

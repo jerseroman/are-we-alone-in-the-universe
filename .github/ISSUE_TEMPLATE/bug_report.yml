@@ -1,0 +1,65 @@
+name: Bug report
+description: Report a technical bug in the calculator or static site.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: problem_summary
+    attributes:
+      label: Problem summary
+      description: Briefly describe the technical problem.
+    validations:
+      required: true
+  - type: input
+    id: page_or_section
+    attributes:
+      label: Page or section
+      description: Where did the problem appear?
+    validations:
+      required: true
+  - type: input
+    id: browser_os
+    attributes:
+      label: Browser and operating system
+      description: "Example: Chrome 125 on Windows 11."
+    validations:
+      required: true
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: Steps to reproduce
+      description: List the exact steps needed to reproduce the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: actual_behavior
+    attributes:
+      label: Actual behavior
+      description: What actually happened?
+    validations:
+      required: true
+  - type: textarea
+    id: screenshot_or_console
+    attributes:
+      label: Screenshot or console error
+      description: Add screenshots, console messages, or error text if available.
+    validations:
+      required: false
+  - type: dropdown
+    id: affected_location
+    attributes:
+      label: Where does the issue appear?
+      options:
+        - GitHub Pages
+        - Official website
+        - Both
+        - Not sure
+    validations:
+      required: true

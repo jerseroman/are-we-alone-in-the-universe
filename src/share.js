@@ -1,5 +1,5 @@
 /*
-Are We Alone in the Universe? Earth-like Planet Estimator
+Are We Alone in the Universe? Earth-like Planet Calculator
 Author: Roman Jerše
 Website: https://www.arewealoneintheuniverse.com/
 Version: 2.12
@@ -46,7 +46,7 @@ function buildShareSummary() {
   if (primary && distance) return `${primary} Distance: ${distance}`;
   if (primary) return primary;
   if (distance) return `Distance result for ${galaxyName}: ${distance}`;
-  return `Explore the Galactic Habitability Calculator for ${galaxyName}.`;
+  return `Explore Are We Alone in the Universe? Earth-like Planet Calculator for ${galaxyName}.`;
 }
 
 function updateShareButtons() {
@@ -91,7 +91,7 @@ function exportJSON() {
   const detectionSnapshot = simulationCompleted ? computeDetectionFilter() : null;
 
   const snap = {
-    calculator: 'Galactic Habitability Calculator',
+    calculator: 'Are We Alone in the Universe? Earth-like Planet Calculator',
     version: '2.12',
     timestamp: new Date().toISOString(),
     preset: activePreset || 'custom',
@@ -179,7 +179,7 @@ function exportLatex() {
   const hi  = Number.isFinite(percentile95)  ? percentile95.toExponential(3) : '--';
 
   const tex =
-    '% Galactic Habitability Calculator v2.12\n' +
+    '% Are We Alone in the Universe? Earth-like Planet Calculator v2.12\n' +
     '% Generated: ' + new Date().toISOString() + '\n' +
     '% Preset: ' + (activePreset || 'custom') + ' | Galaxy: ' + galaxyName + ' | Epoch: ' + bayesianMode + '\n\n' +
     '\\begin{table}[h!]\n\\centering\n' +
@@ -206,7 +206,7 @@ window.exportLatex = exportLatex;
 
 function exportBibtex() {
   const bib =
-    '% BibTeX references 〰 Galactic Habitability Calculator v2.12\n' +
+    '% BibTeX references - Are We Alone in the Universe? Earth-like Planet Calculator v2.12\n' +
     '% Generated: ' + new Date().toISOString() + '\n\n' +
     '@article{Drake1965,\n  author={Drake, Frank},\n  title={The Radio Search for Intelligent Extraterrestrial Life},\n  journal={Current Aspects of Exobiology},\n  year={1965},\n  pages={323--345}\n}\n\n' +
     '@article{Lineweaver2004,\n  author={Lineweaver, Charles H.},\n  title={The Galactic Habitable Zone and the Age Distribution of Complex Life in the Milky Way},\n  journal={Science},\n  volume={303},\n  number={5654},\n  pages={59--62},\n  year={2004},\n  doi={10.1126/science.1092322}\n}\n\n' +

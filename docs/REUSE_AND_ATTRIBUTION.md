@@ -1,5 +1,8 @@
 # Reuse and Attribution
 
+Official project name:
+Are We Alone in the Universe? Earth-like Planet Calculator
+
 Original project by Roman Jerše:
 https://www.arewealoneintheuniverse.com/
 

@@ -1,6 +1,6 @@
-# Are We Alone in the Universe? Earth-like Planet Estimator
+# Are We Alone in the Universe? Earth-like Planet Calculator
 
-Browser-based estimator for exploring the possible number of potentially Earth-like planets across the Milky Way and the observable universe using transparent astrophysical assumptions.
+Browser-based calculator for exploring the possible number of potentially Earth-like planets across the Milky Way and the observable universe using transparent astrophysical assumptions.
 
 ## Official website
 
@@ -24,7 +24,7 @@ Its purpose is to make scale, uncertainty, and modelling assumptions visible in 
 
 ## What this project estimates
 
-The estimator is designed to explore questions such as:
+The calculator is designed to explore questions such as:
 
 - how many potentially Earth-like planets may exist in the Milky Way;
 - how such estimates change when astrophysical assumptions are adjusted;
@@ -35,14 +35,13 @@ The model should be interpreted as an exploratory estimation tool, not as a defi
 
 ## What this project is not
 
-This estimator is not a deterministic prediction, an observational exoplanet catalogue, or evidence for extraterrestrial life.
+This calculator is not a deterministic prediction, an observational exoplanet catalogue, or evidence for extraterrestrial life.
 It is a structured modelling tool for exploring assumptions about potentially Earth-like planets, uncertainty, and cosmic scale.
-
-Tofu & Pancake
 
 ## Repository structure
 
 - `index.html` — GitHub Pages entry point
+- `CHANGELOG.md` — release history
 - `src/calculator-core.js` — core calculation logic
 - `src/app.js` — page initialization and UI wiring
 - `src/charts.js` — chart rendering logic
@@ -51,9 +50,11 @@ Tofu & Pancake
 - `src/styles.css` — visual styling
 - `docs/MODEL_SCOPE.md` — model scope, assumptions, and limitations
 - `docs/REUSE_AND_ATTRIBUTION.md` — reuse, fork, and attribution rules
+- `.github/ISSUE_TEMPLATE/` — structured issue report templates
 - `LICENSE.md` — custom source-available attribution license
 - `NOTICE.md` — short attribution notice
 - `CITATION.cff` — citation metadata
+- `RELEASE_NOTES_v2.12.md` — release notes for manual GitHub release creation
 - `404.html` — fallback page for GitHub Pages
 - `.nojekyll` — disables Jekyll processing on GitHub Pages
 - `.gitattributes` — line-ending and text-file handling rules
@@ -80,9 +81,7 @@ Recommended GitHub Pages settings:
 
 - Source: Deploy from branch
 - Branch: `main`
-- Folder: `/root`
-
-After deployment, add the published GitHub Pages URL under the `GitHub Pages` section above.
+- Folder: `/ (root)`
 
 ## External dependencies
 
