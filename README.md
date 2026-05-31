@@ -1,6 +1,15 @@
 # Are We Alone in the Universe? Earth-like Planet Calculator
-
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20474528-blue)](https://doi.org/10.5281/zenodo.20474528)
+![Version](https://img.shields.io/badge/version-v2.13-blue)
+![Model](https://img.shields.io/badge/model-scenario--based%20estimate-informational)
+![License](https://img.shields.io/github/license/jerseroman/are-we-alone-in-the-universe)
+![Static App](https://img.shields.io/badge/app-static%20browser%20calculator-6f42c1)
+![Status](https://img.shields.io/badge/status-public%20review%20build-orange)
 [![CI](https://github.com/jerseroman/are-we-alone-in-the-universe/actions/workflows/ci.yml/badge.svg)](https://github.com/jerseroman/are-we-alone-in-the-universe/actions/workflows/ci.yml)
+
+<p align="center">
+  <img src="assets/images/Banner.png" alt="Are We Alone in the Universe? Earth-like Planet Calculator banner" width="100%">
+</p>
 
 Browser-based calculator for exploring the possible number of potentially Earth-like candidates across the Milky Way and the observable universe using transparent astrophysical assumptions.
 
