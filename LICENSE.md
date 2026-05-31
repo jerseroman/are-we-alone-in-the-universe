@@ -3,7 +3,7 @@ CUSTOM SOURCE-AVAILABLE ATTRIBUTION LICENSE
 Project: Are We Alone in the Universe? Earth-like Planet Calculator
 Author: Roman Jerše
 Website: https://www.arewealoneintheuniverse.com/
-Version: 2.12
+Version: 2.13
 
 Copyright © Roman Jerše. All rights reserved except as expressly granted below.
 

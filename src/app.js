@@ -1,11 +1,3 @@
-/*
-Are We Alone in the Universe? Earth-like Planet Calculator
-Author: Roman Jerše
-Website: https://www.arewealoneintheuniverse.com/
-Version: 2.12
-License: Custom source-available attribution license. See ../LICENSE.md.
-*/
-
 const sfCanvas = byId('starfield');
 
 const sfCtx = sfCanvas ? sfCanvas.getContext('2d') : null;
@@ -145,17 +137,24 @@ function toggleAllIntervals() {
 window.toggleAllIntervals = toggleAllIntervals;
 
 const PRESET_BOUNDS_NOTE =
-  'Preset and epoch controls update central values only. Monte Carlo min/max bounds stay unchanged.';
+  'Selecting a named scenario resets visible min/max fields; default Monte Carlo uses scenario-local uncertainty centered on that preset. Modified scenarios use visible custom bounds.';
 
 function syncPresetUi() {
+  const scenario = getScenarioState();
   document.querySelectorAll('.preset-btn[data-preset]').forEach(btn => {
-    setPressedState(btn, btn.dataset.preset === activePreset);
+    const activeKey = scenario.isModified ? scenario.originPreset : activePreset;
+    setPressedState(btn, btn.dataset.preset === activeKey);
   });
 
   const desc = byId('preset-description');
   if (!desc) return;
 
-  if (PRESETS[activePreset]) {
+  if (scenario.isModified && PRESETS[scenario.originPreset]) {
+    desc.innerHTML =
+      `<strong>${scenario.label}.</strong> ` +
+      `<em>${getModifiedPresetWarningText()} The central values may still resemble the loaded preset, but this is no longer the unchanged preset scenario.</em>` +
+      `<span style="display:block;margin-top:6px;font-size:10px;color:var(--text-dim);">${PRESET_BOUNDS_NOTE}</span>`;
+  } else if (PRESETS[activePreset]) {
     const preset = PRESETS[activePreset];
     desc.innerHTML =
       `<strong>${preset.label}.</strong> ` +
@@ -164,7 +163,7 @@ function syncPresetUi() {
   } else {
     desc.innerHTML =
       '<strong>Custom values active.</strong> ' +
-      '<em>Manual input changes override the named scenario presets until you load one of the published scenarios again.</em>' +
+      '<em>Manual input changes override the named scenario presets until you load one of the scenario cards again.</em>' +
       `<span style="display:block;margin-top:6px;font-size:10px;color:var(--text-dim);">${PRESET_BOUNDS_NOTE}</span>`;
   }
 }
@@ -175,14 +174,117 @@ function syncBayesianUi() {
 
   const note = byId('bayes-note');
   if (note && BAYES[bayesianMode]) {
+    const scenario = getScenarioState();
+    const modeLead =
+      bayesianMode === 'pre'
+        ? '<strong>f_HZ / f_rocky source active - Conservative Kepler-era.</strong> '
+        : '<strong>f_HZ / f_rocky source active - Updated Kepler/Gaia.</strong> ';
+    const autoLead =
+      scenario.isModified
+        ? `This source mode is attached to ${scenario.label}; manual edits mean the run is no longer the unchanged preset. `
+        : activePreset && activePreset !== 'custom'
+        ? 'This source mode was selected with the current scientific scenario; it is separate from the four scenario cards. '
+        : 'Manual source override active. ';
     note.innerHTML =
+      modeLead +
+      autoLead +
       `${BAYES[bayesianMode].note}` +
       `<span style="display:block;margin-top:4px;">${PRESET_BOUNDS_NOTE}</span>`;
   }
 }
 
+function renderInputValidationWarnings(warnings = []) {
+  document.querySelectorAll('.input-validation-warning').forEach(el => el.remove());
+  document.querySelectorAll('.input-card.validation-warning').forEach(card => {
+    card.classList.remove('validation-warning');
+  });
+
+  warnings.forEach(warning => {
+    const card = byId(`card-${warning.id}`);
+    if (!card) return;
+
+    card.classList.add('validation-warning');
+    const warningEl = document.createElement('div');
+    warningEl.className = 'input-validation-warning';
+    warningEl.setAttribute('role', 'status');
+    warningEl.textContent = warning.shortText || 'Input was normalized to the nearest valid value.';
+    card.appendChild(warningEl);
+  });
+}
+
+// ── Probability / fraction field clamp (>1 → 1) ─────────────────────────────
+// The canonical probability-field set lives in calculator-core.js.  We access
+// it through the globalThis bridge so app.js is not duplicating the list.
+const CLAMP_PROBABILITY_FIELDS = typeof PROBABILITY_FIELDS_GLOBAL !== 'undefined'
+  ? PROBABILITY_FIELDS_GLOBAL
+  : new Set();
+
+// Derive the base parameter id from a control id (strips _min / _max suffix).
+function _clampBaseId(controlId) {
+  return controlId.replace(/_(min|max)$/, '');
+}
+
+// Show or clear the local >1 clamp warning inside the parameter card.
+function showClampWarning(baseId) {
+  const card = byId(`card-${baseId}`);
+  if (!card || typeof card.querySelectorAll !== 'function') return;
+  if (card.querySelectorAll('.input-clamp-warning').length) return; // already shown
+  const el = document.createElement('div');
+  el.className = 'input-clamp-warning';
+  if (typeof el.setAttribute === 'function') el.setAttribute('role', 'status');
+  el.textContent = 'Maximum allowed value is 1. Value was set to 1.';
+  card.appendChild(el);
+}
+
+function clearClampWarning(baseId) {
+  const card = byId(`card-${baseId}`);
+  if (!card || typeof card.querySelectorAll !== 'function') return;
+  card.querySelectorAll('.input-clamp-warning').forEach(el => {
+    el.remove();
+    // Keep the children array in sync for harnesses where remove() is a no-op.
+    if (Array.isArray(card.children)) {
+      const idx = card.children.indexOf(el);
+      if (idx !== -1) card.children.splice(idx, 1);
+    }
+  });
+}
+
+// Called on input/change for any field.  Returns true if a clamp was applied.
+function applyProbabilityClamp(controlId) {
+  const baseId = _clampBaseId(controlId);
+  if (!CLAMP_PROBABILITY_FIELDS.has(baseId)) return false;
+
+  const el = byId(controlId);
+  if (!el) return false;
+
+  const raw = el.value;
+  const val = parseFloat(raw);
+  // Only clamp when we have a clearly finite value > 1; partial input like '.'
+  // or '' is left for existing validation.
+  if (!Number.isFinite(val) || val <= 1) {
+    // Clear any prior clamp warning once value is back in range.
+    if (Number.isFinite(val)) clearClampWarning(baseId);
+    return false;
+  }
+
+  el.value = '1';
+  showClampWarning(baseId);
+  return true;
+}
+
+// Clear all clamp warnings for a set of ids (called on preset load).
+function clearAllClampWarnings(ids = []) {
+  const visited = new Set();
+  for (const id of ids) {
+    const base = _clampBaseId(id);
+    if (!visited.has(base)) { clearClampWarning(base); visited.add(base); }
+  }
+}
+globalThis.clearAllClampWarnings = clearAllClampWarnings;
+
 function allDistanceModelsDisabled() {
   return (
+    !((byId('model-radial') || {}).checked) &&
     !((byId('model-2d') || {}).checked) &&
     !((byId('model-3d-disk') || {}).checked) &&
     !((byId('model-3d-sphere') || {}).checked)
@@ -195,6 +297,12 @@ function renderConfigurationWarnings() {
   if (!box || !body) return;
 
   const warnings = getConfigurationWarnings();
+  if (typeof getInputValidationWarnings === 'function') {
+    const fieldWarnings = getInputValidationWarnings();
+    const intervalWarnings =
+      typeof getBoundIntervalWarnings === 'function' ? getBoundIntervalWarnings() : [];
+    renderInputValidationWarnings([...fieldWarnings, ...intervalWarnings]);
+  }
   if (!warnings.length) {
     box.style.display = 'none';
     body.innerHTML = '';
@@ -203,14 +311,19 @@ function renderConfigurationWarnings() {
 
   body.innerHTML = warnings
     .map(
-      w => `
-        <div class="alert-item">
+      w => {
+        const isBlocked = w.label === 'Monte Carlo blocked';
+        const itemClass = isBlocked ? 'alert-item alert-item--blocked' : 'alert-item';
+        const icon = '⚠';
+        return `
+        <div class="${itemClass}">
           <div class="alert-head">
-            <div class="alert-title">⚠ Warning <span class="alert-label">· ${w.label}</span></div>
+            <div class="alert-title">${icon} Warning <span class="alert-label">· ${w.label}</span></div>
           </div>
           <div class="alert-copy">${w.text}</div>
         </div>
-      `
+      `;
+      }
     )
     .join('');
 
@@ -224,30 +337,42 @@ function renderResultRealityCheck() {
 
   const isMilkyWay = galaxyName === 'Milky Way (MW)';
   const triggered = [];
+  const messages = [];
 
   if (hasDeterministicCalculation && Number.isFinite(deterministicPlanets) && deterministicPlanets < 1) {
     triggered.push('deterministic estimate');
   }
-  if (simulationCompleted && Number.isFinite(averagePlanets) && averagePlanets < 1) {
-    triggered.push('Monte Carlo mean');
+  if (simulationCompleted && Number.isFinite(mcMedianQ50) && mcMedianQ50 < 1) {
+    triggered.push('Monte Carlo q50 median');
   }
 
-  if (!isMilkyWay || !isComplexLifeEnabled || !triggered.length) {
+  if (monteCarloIntervalComparison && monteCarloIntervalComparison.warning) {
+    messages.push(
+      `<strong>Monte Carlo basis check.</strong> ${monteCarloIntervalComparison.warning}`
+    );
+  }
+
+  if (isMilkyWay && isComplexLifeEnabled && triggered.length) {
+    const subject =
+      triggered.length === 2
+        ? 'Both the deterministic estimate and the Monte Carlo q50 median'
+        : `The ${triggered[0]}`;
+
+    messages.push(
+      `<strong>Reality check.</strong> ${subject} falls below 1 even though the Milky Way is known ` +
+      `to host at least one planet with complex life and intelligent life: Earth. ` +
+      `Treat this scenario as an extreme prior rather than an Earth-conditioned baseline. ` +
+      `Even with such a restrictive Milky Way estimate, the model can still imply very large totals on observable-universe scales; see the <strong>Universe scale</strong> section after running <strong>Where is Everyone?</strong>.`
+    );
+  }
+
+  if (!messages.length) {
     box.style.display = 'none';
     body.innerHTML = '';
     return;
   }
 
-  const subject =
-    triggered.length === 2
-      ? 'Both the deterministic estimate and the Monte Carlo mean'
-      : `The ${triggered[0]}`;
-
-  body.innerHTML =
-    `<strong>Reality check.</strong> ${subject} falls below 1 even though the Milky Way is known ` +
-    `to host at least one planet with complex life and intelligent life: Earth. ` +
-    `Treat this scenario as an extreme prior rather than an Earth-conditioned baseline. ` +
-    `Even with such a restrictive Milky Way estimate, the model can still imply very large totals on observable-universe scales; see the <strong>Universe scale</strong> section after running <strong>Where is Everyone?</strong>.`;
+  body.innerHTML = messages.join('<br><br>');
   box.style.display = 'block';
 }
 
@@ -351,7 +476,7 @@ function renderConvergenceSummary() {
       `Running mean only settled by the final checkpoint. The estimate is usable, but more iterations would make the mean less path-dependent.`;
   } else {
     status.innerHTML =
-      `Running mean is still drifting by more than ±<strong>${convergenceSummary.relTolPct.toFixed(0)}%</strong>. Consider increasing the iteration count before over-interpreting the Monte Carlo mean.`;
+      `Running arithmetic mean is still drifting by more than ±<strong>${convergenceSummary.relTolPct.toFixed(0)}%</strong>. Consider increasing the iteration count before over-interpreting the Monte Carlo arithmetic mean.`;
   }
 
   const convergenceAlert = getConvergenceAlert(convergenceSummary);
@@ -374,29 +499,48 @@ function renderConvergenceSummary() {
 }
 
 function invalidateResults(markCustom = true, clearDeterministic = true) {
+  if (typeof clearInputValidationWarnings === 'function') clearInputValidationWarnings();
+  // A previously-current Monte Carlo run is now stale (results no longer match
+  // the current input state). A run that never completed stays 'not-run'.
+  if (simulationCompleted) monteCarloState = 'stale';
   simulationCompleted = false;
   distanceCalculated = false;
   if (clearDeterministic) {
     deterministicPlanets = 0;
     hasDeterministicCalculation = false;
   }
-  averagePlanets = 0;
-  percentile5 = 0;
-  percentile95 = 0;
+  mcMedianQ50 = 0;
+  mcArithmeticMean = 0;
+  mcQ025 = 0;
+  mcQ975 = 0;
   mostFrequent = 0;
   stdDev = 0;
 
-  distance2D = distance3DDisk = distance3DSphere = Infinity;
+  distance2D = distance3DDisk = distance3DSphere = distanceRadial = Infinity;
   minDistance2D = maxDistance2D = Infinity;
   minDistance3DDisk = maxDistance3DDisk = Infinity;
   minDistance3DSphere = maxDistance3DSphere = Infinity;
+  minDistanceRadial = maxDistanceRadial = Infinity;
+  if (typeof resetActiveDistanceSnapshot === 'function') resetActiveDistanceSnapshot();
 
   lastResults = [];
+  lastSampleYields = [];
+  monteCarloYieldStats = null;
   convergenceSummary = null;
   simulationEnvelope = null;
+  monteCarloBoundsMode = '';
+  monteCarloBoundsLabel = '';
+  monteCarloUncertaintyBasisLabel = '';
+  monteCarloIntervalComparison = null;
 
-  if (markCustom && activePreset) activePreset = 'custom';
+  if (markCustom) {
+    markScenarioModified();
+    if (typeof reconcileScenarioStateWithVisiblePreset === 'function') {
+      reconcileScenarioStateWithVisiblePreset();
+    }
+  }
   syncPresetUi();
+  syncBayesianUi();
   renderConfigurationWarnings();
   fermiContexts = { mc: null, dt: null };
   renderConvergenceSummary();
@@ -406,6 +550,7 @@ function invalidateResults(markCustom = true, clearDeterministic = true) {
     byId('deterministicResult').textContent = '';
   }
   if (byId('monteCarloResult')) byId('monteCarloResult').textContent = '';
+  if (byId('monteCarloMedian')) byId('monteCarloMedian').textContent = '';
   if (byId('stats')) byId('stats').textContent = '';
   if (byId('result-reality-check')) byId('result-reality-check').style.display = 'none';
   if (byId('result-reality-copy')) byId('result-reality-copy').innerHTML = '';
@@ -418,15 +563,28 @@ function invalidateResults(markCustom = true, clearDeterministic = true) {
   if (byId('fermi-content')) byId('fermi-content').innerHTML = '';
   if (byId('fermi-tail')) byId('fermi-tail').innerHTML = '';
   if (byId('fermi-actions')) byId('fermi-actions').innerHTML = '';
+  if (typeof clearCharts === 'function') clearCharts();
+  if (byId('adv-tornado-container')) byId('adv-tornado-container').innerHTML = '';
 
   
   if (byId('sobol-panel')) byId('sobol-panel').style.display = 'none';
   if (byId('temporal-nt-panel')) byId('temporal-nt-panel').style.display = 'none';
   if (byId('detection-panel')) byId('detection-panel').style.display = 'none';
-  if (byId('sobolBtn')) byId('sobolBtn').disabled = true;
 
   renderCalculationConsole();
   updateShareButtons();
+}
+
+function invalidateScenarioResults(clearDeterministic = true) {
+  invalidateResults(true, clearDeterministic);
+}
+
+function invalidateResultsOnly(clearDeterministic = true) {
+  invalidateResults(false, clearDeterministic);
+}
+
+function invalidateDisplayOrDistanceOnly(clearDeterministic = true) {
+  invalidateResults(false, clearDeterministic);
 }
 
 function fmtConsoleValue(v) {
@@ -517,7 +675,7 @@ function buildConsoleDetectionTrace(planetCount) {
   const f_tx = clamp01(rawNumber('detection-f_tx', 0.01));
   const T_gal_yr = 13.5e9;
   const geom = getGHZGeometryLy();
-  const d_gal_ly = geom.outerLy > 0 ? Math.round(geom.outerLy / 0.85) * 2 : (isGalaxySettingsEnabled ? Math.max(1000, pf('galaxy-diameter')) : 100000);
+  const d_gal_ly = geom.outerLy > 0 ? Math.round(geom.outerLy / GHZ_OUTER_FRAC) * 2 : (isGalaxySettingsEnabled ? Math.max(1000, pf('galaxy-diameter')) : 100000);
 
   if (N_planets <= 0 || geom.area <= 0) return null;
 
@@ -596,12 +754,12 @@ function renderCalculationConsole() {
   const activeAdvanced = advancedFactors.filter(f => f.enabled);
   const baseResult = computePlanetsBase(fullInp);
   const finalResult = computePlanetsAdvanced(fullInp);
-  const basisCount = simulationCompleted ? averagePlanets : finalResult;
+  const basisCount = simulationCompleted ? mcMedianQ50 : finalResult;
   const detectionTrace = buildConsoleDetectionTrace(basisCount);
   const distanceScenario = buildDistanceScenario(
     basisCount,
-    simulationCompleted ? percentile5 : null,
-    simulationCompleted ? percentile95 : null
+    simulationCompleted ? mcQ025 : null,
+    simulationCompleted ? mcQ975 : null
   );
 
   const lines = [];
@@ -613,14 +771,14 @@ function renderCalculationConsole() {
 
   pushSection('Status');
   pushLine(
-    `Preset=${activePreset || 'custom'} | Epoch=${bayesianMode} | Advanced=${ADV.enabled ? 'on' : 'off'} | Basis=${simulationCompleted ? 'Monte Carlo mean' : 'deterministic preview'}`
+    `Scenario=${getScenarioExportLabel()} | Prior=${bayesianMode} | Advanced=${ADV.enabled ? 'on' : 'off'} | Basis=${simulationCompleted ? 'Monte Carlo q50 median' : 'deterministic preview'}`
   );
   pushLine(
     `Galaxy=${galaxyName} | Detection L=${fmtConsoleValue(Math.max(1, rawNumber('detection-L', 30000)))} yr | f_tx=${fmtConsoleValue(clamp01(rawNumber('detection-f_tx', 0.01)))}`
   );
   pushLine(
     simulationCompleted
-      ? 'Detection and distance traces below are using the latest Monte Carlo mean and confidence interval where applicable.'
+      ? 'Detection and distance traces below are using the latest Monte Carlo q50 median and sampled model interval where applicable.'
       : 'Detection and distance traces below are live previews based on the current deterministic state. The official detection panel still activates after Monte Carlo.'
     ,
     'calc-console-muted'
@@ -704,13 +862,17 @@ function renderCalculationConsole() {
 
   if (ADV.enabled && ADV.modules.volatileSplit.enabled) {
     hasDerivedDefinitions = true;
-    const delivery = clamp01(pf('adv_f_vol_del'));
-    const retention = clamp01(pf('adv_f_wat_ret'));
-    pushLine('Water availability is decomposed into delivery and retention:', 'calc-console-muted');
-    pushFormula([
-      'f_{H_2O} &= f_{\\mathrm{vol}} \\cdot f_{\\mathrm{ret}}',
-      `&= ${fmtLatexNumber(delivery)} \\cdot ${fmtLatexNumber(retention)} = ${fmtLatexNumber(delivery * retention)}`
-    ]);
+    if (isH2OEnabled) {
+      const delivery = clamp01(pf('adv_f_vol_del'));
+      const retention = clamp01(pf('adv_f_wat_ret'));
+      pushLine('Water availability is decomposed into delivery and retention:', 'calc-console-muted');
+      pushFormula([
+        'f_{H_2O} &= f_{\\mathrm{vol}} \\cdot f_{\\mathrm{ret}}',
+        `&= ${fmtLatexNumber(delivery)} \\cdot ${fmtLatexNumber(retention)} = ${fmtLatexNumber(delivery * retention)}`
+      ]);
+    } else {
+      pushLine('Volatile delivery / retention is enabled, but f_H2O remains 1 because the surface-water gate is disabled.', 'calc-console-muted');
+    }
   }
 
   if (ADV.enabled && ADV.modules.longterm.enabled) {
@@ -776,7 +938,7 @@ function renderCalculationConsole() {
         `&= \\operatorname{radialGHZ}(${fmtLatexNumber(ghz.N_total)}, ${fmtLatexNumber(pf('adv_scale_length'))}, ${fmtLatexNumber(ghz.innerKpc)}, ${fmtLatexNumber(ghz.outerKpc)}, ${fmtLatexNumber(pf('adv_met_thresh'))}, ${fmtLatexNumber(Math.max(20, Math.floor(pf('adv_radial_bins'))))})`,
         `&= ${fmtLatexNumber(ghz.N_GHZ)}`
       ],
-      'This is the toy radial integration currently implemented in the calculator.'
+      'This is the simplified radial integration currently implemented in the calculator.'
     );
   }
 
@@ -843,12 +1005,12 @@ function renderCalculationConsole() {
   } else {
     pushLine(`N_final = ${fmtConsoleValue(finalResult)}`, 'calc-console-accent');
   }
-  pushLine(`Deterministic output = <strong>${fmtConsoleValue(finalResult)}</strong> Earth-like planets`, 'calc-console-accent');
+  pushLine(`Deterministic output = <strong>${fmtConsoleValue(finalResult)}</strong> modelled Earth-like candidates`, 'calc-console-accent');
 
   pushSection('Detection Trace');
   if (detectionTrace) {
     pushLine(
-      `Current planet basis = ${simulationCompleted ? 'Monte Carlo mean' : 'deterministic preview'} = ${fmtConsoleValue(detectionTrace.N_planets)}`,
+      `Current planet basis = ${simulationCompleted ? 'Monte Carlo q50 median' : 'deterministic preview'} = ${fmtConsoleValue(detectionTrace.N_planets)}`,
       'calc-console-muted'
     );
     pushFormula([
@@ -883,9 +1045,20 @@ function renderCalculationConsole() {
   pushSection('Distance Trace');
   if (distanceScenario.kind === 'geometric' && distanceScenario.metrics) {
     pushLine(
-      `Current distance basis = ${simulationCompleted ? 'Monte Carlo mean' : 'deterministic preview'} = ${fmtConsoleValue(basisCount)}`,
+      `Current distance basis = ${simulationCompleted ? 'Monte Carlo q50 median' : 'deterministic preview'} = ${fmtConsoleValue(basisCount)}`,
       'calc-console-muted'
     );
+    if (distanceScenario.metrics.modelRadial) {
+      const model = distanceScenario.metrics.modelRadial;
+      pushFormula(
+        [
+          '\\Lambda(r) &= \\int_{B(r)} \\lambda(R)\\,dA',
+          '\\bar d_{\\mathrm{radial}} &= \\int_0^\\infty \\exp[-\\Lambda(r)]\\,dr',
+          `&= ${fmtLatexNumber(model.distance)}\\,\\text{ly}`
+        ],
+        `${model.modelLabel} (R_sun=${model.rSunKpc.toFixed(1)} kpc, GHZ=${model.innerKpc.toFixed(1)}-${model.outerKpc.toFixed(1)} kpc)`
+      );
+    }
     [distanceScenario.metrics.model2d, distanceScenario.metrics.model3dDisk, distanceScenario.metrics.model3dSphere]
       .filter(Boolean)
       .forEach(function(model) {
@@ -924,11 +1097,16 @@ function renderCalculationConsole() {
   }
 
   if (simulationCompleted && lastResults.length) {
+    const simulationSummary = describeSimulationOptions();
     pushSection('Latest Monte Carlo Run');
-    pushLine(`Iterations=${parseInt((byId('iterations') || {}).value || '2000', 10).toLocaleString()} | Engine=${((byId('simulation-engine') || {}).value || 'standard')} | Distribution=${((byId('distribution') || {}).value || 'lognormal')}`);
-    pushLine(`MC mean=${fmtConsoleValue(averagePlanets)} | 95% interval=[${fmtConsoleValue(percentile5)}, ${fmtConsoleValue(percentile95)}] | StdDev=${fmtConsoleValue(stdDev)} | Mode≈${fmtConsoleValue(mostFrequent)}`);
+    pushLine(`Iterations=${parseInt((byId('iterations') || {}).value || '2000', 10).toLocaleString()} | Engine=${((byId('simulation-engine') || {}).value || 'standard')} | Distribution=${((byId('distribution') || {}).value || 'lognormal')} | MC basis=${simulationSummary.boundsLabel}`);
+    pushLine(`MC q50 median=${fmtConsoleValue(mcMedianQ50)} | MC arithmetic mean=${fmtConsoleValue(mcArithmeticMean)} | 95% sampled model interval=[${fmtConsoleValue(mcQ025)}, ${fmtConsoleValue(mcQ975)}] | StdDev=${fmtConsoleValue(stdDev)} | Mode≈${fmtConsoleValue(mostFrequent)}`);
+    if (monteCarloIntervalComparison && monteCarloIntervalComparison.warning) {
+      pushLine(monteCarloIntervalComparison.warning, 'calc-console-warn');
+    }
     if (distanceCalculated) {
-      pushLine(`Distance models: 2D=${Number.isFinite(distance2D) ? fmtConsoleValue(distance2D) + ' ly' : 'off/Infinity'} | 3D disk=${Number.isFinite(distance3DDisk) ? fmtConsoleValue(distance3DDisk) + ' ly' : 'off/Infinity'} | 3D shell=${Number.isFinite(distance3DSphere) ? fmtConsoleValue(distance3DSphere) + ' ly' : 'off/Infinity'}`);
+      const radialMetric = fermiContexts.mc && fermiContexts.mc.distLy ? fermiContexts.mc.distLy : null;
+      pushLine(`Distance models: radial=${Number.isFinite(radialMetric) ? fmtConsoleValue(radialMetric) + ' ly' : 'off/Infinity'} | 2D=${Number.isFinite(distance2D) ? fmtConsoleValue(distance2D) + ' ly' : 'off/Infinity'} | 3D disk=${Number.isFinite(distance3DDisk) ? fmtConsoleValue(distance3DDisk) + ' ly' : 'off/Infinity'} | 3D shell=${Number.isFinite(distance3DSphere) ? fmtConsoleValue(distance3DSphere) + ' ly' : 'off/Infinity'}`);
     }
   } else {
     pushLine('Monte Carlo has not been run yet for this state.', 'calc-console-muted');
@@ -963,7 +1141,10 @@ function renderSimulationMethodSummary() {
   modelLine.style.display = 'block';
   modelLine.innerHTML =
     `<span class="result-label">SIMULATION MODEL ·</span> ` +
-    `${summary.engineLabel} · ${summary.distributionShort} · ${summary.correlationLabel}`;
+    `${summary.engineLabel} · ${summary.distributionShort} · ${summary.correlationLabel} · ${summary.boundsLabel}`;
+  if (summary.uncertaintyBasisLabel) {
+    modelLine.innerHTML += ` <span style="font-size:10px;color:var(--text-dim)">(${summary.uncertaintyBasisLabel})</span>`;
+  }
 
   if (simulationEnvelope) {
     envelopeLine.style.display = 'block';
@@ -975,6 +1156,56 @@ function renderSimulationMethodSummary() {
     envelopeLine.textContent = '';
     envelopeLine.style.display = 'none';
   }
+}
+
+const UNCERTAINTY_PROFILES = {
+  conservative: {
+    uncertainty: 25,
+    distribution: 'lognormal',
+    engine: 'standard',
+    correlation: 'independent',
+    robustBounds: false,
+    mcMode: 'auto'
+  },
+  baseline: {
+    uncertainty: 50,
+    distribution: 'lognormal',
+    engine: 'standard',
+    correlation: 'independent',
+    robustBounds: false,
+    mcMode: 'auto'
+  },
+  broad: {
+    uncertainty: 75,
+    distribution: 'lognormal',
+    engine: 'lhs',
+    correlation: 'independent',
+    robustBounds: false,
+    mcMode: 'globalEnvelope'
+  },
+  stress: {
+    uncertainty: 100,
+    distribution: 'uniform',
+    engine: 'lhs',
+    correlation: 'independent',
+    robustBounds: true,
+    mcMode: 'globalEnvelope'
+  }
+};
+
+function applyUncertaintyProfile(name) {
+  const profile = UNCERTAINTY_PROFILES[name];
+  if (!profile) return;
+
+  if (byId('sampling_uncertainty')) byId('sampling_uncertainty').value = String(profile.uncertainty);
+  if (byId('distribution')) byId('distribution').value = profile.distribution;
+  if (byId('simulation-engine')) byId('simulation-engine').value = profile.engine;
+  if (byId('correlation-model')) byId('correlation-model').value = profile.correlation;
+  if (byId('robust-bounds')) byId('robust-bounds').checked = profile.robustBounds;
+  if (byId('mc-basis-mode')) byId('mc-basis-mode').value = profile.mcMode || 'auto';
+
+  clampSamplingUncertaintyInput();
+  invalidateResults(false, false);
 }
 
 function clampIterationsInput() {
@@ -1010,14 +1241,16 @@ function captureGalaxySettingsBaseline() {
     diameter: (byId('galaxy-diameter') || {}).value || '100000',
     thickness: (byId('galaxy-thickness') || {}).value || '1000',
     earthDistance: (byId('galaxy-earth-distance') || {}).value || '0',
-    N_GHZ: (byId('N_GHZ') || {}).value || '100000000000',
+    N_GHZ: (byId('N_GHZ') || {}).value || '10000000000',
+    totalStars: (byId('adv_N_total_stars') || {}).value || '',
+    modelRadial: !!((byId('model-radial') || {}).checked),
     model2d: !!((byId('model-2d') || {}).checked),
     model3dDisk: !!((byId('model-3d-disk') || {}).checked),
     model3dSphere: !!((byId('model-3d-sphere') || {}).checked)
   };
 }
 
-function applyGalaxyPresetSelection(key, syncMainCount = true) {
+function applyGalaxyPresetSelection(key) {
   const preset = GALAXY_PRESET_MAP[key];
   if (!preset) return null;
 
@@ -1026,7 +1259,7 @@ function applyGalaxyPresetSelection(key, syncMainCount = true) {
   if (byId('galaxy-preset')) byId('galaxy-preset').value = key;
   if (Number.isFinite(preset.d) && byId('galaxy-diameter')) byId('galaxy-diameter').value = preset.d;
   if (Number.isFinite(preset.t) && byId('galaxy-thickness')) byId('galaxy-thickness').value = preset.t;
-  if (syncMainCount && Number.isFinite(preset.n) && byId('N_GHZ')) byId('N_GHZ').value = preset.n;
+  if (Number.isFinite(preset.n) && byId('adv_N_total_stars')) byId('adv_N_total_stars').value = preset.n;
   if (byId('galaxy-earth-distance') && preset.earthDist !== undefined) {
     byId('galaxy-earth-distance').value = preset.earthDist ?? 0;
   }
@@ -1037,6 +1270,7 @@ function applyGalaxyPresetSelection(key, syncMainCount = true) {
 function restoreGalaxySettingsBaseline(state) {
   if (!state) {
     applyGalaxyPresetSelection('mw');
+    if (byId('model-radial')) byId('model-radial').checked = true;
     if (byId('model-2d')) byId('model-2d').checked = true;
     if (byId('model-3d-disk')) byId('model-3d-disk').checked = true;
     if (byId('model-3d-sphere')) byId('model-3d-sphere').checked = true;
@@ -1049,75 +1283,121 @@ function restoreGalaxySettingsBaseline(state) {
   if (byId('galaxy-diameter')) byId('galaxy-diameter').value = state.diameter || '100000';
   if (byId('galaxy-thickness')) byId('galaxy-thickness').value = state.thickness || '1000';
   if (byId('galaxy-earth-distance')) byId('galaxy-earth-distance').value = state.earthDistance || '0';
-  if (byId('N_GHZ')) byId('N_GHZ').value = state.N_GHZ || '100000000000';
+  if (byId('N_GHZ')) byId('N_GHZ').value = state.N_GHZ || '10000000000';
+  if (byId('adv_N_total_stars')) byId('adv_N_total_stars').value = state.totalStars || '';
+  if (byId('model-radial')) byId('model-radial').checked = state.modelRadial !== false;
   if (byId('model-2d')) byId('model-2d').checked = state.model2d !== false;
   if (byId('model-3d-disk')) byId('model-3d-disk').checked = state.model3dDisk !== false;
   if (byId('model-3d-sphere')) byId('model-3d-sphere').checked = state.model3dSphere !== false;
 }
 
-function setPresetBounds(id, meanVal) {
-  if (!Number.isFinite(meanVal) || meanVal <= 0) return;
-  const loEl = byId(id + '_min');
-  const hiEl = byId(id + '_max');
-  if (!loEl || !hiEl) return;
-  const fmt = v => (v > 0 && v < 0.001) ? v.toExponential(2) : parseFloat(v.toPrecision(4));
-  if (PROBABILITY_FIELDS.has(id)) {
-    const mClamped = Math.max(1e-9, Math.min(1 - 1e-6, meanVal));
-    const logitM = Math.log(mClamped / (1 - mClamped));
-    const k = 2.0;
-    let lo = Math.max(1e-9, 1 / (1 + Math.exp(-(logitM - k))));
-    let hi = Math.min(1 - 1e-6, 1 / (1 + Math.exp(-(logitM + k))));
-    if (lo >= hi) hi = Math.min(1 - 1e-6, lo * 10);
-    loEl.value = fmt(lo);
-    hiEl.value = fmt(hi);
-  } else if (POSITIVE_FIELDS.has(id)) {
-    loEl.value = fmt(meanVal / 5);
-    hiEl.value = fmt(meanVal * 5);
-  }
+const ADVANCED_DEFAULT_CONTROL_IDS = [
+  'adv_f_G', 'adv_w_G_hz', 'adv_w_G_act',
+  'adv_f_K', 'adv_w_K_hz', 'adv_w_K_act',
+  'adv_f_M', 'adv_w_M_hz', 'adv_w_M_act', 'adv_w_M_lock',
+  'adv_f_atm_ret', 'adv_f_atm_ret_min', 'adv_f_atm_ret_max',
+  'adv_f_vol_del', 'adv_f_vol_del_min', 'adv_f_vol_del_max',
+  'adv_f_wat_ret', 'adv_f_wat_ret_min', 'adv_f_wat_ret_max',
+  'adv_f_tect', 'adv_f_tect_min', 'adv_f_tect_max',
+  'adv_f_radio', 'adv_f_radio_min', 'adv_f_radio_max',
+  'adv_f_clim', 'adv_f_clim_min', 'adv_f_clim_max',
+  'adv_f_spin_G', 'adv_f_spin_K', 'adv_f_spin_M', 'adv_moon_boost',
+  'adv_P_rocky', 'adv_P_rocky_min', 'adv_P_rocky_max',
+  'adv_N_total_stars', 'adv_scale_length', 'adv_ghz_inner', 'adv_ghz_outer',
+  'adv_met_thresh', 'adv_radial_bins',
+  'adv_f_xuv', 'adv_f_xuv_min', 'adv_f_xuv_max',
+  'adv_f_uv', 'adv_f_uv_min', 'adv_f_uv_max',
+  'adv_f_binary', 'adv_f_binary_min', 'adv_f_binary_max',
+  'adv_f_rad', 'adv_f_rad_min', 'adv_f_rad_max',
+  'adv_ard_mass', 'adv_ard_atm', 'adv_ard_age', 'adv_temporal_R'
+];
+
+let advancedControlDefaults = null;
+
+function captureAdvancedControlDefaults() {
+  const defaults = {};
+  ADVANCED_DEFAULT_CONTROL_IDS.forEach(id => {
+    const el = byId(id);
+    if (!el) return;
+    defaults[id] = {
+      value: el.value,
+      checked: !!el.checked
+    };
+  });
+  advancedControlDefaults = defaults;
+}
+
+function resetAdvancedStateToDefaults() {
+  if (!advancedControlDefaults) captureAdvancedControlDefaults();
+
+  ADV.enabled = false;
+  Object.keys(ADV.modules).forEach(key => {
+    ADV.modules[key].enabled = false;
+    const toggle = byId('toggle-' + key);
+    const body = byId('body-' + key);
+    if (toggle) toggle.classList.toggle('enabled', false);
+    if (body) body.style.display = 'none';
+  });
+
+  const master = byId('adv-master-toggle');
+  if (master) master.classList.toggle('enabled', false);
+  const options = byId('adv-options');
+  if (options) options.style.display = 'none';
+
+  Object.entries(advancedControlDefaults || {}).forEach(([id, state]) => {
+    const el = byId(id);
+    if (!el) return;
+    el.value = state.value;
+    el.checked = state.checked;
+  });
+
+  refreshAdvancedInlineNotes();
+}
+
+function areAdvancedControlsAtDefaults() {
+  if (!advancedControlDefaults) captureAdvancedControlDefaults();
+
+  return Object.entries(advancedControlDefaults || {}).every(([id, state]) => {
+    const el = byId(id);
+    if (!el) return true;
+    return String(el.value ?? '') === String(state.value ?? '') && !!el.checked === !!state.checked;
+  });
+}
+
+function resetOptionalFactorStateForPreset(preset) {
+  isH2OEnabled = preset.enableH2O !== false;
+  isCHNOPSEnabled = preset.enableCHNOPS !== false;
+  isComplexLifeEnabled = !!preset.enableComplex;
+  isXEnabled = !!preset.enableX;
+
+  if (byId('H2O-toggle')) byId('H2O-toggle').classList.toggle('enabled', isH2OEnabled);
+  if (byId('CHNOPS-toggle')) byId('CHNOPS-toggle').classList.toggle('enabled', isCHNOPSEnabled);
+  if (byId('complex-life-toggle')) byId('complex-life-toggle').classList.toggle('enabled', isComplexLifeEnabled);
+  if (byId('x-toggle')) byId('x-toggle').classList.toggle('enabled', isXEnabled);
 }
 
 function loadPreset(name) {
-const p = PRESETS[name];
-if (!p) return;
+  const p = PRESETS[name];
+  if (!p) return;
 
-activePreset = name;
+  setScenarioPreset(name);
 
-  [
-    'N_GHZ',
-    'f_sun_type',
-    'f_sun_age',
-    'N_p_star',
-    'f_composition',
-    'f_orbit',
-    'f_stability',
-    'f_magnetosphere',
-    'f_lunar_stability',
-    'f_size',
-    'f_rotation',
-    'f_tilt',
-    'f_H2O',
-    'f_CHNOPS',
-    'f_complex_life',
-    'f_x'
-  ].forEach(k => {
-    const el = byId(k);
-    if (el && p[k] !== undefined) {
-      el.value = p[k];
-      setPresetBounds(k, +p[k]);
-    }
-  });
+  applyPresetParameterState(p);
 
-  isComplexLifeEnabled = !!p.enableComplex;
-  isXEnabled = !!p.enableX;
-
-  byId('complex-life-toggle').classList.toggle('enabled', isComplexLifeEnabled);
-  byId('x-toggle').classList.toggle('enabled', isXEnabled);
+  resetOptionalFactorStateForPreset(p);
+  resetAdvancedStateToDefaults();
   syncPresetUi();
 
-  if (name === 'jwst') setBayesian('post', false);
+  if (name === 'kepler' || name === 'optimist') setBayesian('post', false);
   else setBayesian('pre', false);
 
+  // Clear any per-card clamp warnings left over from prior user edits.
+  clearAllClampWarnings([...CLAMP_PROBABILITY_FIELDS, ...[...CLAMP_PROBABILITY_FIELDS].map(id => id + '_min'), ...[...CLAMP_PROBABILITY_FIELDS].map(id => id + '_max')]);
+
   invalidateResults(false);
+  // Loading a preset is a fresh scenario slate: Monte Carlo has never completed
+  // for this new state, so reset the lifecycle to 'not-run' (not 'stale').
+  monteCarloState = 'not-run';
 }
 window.loadPreset = loadPreset;
 
@@ -1128,8 +1408,10 @@ function setBayesian(mode, applyToFields = true) {
   if (applyToFields) {
     byId('f_orbit').value = BAYES[mode].f_orbit;
     byId('f_composition').value = BAYES[mode].f_composition;
-    activePreset = 'custom';
-    syncPresetUi();
+    markScenarioModified();
+    if (typeof reconcileScenarioStateWithVisiblePreset === 'function') {
+      reconcileScenarioStateWithVisiblePreset();
+    }
     invalidateResults(false);
   }
 }
@@ -1178,14 +1460,25 @@ function setDetectionPreset(name) {
 function renderDistanceHtml(metrics) {
   const rows = [];
 
+  if (metrics.modelRadial) {
+    rows.push(
+      `<span class="result-label">${metrics.modelRadial.htmlLabel} ·</span> ` +
+        `<span class="bold-number">${fmtN(metrics.modelRadial.distance)}</span> ly` +
+        (Number.isFinite(metrics.modelRadial.ciLow) && Number.isFinite(metrics.modelRadial.ciHigh)
+          ? ` (95% sampled model interval: ${fmtN(metrics.modelRadial.ciLow)}~${fmtN(metrics.modelRadial.ciHigh)} ly`
+          : '') +
+        ` <em style="font-size:9px;color:var(--text-dim);">(default non-uniform baseline)</em>`
+    );
+  }
+
   if (metrics.model3dDisk) {
     rows.push(
       `<span class="result-label">${metrics.model3dDisk.htmlLabel} ·</span> ` +
         `<span class="bold-number">${fmtN(metrics.model3dDisk.distance)}</span> ly` +
         (Number.isFinite(metrics.model3dDisk.ciLow) && Number.isFinite(metrics.model3dDisk.ciHigh)
-          ? ` (95% CI: ${fmtN(metrics.model3dDisk.ciLow)}~${fmtN(metrics.model3dDisk.ciHigh)} ly`
+          ? ` (95% sampled model interval: ${fmtN(metrics.model3dDisk.ciLow)}~${fmtN(metrics.model3dDisk.ciHigh)} ly`
           : '') +
-        ` <em style="font-size:9px;color:var(--text-dim);">(primary realistic baseline)</em>`
+        ` <em style="font-size:9px;color:var(--text-dim);">(uniform comparison baseline)</em>`
     );
   }
 
@@ -1194,7 +1487,7 @@ function renderDistanceHtml(metrics) {
       `<span class="result-label">${metrics.model2d.htmlLabel} ·</span> ` +
         `<span class="bold-number">${fmtN(metrics.model2d.distance)}</span> ly` +
         (Number.isFinite(metrics.model2d.ciLow) && Number.isFinite(metrics.model2d.ciHigh)
-          ? ` (95% CI: ${fmtN(metrics.model2d.ciLow)}~${fmtN(metrics.model2d.ciHigh)} ly`
+          ? ` (95% sampled model interval: ${fmtN(metrics.model2d.ciLow)}~${fmtN(metrics.model2d.ciHigh)} ly`
           : '') +
         ` <em style="font-size:9px;color:var(--text-dim);">(optimistic lower bound)</em>`
     );
@@ -1240,7 +1533,9 @@ function renderFermiBox(preferredMode = null) {
   if (preferredMode && fermiContexts[preferredMode]) {
     fermiMode = preferredMode;
   } else if (!fermiContexts[fermiMode]) {
-    fermiMode = fermiContexts.mc ? 'mc' : fermiContexts.dt ? 'dt' : 'mc';
+    // Prefer deterministic when current mode is unavailable — deterministic
+    // is the methodological primary for scenario-based presets.
+    fermiMode = fermiContexts.dt ? 'dt' : fermiContexts.mc ? 'mc' : 'dt';
   }
 
   syncFermiModeUi();
@@ -1274,44 +1569,195 @@ function setFermiMode(mode) {
   renderFermiBox();
 }
 
+const HISTORY_STORAGE_KEY = 'simHistory';
+const HISTORY_SCHEMA_VERSION = 1;
+
+function normalizeHistoryStore(parsed) {
+  if (Array.isArray(parsed)) {
+    return {
+      schemaVersion: HISTORY_SCHEMA_VERSION,
+      items: parsed
+    };
+  }
+
+  if (
+    parsed &&
+    typeof parsed === 'object' &&
+    parsed.schemaVersion === HISTORY_SCHEMA_VERSION &&
+    Array.isArray(parsed.items)
+  ) {
+    return {
+      schemaVersion: HISTORY_SCHEMA_VERSION,
+      items: parsed.items
+    };
+  }
+
+  return {
+    schemaVersion: HISTORY_SCHEMA_VERSION,
+    items: []
+  };
+}
+
+function readHistoryStore(storage = localStorage) {
+  try {
+    const raw = storage.getItem(HISTORY_STORAGE_KEY);
+    if (!raw) return normalizeHistoryStore(null);
+    return normalizeHistoryStore(JSON.parse(raw));
+  } catch (e) {
+    return normalizeHistoryStore(null);
+  }
+}
+
+function writeHistoryStore(store, storage = localStorage) {
+  const normalized = normalizeHistoryStore(store);
+  try {
+    storage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(normalized));
+  } catch (e) {}
+  return normalized;
+}
+
+function clearHistoryStore(storage = localStorage) {
+  try {
+    storage.removeItem(HISTORY_STORAGE_KEY);
+  } catch (e) {}
+}
+
+window.normalizeHistoryStore = normalizeHistoryStore;
+window.readHistoryStore = readHistoryStore;
+window.writeHistoryStore = writeHistoryStore;
+window.clearHistoryStore = clearHistoryStore;
+
 function saveHistoryEntry() {
   try {
-    const hist = JSON.parse(localStorage.getItem('simHistory') || '[]');
-    hist.push({
+    const store = readHistoryStore();
+    const distanceSnapshot =
+      typeof getActiveDistanceSnapshot === 'function'
+        ? getActiveDistanceSnapshot()
+        : {};
+    const mcState = typeof getMonteCarloState === 'function'
+      ? getMonteCarloState()
+      : (simulationCompleted ? 'current' : 'not-run');
+    const isCurrentMc = mcState === 'current';
+    // Non-current display placeholder: 'stale' marks an invalidated run,
+    // 'not run' marks a run that never completed. Never store 0 as a placeholder.
+    const mcPlaceholder = mcState === 'stale' ? 'stale' : 'not run';
+    const mcDisplay = v => Number.isFinite(v) ? (v < 1 ? v.toExponential(2) : Math.round(v)) : mcPlaceholder;
+    // Raw numeric value only when the run is current; null otherwise (never an invalid zero placeholder).
+    const mcRaw = v => isCurrentMc && Number.isFinite(v) ? v : null;
+    const mcMedianQ50Display = isCurrentMc ? mcDisplay(mcMedianQ50) : mcPlaceholder;
+    const mcArithmeticMeanDisplay = isCurrentMc ? mcDisplay(mcArithmeticMean) : mcPlaceholder;
+    const mcQ025Display = isCurrentMc ? mcDisplay(mcQ025) : mcPlaceholder;
+    const mcQ975Display = isCurrentMc ? mcDisplay(mcQ975) : mcPlaceholder;
+    store.items.push({
       date: new Date().toLocaleString('en-US'),
-      scenario: activePreset || 'custom',
+      selectedPreset: activePreset || 'custom',
+      scenario: getScenarioExportLabel(),
+      scenarioLabel: getScenarioExportLabel(),
+      scenarioState: typeof getScenarioState === 'function' ? getScenarioState() : null,
       galaxy: galaxyName,
-      average: averagePlanets < 1 ? averagePlanets.toExponential(2) : Math.round(averagePlanets),
-      ciLow: percentile5 < 1 ? percentile5.toExponential(2) : Math.round(percentile5),
-      ciHigh: percentile95 < 1 ? percentile95.toExponential(2) : Math.round(percentile95),
-      distance2D: Number.isFinite(distance2D) ? Math.round(distance2D) : 'N/A'
+      basis: isCurrentMc ? 'MC q50 median' : 'deterministic central',
+      mcMode: monteCarloBoundsMode || null,
+      uncertaintyBasisLabel: monteCarloUncertaintyBasisLabel || null,
+      simulationCompleted,
+      mcState,
+      staleState: mcState,
+      deterministic: deterministicPlanets,
+      // Backward-compatible display fields (read by renderHistory):
+      mcMedianQ50: mcMedianQ50Display,
+      mcArithmeticMean: mcArithmeticMeanDisplay,
+      ciLow: mcQ025Display,
+      ciHigh: mcQ975Display,
+      // Explicit display fields:
+      mcMedianQ50Display,
+      mcArithmeticMeanDisplay,
+      mcQ025Display,
+      mcQ975Display,
+      // Raw numeric fields for auditability (null unless MC is current):
+      mcMedianQ50Raw: mcRaw(mcMedianQ50),
+      mcArithmeticMeanRaw: mcRaw(mcArithmeticMean),
+      mcQ025Raw: mcRaw(mcQ025),
+      mcQ975Raw: mcRaw(mcQ975),
+      activeDistanceModel: distanceSnapshot.activeDistanceModel || null,
+      activeDistanceBasis: distanceSnapshot.activeDistanceBasis || null,
+      activeDistanceCountBasis: distanceSnapshot.activeDistanceCountBasis || null,
+      displayedDistanceValue: Number.isFinite(distanceSnapshot.displayedDistanceValue)
+        ? Math.round(distanceSnapshot.displayedDistanceValue)
+        : null,
+      displayedDistanceLabel: distanceSnapshot.displayedDistanceLabel || null,
+      distanceRadial: Number.isFinite(distanceSnapshot.distanceRadial) ? Math.round(distanceSnapshot.distanceRadial) : null,
+      distance2D: Number.isFinite(distanceSnapshot.distance2D) ? Math.round(distanceSnapshot.distance2D) : null,
+      distance3DDisk: Number.isFinite(distanceSnapshot.distance3DDisk) ? Math.round(distanceSnapshot.distance3DDisk) : null,
+      distance3DSphere: Number.isFinite(distanceSnapshot.distance3DSphere) ? Math.round(distanceSnapshot.distance3DSphere) : null,
+      externalReferenceDistance: distanceSnapshot.activeDistanceBasis === 'external reference distance' && Number.isFinite(distanceSnapshot.displayedDistanceValue)
+        ? Math.round(distanceSnapshot.displayedDistanceValue)
+        : null
     });
-    localStorage.setItem('simHistory', JSON.stringify(hist));
+    writeHistoryStore(store);
   } catch (e) {
     
   }
 }
 
-function buildExpectedWithinPills(count, geom) {
-  if (!Number.isFinite(count) || count <= 0 || !Number.isFinite(geom.volumeDisk) || geom.volumeDisk <= 0) return '';
+function buildExpectedWithinPills(count, geom, refModel = null) {
+  if (!Number.isFinite(count) || count <= 0 || !geom) return null;
 
-  const density3D = count / geom.volumeDisk;
-  const halfThick  = geom.thickness / 2;
+  let modelLabel = '3D GHZ disk';
+  let modelNote = 'Same active 3D GHZ disk model as the headline distance. The search sphere is capped at disk thickness when the radius exceeds the GHZ half-thickness.';
+  let modelKind = '3d-disk';
+  let expectedAtRadius = null;
 
-  return [100, 200, 300, 400, 500, 1000, 2000, 3000]
+  if (refModel && refModel.isRadial && typeof buildRadialGHZDensityProfile === 'function' && typeof radialMeanWithinDistance === 'function') {
+    const profile = buildRadialGHZDensityProfile();
+    if (profile) {
+      modelLabel = 'radial GHZ density';
+      modelNote = 'Same active radial GHZ density model as the headline distance. Values are Lambda(r): the expected count inside an observer-centred search circle in the non-uniform radial GHZ profile.';
+      modelKind = 'radial';
+      expectedAtRadius = radius => radialMeanWithinDistance(count, profile, radius / 3261.56);
+    }
+  }
+
+  if (!expectedAtRadius && refModel && refModel.modelLabel === '2D GHZ annulus' && Number.isFinite(geom.area) && geom.area > 0) {
+    const density2D = count / geom.area;
+    modelLabel = '2D GHZ annulus';
+    modelNote = 'Same active 2D GHZ annulus model as the headline distance. Values use the expected count inside a projected observer-centred search circle.';
+    modelKind = '2d';
+    expectedAtRadius = radius => density2D * Math.min(Math.PI * radius * radius, geom.area);
+  }
+
+  if (!expectedAtRadius && refModel && refModel.modelLabel === '3D GHZ shell' && Number.isFinite(geom.volumeSphere) && geom.volumeSphere > 0) {
+    const densityShell = count / geom.volumeSphere;
+    modelLabel = '3D GHZ shell';
+    modelNote = 'Same active 3D GHZ shell reference model as the headline distance. Values use the expected count inside a local spherical search volume.';
+    modelKind = '3d-shell';
+    expectedAtRadius = radius => densityShell * Math.min((4 / 3) * Math.PI * Math.pow(radius, 3), geom.volumeSphere);
+  }
+
+  if (!expectedAtRadius && Number.isFinite(geom.volumeDisk) && geom.volumeDisk > 0) {
+    const density3D = count / geom.volumeDisk;
+    const halfThick = geom.thickness / 2;
+    expectedAtRadius = radius => {
+      const volume = radius <= halfThick
+        ? (4 / 3) * Math.PI * Math.pow(radius, 3)
+        : Math.PI * radius * radius * geom.thickness;
+      return density3D * Math.min(volume, geom.volumeDisk);
+    };
+  }
+
+  if (!expectedAtRadius) return null;
+
+  const html = [100, 200, 300, 400, 500, 1000, 2000, 3000]
     .map(radius => {
-      let sphereVol;
-      if (radius <= halfThick) {
-        sphereVol = (4 / 3) * Math.PI * Math.pow(radius, 3);
-      } else {
-        sphereVol = Math.PI * radius * radius * geom.thickness;
-      }
-      sphereVol = Math.min(sphereVol, geom.volumeDisk);
-      const expected = density3D * sphereVol;
+      const expected = expectedAtRadius(radius);
       const expectedFmt = expected < 0.001 ? '∅' : fmtHuman(expected);
-      return `<span class="fermi-pill"><strong>${radius.toLocaleString()} ly</strong> ${expectedFmt}</span>`;
+      const probability = Number.isFinite(expected) && expected >= 0 ? 1 - Math.exp(-expected) : NaN;
+      const probabilityTitle = Number.isFinite(probability)
+        ? `Poisson P(at least one within ${radius.toLocaleString()} ly) = ${fmtExistencePct(probability, true)}`
+        : `Poisson probability unavailable for ${radius.toLocaleString()} ly`;
+      return `<span class="fermi-pill" title="${probabilityTitle}"><strong>${radius.toLocaleString()} ly</strong> ${expectedFmt}</span>`;
     })
     .join('');
+
+  return { html, modelLabel, modelNote, modelKind };
 }
 
 function buildHostBreakdownHtml() {
@@ -1419,12 +1865,71 @@ function getInterpretationBasis(mode = fermiMode) {
   const requestedMode = mode === 'dt' ? 'dt' : 'mc';
   const hasDeterministic = Number.isFinite(deterministicPlanets);
   const resolvedMode = requestedMode === 'dt' && hasDeterministic ? 'dt' : 'mc';
-  const count = resolvedMode === 'dt' ? deterministicPlanets : averagePlanets;
+  const count = resolvedMode === 'dt' ? deterministicPlanets : mcMedianQ50;
 
   return {
     mode: resolvedMode,
     count: Number.isFinite(count) ? Math.max(0, count) : 0,
-    label: resolvedMode === 'dt' ? 'deterministic result' : 'Monte Carlo mean'
+    label: resolvedMode === 'dt' ? 'deterministic result' : 'Monte Carlo median (q50)'
+  };
+}
+
+function getCurrentEffectiveModelStars() {
+  if (ADV.enabled && ADV.modules.radialGHZ.enabled && typeof computeRadialGHZDetails === 'function') {
+    const details = computeRadialGHZDetails();
+    if (details && Number.isFinite(details.N_GHZ) && details.N_GHZ > 0) {
+      return details.N_GHZ;
+    }
+  }
+
+  return Math.max(1, rawNumber('N_GHZ', 1e10));
+}
+
+function getUniverseScaleBasis(mode = fermiMode) {
+  const basis = getInterpretationBasis(mode);
+  const scenario = getScenarioState();
+  const boundsDescriptor = getMonteCarloBoundsDescriptor();
+
+  if (
+    basis.mode === 'mc' &&
+    monteCarloYieldStats &&
+    monteCarloYieldStats.basis === 'per-sample-yield' &&
+    monteCarloYieldStats.n > 0
+  ) {
+    // Use the MEDIAN per-sample yield (q50), not the arithmetic mean. The
+    // mean of yield samples is also right-skewed for multiplicative chains
+    // and would systematically over-scale the Universe estimate. Median is
+    // the methodologically defensible aggregator here.
+    const yieldPoint = Number.isFinite(monteCarloYieldStats.median)
+      ? monteCarloYieldStats.median
+      : monteCarloYieldStats.mean;
+    const scalePoint = Number.isFinite(monteCarloYieldStats.scaleMedian)
+      ? monteCarloYieldStats.scaleMedian
+      : monteCarloYieldStats.scaleMean;
+    return {
+      basis,
+      perStarYield: yieldPoint,
+      scale: scalePoint,
+      yieldInterval: monteCarloYieldStats,
+      label: `Monte Carlo per-sample yield scaling with ${boundsDescriptor.label}`,
+      note:
+        `Scenario state: ${scenario.label}. Universe-scale extrapolation uses the MEDIAN (q50) per-sample yield N_i / N_GHZ_i, which is the methodologically preferred point estimate for multiplicative chains; the arithmetic mean would drift above due to Jensen's inequality on the right-skewed sample distribution.`
+    };
+  }
+
+  const currentModelStars = getCurrentEffectiveModelStars();
+  const perStarYield = basis.count / currentModelStars;
+  return {
+    basis,
+    perStarYield,
+    scale: computeUniverseScaleFromYield(perStarYield),
+    yieldInterval: null,
+    label:
+      basis.mode === 'dt'
+        ? `Deterministic scenario per-star yield scaling for ${scenario.label}`
+        : `Deterministic fallback per-star yield scaling for ${scenario.label}`,
+    note:
+      `This uses ${basis.label} divided by the effective N_GHZ used in the current model state.`
   };
 }
 
@@ -1443,8 +1948,8 @@ function buildInterpretationHtml(mode = fermiMode) {
 
   const bayesLabel =
     bayesianMode === 'post'
-      ? '(post-JWST observational preset)'
-      : '(pre-JWST observational preset)';
+      ? '(updated Kepler/Gaia observational prior)'
+      : '(conservative Kepler-era observational prior)';
 
   const pAtLeastOne = 1 - Math.exp(-Math.max(0, basisCount));
   const health = computeModelHealthSummary();
@@ -1452,8 +1957,8 @@ function buildInterpretationHtml(mode = fermiMode) {
   const geom = getGHZGeometryLy();
   const distanceScenario = buildDistanceScenario(
     basisCount,
-    currentMode === 'mc' ? percentile5 : null,
-    currentMode === 'mc' ? percentile95 : null
+    currentMode === 'mc' ? mcQ025 : null,
+    currentMode === 'mc' ? mcQ975 : null
   );
   const distanceMetrics = distanceScenario.metrics;
   const referenceDistance = Number.isFinite(distanceScenario.fermiDistance)
@@ -1469,11 +1974,11 @@ function buildInterpretationHtml(mode = fermiMode) {
   const isExternalGalaxy = galaxyName !== 'Milky Way (MW)' && galaxyName !== 'Custom Galaxy X';
   const expectedWithinPills =
     isExternalGalaxy || distanceScenario.kind === 'external'
-      ? ''
-      : buildExpectedWithinPills(basisCount, geom);
+      ? null
+      : buildExpectedWithinPills(basisCount, geom, distanceScenario.refModel);
 
   let keyTakeaway =
-    `The current ${basisLabel} suggests <span class="bold-number">${fmtN(basisCount)}</span> Earth-like planets${lifeLabel()} in ${galaxyName}`;
+    `The current ${basisLabel} suggests <span class="bold-number">${fmtN(basisCount)}</span> modelled Earth-like candidates${lifeLabel()} in ${galaxyName}`;
   if (Number.isFinite(referenceDistance)) {
     keyTakeaway +=
       `, with a nearest GHZ-style reference distance of roughly <span class="bold-number">${fmtN(referenceDistance)}</span> light years`;
@@ -1546,7 +2051,7 @@ function buildInterpretationHtml(mode = fermiMode) {
       contactText +=
         `<br><br>The nearest <strong>detectable</strong> transmitter is currently estimated around <span class="bold-number">${fmtN(detection.d_nearest_det)}</span> light years` +
         (Number.isFinite(ratio)
-          ? `, about <span class="bold-number">${fmtN(ratio)}</span>× farther out than the nearest habitable-planet estimate.`
+          ? `, about <span class="bold-number">${fmtN(ratio)}</span>× farther out than the nearest modelled candidate distance scale.`
           : '.');
     }
 
@@ -1560,14 +2065,15 @@ function buildInterpretationHtml(mode = fermiMode) {
     label: 'Result summary',
     text:
       currentMode === 'dt'
-        ? `The deterministic calculation using the current central parameter values yields <span class="bold-number">${fmtN(basisCount)}</span> Earth-like planets${lifeLabel()} in ${galaxyName}.<br><br>` +
-          `For reference, the latest Monte Carlo run based on ${itr.toLocaleString()} ${simulationSummary.engineLabel} draws with ${simulationSummary.distributionLong} and ${simulationSummary.correlationLabel.toLowerCase()} ${bayesLabel} gives <span class="bold-number">${fmtN(averagePlanets)}</span>, ` +
-          `with a 95% interval of [<span class="bold-number">${fmtN(percentile5)}</span>, <span class="bold-number">${fmtN(percentile95)}</span>] (q2.5–q97.5). ` +
+        ? `The deterministic calculation using the current central parameter values yields <span class="bold-number">${fmtN(basisCount)}</span> modelled Earth-like candidates${lifeLabel()} in ${galaxyName}.<br><br>` +
+          `For reference, the latest Monte Carlo run based on ${itr.toLocaleString()} ${simulationSummary.engineLabel} draws with ${simulationSummary.distributionLong}, ${simulationSummary.correlationLabel.toLowerCase()}, and ${simulationSummary.boundsLabel.toLowerCase()} ${bayesLabel} gives q50 median <span class="bold-number">${fmtN(mcMedianQ50)}</span> and arithmetic mean <span class="bold-number">${fmtN(mcArithmeticMean)}</span>, ` +
+          `with a 95% sampled model interval of [<span class="bold-number">${fmtN(mcQ025)}</span>, <span class="bold-number">${fmtN(mcQ975)}</span>] (q2.5–q97.5; not an observational confidence interval). ` +
           `Mode estimate: ~<span class="bold-number">${modalLabel}</span>. Sample standard deviation: <span class="bold-number">${fmtN(stdDev)}</span>.`
-        : `Based on ${itr.toLocaleString()} ${simulationSummary.engineLabel} draws with ${simulationSummary.distributionLong} and ${simulationSummary.correlationLabel.toLowerCase()} ${bayesLabel}, ` +
-          `the model estimates <span class="bold-number">${fmtN(basisCount)}</span> Earth-like planets${lifeLabel()} in ${galaxyName}.<br><br>` +
-          `95% interval: [<span class="bold-number">${fmtN(percentile5)}</span>, ` +
-          `<span class="bold-number">${fmtN(percentile95)}</span>] (q2.5–q97.5). ` +
+        : `Based on ${itr.toLocaleString()} ${simulationSummary.engineLabel} draws with ${simulationSummary.distributionLong}, ${simulationSummary.correlationLabel.toLowerCase()}, and ${simulationSummary.boundsLabel.toLowerCase()} ${bayesLabel}, ` +
+          `the model estimates <span class="bold-number">${fmtN(basisCount)}</span> modelled Earth-like candidates${lifeLabel()} in ${galaxyName}.<br><br>` +
+          `MC arithmetic mean: <span class="bold-number">${fmtN(mcArithmeticMean)}</span>. ` +
+          `95% sampled model interval: [<span class="bold-number">${fmtN(mcQ025)}</span>, ` +
+          `<span class="bold-number">${fmtN(mcQ975)}</span>] (q2.5–q97.5; not an observational confidence interval). ` +
           `Mode estimate: ~<span class="bold-number">${modalLabel}</span>. ` +
           `Sample standard deviation: <span class="bold-number">${fmtN(stdDev)}</span>.`
   });
@@ -1577,19 +2083,20 @@ function buildInterpretationHtml(mode = fermiMode) {
       label: 'Bounds check',
       text:
         `Optional robust interval envelope: [<span class="bold-number">${fmtN(simulationEnvelope.low)}</span>, ` +
-        `<span class="bold-number">${fmtN(simulationEnvelope.high)}</span>]. This is a direct parameterwise min/max bounds check, not the empirical Monte Carlo 95% interval.`
+        `<span class="bold-number">${fmtN(simulationEnvelope.high)}</span>]. This is a direct parameterwise min/max bounds check, not the empirical Monte Carlo sampled model interval.`
     });
   }
 
   sections.push({
     label: 'Existence odds',
     text:
-      `Poisson probability of at least one such planet in the modelled system under this ${currentMode === 'dt' ? 'deterministic count' : 'Monte Carlo mean'}: ` +
-      `<span class="bold-number">${(100 * pAtLeastOne).toFixed(2)}%</span>.`
+      `Poisson probability of at least one such planet in the modelled system under this ${currentMode === 'dt' ? 'deterministic central count' : 'Monte Carlo q50 median'}: ` +
+      `<span class="bold-number">${fmtExistencePct(pAtLeastOne)}</span>.`
   });
 
   if (expectedWithinPills) {
-    const r1ly = geom.volumeDisk > 0 && basisCount > 0
+    const showDiskNearestNote = expectedWithinPills.modelKind === '3d-disk';
+    const r1ly = showDiskNearestNote && geom.volumeDisk > 0 && basisCount > 0
       ? Math.pow(3 * geom.volumeDisk / (4 * Math.PI * basisCount), 1 / 3)
       : null;
     const dNearestLy = r1ly ? gamma(1 + 1 / 3) * r1ly : null;
@@ -1608,9 +2115,10 @@ function buildInterpretationHtml(mode = fermiMode) {
     sections.push({
       label: 'Local neighbourhood',
       text:
-        `Expected Earth-like planets inside 3D spherical volumes around our position:` +
-        `<div class="fermi-pill-row">${expectedWithinPills}</div>` +
-        `<div class="fermi-subnote">3D Poisson estimate ~ sphere volume capped at disk thickness when the search radius exceeds the half-thickness of the GHZ disk.</div>` +
+        `Expected modelled Earth-like candidates inside local search radii using the active <strong>${expectedWithinPills.modelLabel}</strong> distance model:` +
+        `<div class="fermi-pill-row">${expectedWithinPills.html}</div>` +
+        `<div class="fermi-subnote"><strong>How to read this:</strong> the headline nearest-distance number is the mean nearest-neighbour distance <em>E[D]</em>. The pills below show <em>Lambda(r)</em>, the expected count inside radius <em>r</em>. <em>Lambda(E[D])</em> does not have to equal 1, so values like 0.67 at 300 ly can still be consistent with a nearest-distance expectation near 300 ly. In a Poisson model, the chance of at least one object inside radius <em>r</em> is <em>1 - e^-Lambda(r)</em>.</div>` +
+        `<div class="fermi-subnote">${expectedWithinPills.modelNote}</div>` +
         r1note
     });
   }
@@ -1633,16 +2141,17 @@ function buildInterpretationHtml(mode = fermiMode) {
     sections.push({
       label: 'Distance frame',
       text:
-        `No geometric distance model is currently active, so the script skips the nearest-neighbour estimate even though the current ${basisLabel} is above one.`
+        `No geometric distance model is currently active, so the calculator does not show the nearest-neighbour estimate even though the current ${basisLabel} is above one.`
     });
   } else {
     sections.push({
       label: 'Distance frame',
       text:
-        `Primary realistic baseline: 3D GHZ disk <span class="bold-number">${distanceMetrics && distanceMetrics.model3dDisk && Number.isFinite(distanceMetrics.model3dDisk.distance) ? Math.round(distanceMetrics.model3dDisk.distance).toLocaleString() : '∞'}</span> ly. ` +
+        `Default non-uniform baseline: radial GHZ density <span class="bold-number">${distanceMetrics && distanceMetrics.modelRadial && Number.isFinite(distanceMetrics.modelRadial.distance) ? Math.round(distanceMetrics.modelRadial.distance).toLocaleString() : '∞'}</span> ly. ` +
+        `Uniform comparison baseline: 3D GHZ disk <span class="bold-number">${distanceMetrics && distanceMetrics.model3dDisk && Number.isFinite(distanceMetrics.model3dDisk.distance) ? Math.round(distanceMetrics.model3dDisk.distance).toLocaleString() : '∞'}</span> ly. ` +
         `Optimistic lower bound: 2D annulus <span class="bold-number">${distanceMetrics && distanceMetrics.model2d && Number.isFinite(distanceMetrics.model2d.distance) ? Math.round(distanceMetrics.model2d.distance).toLocaleString() : '∞'}</span> ly. ` +
         `Additional shell-style reference: 3D GHZ shell <span class="bold-number">${distanceMetrics && distanceMetrics.model3dSphere && Number.isFinite(distanceMetrics.model3dSphere.distance) ? Math.round(distanceMetrics.model3dSphere.distance).toLocaleString() : '∞'}</span> ly.<br><br>` +
-        `These distances are computed from GHZ geometry rather than the full galactic disk, and the interface now treats the 3D GHZ disk as the default Fermi reference because it is usually the more realistic spatial baseline.`
+        `The radial model uses an exponential-disk GHZ intensity and a non-homogeneous Poisson void-probability integral. The uniform 2D/3D models remain comparison geometries, not catalogue predictions.`
     });
   }
 
@@ -1717,19 +2226,44 @@ function buildInterpretationHtml(mode = fermiMode) {
 function buildUniverseScaleHtml(mode = fermiMode) {
   if (!simulationCompleted || !distanceCalculated) return '';
 
-  const basis = getInterpretationBasis(mode);
-  const minUni = basis.count * 2e11;
-  const maxUni = basis.count * 2e12;
+  const universeBasis = getUniverseScaleBasis(mode);
+  const basis = universeBasis.basis;
+  const minUni = universeBasis.scale.min;
+  const maxUni = universeBasis.scale.max;
+  const fmtUniverseInteger = value =>
+    value < 1 ? value.toExponential(2) : Math.round(value).toLocaleString();
+  const intervalText =
+    universeBasis.yieldInterval && universeBasis.yieldInterval.n
+      ? ` The sampled per-star-yield interval would scale to roughly ` +
+        `<span class="bold-number">${fmtUniverseInteger(universeBasis.yieldInterval.scaleP025.min)}</span> to ` +
+        `<span class="bold-number">${fmtUniverseInteger(universeBasis.yieldInterval.scaleP975.max)}</span> ` +
+        `modelled candidates across the same stellar-count range. `
+      : '';
+  const sourceLinks =
+    `<div class="universe-source-row">` +
+    `<span class="universe-source-label">Star-count basis:</span>` +
+    `<a class="universe-source-link" href="https://www.esa.int/Science_Exploration/Space_Science/How_many_stars_are_there_in_the_Universe" rel="noopener noreferrer" target="_blank">ESA <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>` +
+    `<a class="universe-source-link" href="https://science.nasa.gov/universe/stars/" rel="noopener noreferrer" target="_blank">NASA <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>` +
+    `<a class="universe-source-link" href="https://doi.org/10.1046/j.1365-8711.2003.06826.x" rel="noopener noreferrer" target="_blank">Liske et al. 2003 / Driver IAU 2003 extrapolation <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>` +
+    `<a class="universe-source-link" href="https://arxiv.org/abs/1009.5992" rel="noopener noreferrer" target="_blank">van Dokkum & Conroy 2010 <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>` +
+    `<a class="universe-source-link" href="https://arxiv.org/abs/1607.03909" rel="noopener noreferrer" target="_blank">Conselice et al. 2016 <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>` +
+    `</div>`;
 
   return (
     `<div class="fermi-summary-block">` +
     `<div class="fermi-summary-label fermi-reveal-item">Universe scale</div>` +
     `<div class="fermi-summary-copy">` +
     buildFermiFactHtml(
-      `Naive scaling from the current ${basis.label} to ~200 billion~2 trillion galaxies yields roughly ` +
-      `<span class="bold-number" style="color:var(--orange)">${minUni < 1 ? minUni.toExponential(2) : Math.round(minUni).toLocaleString()}</span> to ` +
-      `<span class="bold-number" style="color:var(--orange)">${maxUni < 1 ? maxUni.toExponential(2) : Math.round(maxUni).toLocaleString()}</span> ` +
-      `Earth-like planets in the observable universe, under the model's assumptions.`
+      `Observable-universe star-count scaling from the current ${basis.label} uses an order-of-magnitude ` +
+      `stellar-count range of 10<sup>22</sup>~10<sup>24</sup> stars and ${universeBasis.label}. ` +
+      `${universeBasis.note} ` +
+      `This gives roughly ` +
+      `<span class="bold-number" style="color:var(--orange)">${fmtUniverseInteger(minUni)}</span> to ` +
+      `<span class="bold-number" style="color:var(--orange)">${fmtUniverseInteger(maxUni)}</span> ` +
+      `modelled Earth-like candidates in the observable universe, under the model's assumptions. ` +
+      intervalText +
+      `This is not a direct census; it does not model galaxy type, cosmic epoch, metallicity evolution, or low-mass-star uncertainties. ` +
+      sourceLinks
     ) +
     `</div>` +
     `</div>`
@@ -1756,6 +2290,7 @@ function refreshAdvancedInlineNotes() {
 }
 
 function initAdvancedPanel() {
+  captureAdvancedControlDefaults();
   const master = byId('adv-master-toggle');
 
   master.addEventListener('click', () => {
@@ -1842,18 +2377,20 @@ function renderHistory() {
   const tbody = byId('history-body');
   if (!tbody) return;
 
-  let hist = [];
-  try {
-    hist = JSON.parse(localStorage.getItem('simHistory') || '[]');
-  } catch (e) {
-    hist = [];
-  }
+  const hist = readHistoryStore().items;
 
   tbody.innerHTML = '';
 
   if (!hist.length) {
-    tbody.innerHTML =
-      '<tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:16px;">No saved simulations yet.</td></tr>';
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    cell.colSpan = 7;
+    cell.style.textAlign = 'center';
+    cell.style.color = 'var(--text-dim)';
+    cell.style.padding = '16px';
+    cell.textContent = 'No saved simulations yet.';
+    row.appendChild(cell);
+    tbody.appendChild(row);
     return;
   }
 
@@ -1862,7 +2399,21 @@ function renderHistory() {
     .reverse()
     .forEach(e => {
       const r = document.createElement('tr');
-      r.innerHTML = `<td>${e.date}</td><td>${e.scenario}</td><td>${e.galaxy}</td><td>${e.average}</td><td>${e.ciLow}</td><td>${e.ciHigh}</td><td>${e.distance2D}</td>`;
+      [
+        e.date,
+        e.scenario,
+        e.galaxy,
+        e.mcMedianQ50 ?? e.average,
+        e.ciLow,
+        e.ciHigh,
+        e.displayedDistanceValue !== null && e.displayedDistanceValue !== undefined
+          ? `${e.displayedDistanceValue} (${e.activeDistanceModel || e.displayedDistanceLabel || 'distance'})`
+          : (e.activeDistanceBasis || e.distance2D || 'N/A')
+      ].forEach(value => {
+        const cell = document.createElement('td');
+        cell.textContent = String(value);
+        r.appendChild(cell);
+      });
       tbody.appendChild(r);
     });
 }
@@ -1871,25 +2422,25 @@ function initBaseEvents() {
   byId('H2O-toggle').addEventListener('click', () => {
     isH2OEnabled = !isH2OEnabled;
     byId('H2O-toggle').classList.toggle('enabled', isH2OEnabled);
-    invalidateResults();
+    invalidateScenarioResults();
   });
 
   byId('CHNOPS-toggle').addEventListener('click', () => {
     isCHNOPSEnabled = !isCHNOPSEnabled;
     byId('CHNOPS-toggle').classList.toggle('enabled', isCHNOPSEnabled);
-    invalidateResults();
+    invalidateScenarioResults();
   });
 
   byId('complex-life-toggle').addEventListener('click', () => {
     isComplexLifeEnabled = !isComplexLifeEnabled;
     byId('complex-life-toggle').classList.toggle('enabled', isComplexLifeEnabled);
-    invalidateResults();
+    invalidateScenarioResults();
   });
 
   byId('x-toggle').addEventListener('click', () => {
     isXEnabled = !isXEnabled;
     byId('x-toggle').classList.toggle('enabled', isXEnabled);
-    invalidateResults();
+    invalidateScenarioResults();
   });
 
   byId('enable-galaxy-settings').addEventListener('click', () => {
@@ -1906,21 +2457,21 @@ function initBaseEvents() {
       galaxySettingsBaseline = null;
     }
 
-    invalidateResults();
+    invalidateResultsOnly();
   });
 
   byId('galaxy-preset').addEventListener('change', function () {
     const v = applyGalaxyPresetSelection(this.value);
     if (!v) return;
 
-    invalidateResults();
+    invalidateResultsOnly();
   });
 
   ['galaxy-diameter', 'galaxy-thickness', 'galaxy-earth-distance'].forEach(id => {
     byId(id).addEventListener('input', () => {
       byId('galaxy-preset').value = 'custom';
       galaxyName = 'Custom Galaxy X';
-      invalidateResults();
+      invalidateResultsOnly();
     });
   });
 
@@ -2014,10 +2565,15 @@ function initBaseEvents() {
     invalidateResults(false, false);
   });
 
+  const uncertaintyProfile = byId('uncertainty-profile');
+  if (uncertaintyProfile) {
+    uncertaintyProfile.addEventListener('change', () => {
+      applyUncertaintyProfile(uncertaintyProfile.value);
+    });
+  }
+
   byId('clearHistory').addEventListener('click', () => {
-    try {
-      localStorage.removeItem('simHistory');
-    } catch (e) {}
+    clearHistoryStore();
     renderHistory();
   });
 
@@ -2026,17 +2582,27 @@ function initBaseEvents() {
 
     if (
       el.id !== 'iterations' &&
+      el.id !== 'sampling_uncertainty' &&
       el.id !== 'distribution' &&
+      el.id !== 'uncertainty-profile' &&
       el.id !== 'simulation-engine' &&
+      el.id !== 'mc-basis-mode' &&
       el.id !== 'correlation-model' &&
       el.id !== 'robust-bounds' &&
-      el.id !== 'galaxy-preset'
+      el.id !== 'galaxy-preset' &&
+      el.id !== 'model-radial' &&
+      el.id !== 'model-2d' &&
+      el.id !== 'model-3d-disk' &&
+      el.id !== 'model-3d-sphere' &&
+      el.id !== 'galaxy-diameter' &&
+      el.id !== 'galaxy-thickness' &&
+      el.id !== 'galaxy-earth-distance'
     ) {
-      el.addEventListener('input', () => invalidateResults());
-      el.addEventListener('change', () => invalidateResults());
+      el.addEventListener('input', () => { applyProbabilityClamp(el.id); invalidateScenarioResults(); });
+      el.addEventListener('change', () => { applyProbabilityClamp(el.id); invalidateScenarioResults(); });
     } else {
-      el.addEventListener('input', () => invalidateResults(false, false));
-      el.addEventListener('change', () => invalidateResults(false, false));
+      el.addEventListener('input', () => invalidateDisplayOrDistanceOnly(false));
+      el.addEventListener('change', () => invalidateDisplayOrDistanceOnly(false));
     }
   });
 
@@ -2061,7 +2627,7 @@ window.addEventListener('load', () => {
   initBaseEvents();
   if (typeof initAccessibilityHelpers === 'function') initAccessibilityHelpers();
   updateShareButtons();
-  loadPreset('consensus');
+  loadPreset('kepler');
 });
 
 function renderSobolPanel(result) {
@@ -2257,7 +2823,7 @@ function renderDetectionPanel() {
   } else if (r.p_detect_pct >= 5) {
     verdictText = 'There is a meaningful but not dominant chance that a detectable civilisation exists within range today. Increasing L (civilisation longevity) would raise this significantly.';
   } else if (r.p_detect_pct >= 0.1) {
-    verdictText = 'The probability is low. Even if many Earth-like planets exist, the timing and distance constraints make an overlapping detectable civilisation rare under these settings.';
+    verdictText = 'The probability is low. Even if many modelled Earth-like candidates exist, the timing and distance constraints make an overlapping detectable civilisation rare under these settings.';
   } else {
     verdictText = 'The probability is extremely low 〰 consistent with the silence we observe. Most potentially inhabited planets are either too far away, or their transmission window does not overlap with ours.';
   }
@@ -2274,18 +2840,26 @@ function renderDetectionPanel() {
     ? fmtHuman(r.N_within) + ' transmitter-bearing worlds in this target galaxy currently inside the Earth-reach window'
     : fmtHuman(r.N_within) + ' transmitter-bearing worlds within this range';
   const combinedResultCopy = r.is_external_reference
-    ? '= (' + fmtHuman(r.N_planets) + ' Earth-like planets × f_tx ' + r.f_tx.toFixed(4).replace(/\.?0+$/, '') + ') × range gate × ' + fmtPct(r.p_temporal_pct)
-    : '= (' + fmtHuman(r.N_planets) + ' Earth-like planets × f_tx ' + r.f_tx.toFixed(4).replace(/\.?0+$/, '') + ') × area fraction × ' + fmtPct(r.p_temporal_pct);
+    ? '= (' + fmtHuman(r.N_planets) + ' modelled Earth-like candidates × f_tx ' + r.f_tx.toFixed(4).replace(/\.?0+$/, '') + ') × range gate × ' + fmtPct(r.p_temporal_pct)
+    : '= (' + fmtHuman(r.N_planets) + ' modelled Earth-like candidates × f_tx ' + r.f_tx.toFixed(4).replace(/\.?0+$/, '') + ') × area fraction × ' + fmtPct(r.p_temporal_pct);
   const formulaCopy = r.is_external_reference
     ? 'Formula: N̂ = (N<sub>Earth-like</sub> × f<sub>tx</sub> × range-gate) × (L / T<sub>galaxy</sub>) · P(≥1) = 1 − e<sup>−N̂</sup><br>'
     : 'Formula: N̂ = (N<sub>Earth-like</sub> × f<sub>tx</sub> × A<sub>horizon</sub> / A<sub>GHZ</sub>) × (L / T<sub>galaxy</sub>) · P(≥1) = 1 − e<sup>−N̂</sup><br>';
+  const geometryFactor = r.is_external_reference
+    ? (r.N_within > 0 ? 1 : 0)
+    : (r.N_tx_total > 0 ? Math.max(0, Math.min(1, r.N_within / r.N_tx_total)) : 0);
+  const geometryFactorLabel = r.is_external_reference ? 'range gate' : 'area fraction';
+  const geometryFactorText = r.is_external_reference
+    ? (geometryFactor > 0 ? '1 · within light-travel reach' : '0 · outside light-travel reach')
+    : (geometryFactor > 0 ? fmtPct(geometryFactor * 100) : '0%');
+  const rawExpectedText = fmtN(r.N_det);
 
   resultsEl.innerHTML =
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-bottom:12px;">' +
       '<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 12px;">' +
         '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:4px;">Step 0 · Civilisation prior</div>' +
         '<div style="font-size:11px;font-weight:700;color:var(--text-bright);">f_tx = ' + r.f_tx.toFixed(4).replace(/\.?0+$/, '') + '</div>' +
-        '<div style="font-size:9.5px;color:var(--text-dim);margin-top:3px;">Only this share of Earth-like planets is assumed to ever produce a detectable transmitter.</div>' +
+        '<div style="font-size:9.5px;color:var(--text-dim);margin-top:3px;">Only this share of modelled Earth-like candidates is assumed to ever produce a detectable transmitter.</div>' +
         '<div style="font-size:10px;color:var(--accent);font-weight:700;margin-top:5px;">' + fmtHuman(r.N_tx_total) + ' transmitter-bearing worlds in the modelled system</div>' +
       '</div>' +
       '<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 12px;">' +
@@ -2297,7 +2871,7 @@ function renderDetectionPanel() {
       '<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 12px;">' +
         '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:4px;">Step 2 · Timing barrier</div>' +
         '<div style="font-size:11px;font-weight:700;color:var(--text-bright);">' + fmtPct(r.p_temporal_pct) + '</div>' +
-        '<div style="font-size:9.5px;color:var(--text-dim);margin-top:3px;">Probability any given planet hosts an <strong>active transmitter right now</strong> 〰 L ÷ galaxy age.</div>' +
+        '<div style="font-size:9.5px;color:var(--text-dim);margin-top:3px;">Temporal-overlap probability for a transmitter-bearing world <strong>right now</strong> 〰 L ÷ galaxy age. This model-derived timing factor does not include f_tx, which separately represents whether a planet ever produces a detectable transmitter.</div>' +
         '<div style="font-size:10px;color:var(--accent3);font-weight:700;margin-top:5px;">Both barriers multiply together →</div>' +
       '</div>' +
     '</div>' +
@@ -2344,9 +2918,17 @@ function renderDetectionPanel() {
       '</div>';
     })() +
     '<div style="background:var(--bg);border:1px solid var(--border);border-left:3px solid ' + gaugeColor + ';border-radius:6px;padding:10px 12px;margin-bottom:10px;">' +
-      '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:4px;">Combined result · Expected detectable transmitters in range</div>' +
+      '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:4px;">Combined result · Poisson mean of detectable transmitters now</div>' +
       '<div style="font-size:16px;font-weight:800;color:' + gaugeColor + ';">' + fmtHuman(r.N_det) + '</div>' +
       '<div style="font-size:9.5px;color:var(--text-dim);margin-top:2px;">' + combinedResultCopy + '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:5px;margin-top:7px;font-size:9.2px;color:var(--text-dim);">' +
+        '<span><strong style="color:var(--text-bright);">N<sub>Earth-like</sub></strong> = ' + fmtHuman(r.N_planets) + '</span>' +
+        '<span><strong style="color:var(--text-bright);">f<sub>tx</sub></strong> = ' + r.f_tx.toFixed(4).replace(/\.?0+$/, '') + '</span>' +
+        '<span><strong style="color:var(--text-bright);">' + geometryFactorLabel + '</strong> = ' + geometryFactorText + '</span>' +
+        '<span><strong style="color:var(--text-bright);">L / T<sub>galaxy</sub></strong> = ' + fmtPct(r.p_temporal_pct) + '</span>' +
+        '<span><strong style="color:var(--text-bright);">N̂</strong> = ' + rawExpectedText + '</span>' +
+      '</div>' +
+      '<div style="font-size:9px;color:var(--text-dim);margin-top:6px;line-height:1.45;">N̂ is an expected value, not a counted object. If N̂ is far below 1, the calculator displays the inverse form "1 in X" to make the small Poisson mean readable.</div>' +
     '</div>' +
     '<div style="margin-bottom:6px;font-size:10px;font-weight:700;color:var(--text-dim);">Probability of at least one active transmitter existing within detection range right now:</div>' +
     '<div class="det-gauge">' +

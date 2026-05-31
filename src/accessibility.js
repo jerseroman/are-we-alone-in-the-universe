@@ -1,11 +1,3 @@
-/*
-Are We Alone in the Universe? Earth-like Planet Calculator
-Author: Roman Jerše
-Website: https://www.arewealoneintheuniverse.com/
-Version: 2.12
-License: Custom source-available attribution license. See ../LICENSE.md.
-*/
-
 function setPressedState(el, active) {
   if (!el) return;
   el.classList.toggle('active', active);

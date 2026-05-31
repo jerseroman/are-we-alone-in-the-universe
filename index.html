@@ -1,33 +1,31 @@
 <!DOCTYPE html>
-<!--
-Are We Alone in the Universe? Earth-like Planet Calculator
-Author: Roman Jerše
-Website: https://www.arewealoneintheuniverse.com/
-Version: 2.12
-License: Custom source-available attribution license. See LICENSE.md.
--->
 <html lang="en">
  <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>
-   Are We Alone in the Universe? Earth-like Planet Calculator · Version 2.12
+   Are We Alone in the Universe? Earth-like Planet Calculator · Version 2.13
   </title>
-  <script async crossorigin="anonymous" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"></script>
-  <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/apexcharts@5.12.0"></script>
+  <script async crossorigin="anonymous" id="MathJax-script" integrity="sha384-Wuix6BuhrWbjDBs24bXrjf4ZQ5aFeFWBuKkFekO2t8xFU0iNaLQfp2K6/1Nxveei" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"></script>
+  <script crossorigin="anonymous" integrity="sha384-VzkrKzZ91/plZ4HYGoiYkmzTHxxDK2ezfxfzA5Sg/EhhKf9MY0SkYZ0pBd4yG1CF" src="https://cdn.jsdelivr.net/npm/apexcharts@5.12.0/dist/apexcharts.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&amp;family=Nunito:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
-  <link crossorigin="anonymous" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet"/>
-  <link href="src/styles.css" rel="stylesheet">
+  <link crossorigin="anonymous" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" rel="stylesheet"/>
+  <link href="src/styles.css?v=badge-fix-20260523b" rel="stylesheet">
  </head>
  <body>
+<noscript>
+  <div role="alert" style="background:#1c1e23;border:1px solid #d4a843;color:#f5f5f5;padding:12px 16px;margin:12px;border-radius:6px;font-family:Nunito,sans-serif;font-size:14px;line-height:1.5;">
+    <strong>JavaScript is required.</strong> This calculator needs JavaScript for preset loading, Monte Carlo, exports, and interpretation outputs. Static fallback values shown below may not reflect the active default preset (Kepler/Gaia · Bryson with Updated Kepler/Gaia observational prior).
+  </div>
+</noscript>
 <canvas id="starfield">
   </canvas>
   <div class="page">
    <header class="header">
     <div class="header-eyebrow">
-     Galactic Earth Analog Calculator
+     Cosmic Earth Analog Calculator
      <span class="version-badge">
-      v2.12
+      v2.13
      </span>
     </div>
     <div class="header-inner">
@@ -37,12 +35,10 @@ License: Custom source-available attribution license. See LICENSE.md.
      <div class="header-text">
       <h1>
        Are We
-       <span class="accent">
-        Alone
-       </span>
+       Alone
        <br/>
        in the
-       <span class="accent2">
+       <span class="accent">
         Universe?
        </span>
       </h1>
@@ -52,11 +48,13 @@ License: Custom source-available attribution license. See LICENSE.md.
       <div class="header-tagline">
        CALCULATE COSMIC POSSIBILITIES
       </div>
-      <div class="top-link-row">
-       <a class="top-link-btn paper" href="https://www.arewealoneintheuniverse.com/paper" rel="noopener noreferrer" target="_blank">Read paper</a>
-       <a class="top-link-btn report" href="https://github.com/jerseroman/are-we-alone-in-the-universe/issues/new" rel="noopener noreferrer" target="_blank">Report problem</a>
-      </div>
      </div>
+    </div>
+    <div class="top-link-row" aria-label="Project links">
+     <a class="top-link-btn paper" href="https://www.arewealoneintheuniverse.com/paper" rel="noopener noreferrer" target="_blank">Read paper <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>
+     <a class="top-link-btn report" href="https://github.com/jerseroman/are-we-alone-in-the-universe/issues/new" rel="noopener noreferrer" target="_blank">Report problem <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>
+     <a class="top-link-btn github" href="https://github.com/jerseroman/are-we-alone-in-the-universe" rel="noopener noreferrer" target="_blank">GitHub <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>
+     <a class="top-link-btn perplexity" href="https://www.perplexity.ai/?q=Analyze%20https%3A%2F%2Fwww.arewealoneintheuniverse.com%2F%20and%20explain%20how%20the%20Earth-like%20Planet%20Estimator%20works%2C%20what%20assumptions%20drive%20its%20estimates." rel="noopener noreferrer" target="_blank">Ask Perplexity <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>
     </div>
    </header>
    <div class="panel">
@@ -65,7 +63,7 @@ License: Custom source-available attribution license. See LICENSE.md.
     </div>
     <div id="equation-latex">
      \[
-      N = N_{\mathrm{GHZ}}\,f_{\odot}\,f_{\mathrm{age}}\,N_p\,f_{\mathrm{rocky}}\,f_{\mathrm{HZ}}\,f_{\mathrm{stab}}\,f_B\,f_{\mathrm{moon}}\,f_{\mathrm{size}}\,f_{\omega}\,f_{\varepsilon}\,f_{H_2O}\,f_{\mathrm{CHNOPS}}\,f_{\mathrm{life}}\,f_x
+      N = N_{\mathrm{GHZ}}\;f_{\odot}\;f_{\mathrm{age}}\;N_p\;f_{\mathrm{rocky}}\;f_{\mathrm{HZ}}\;f_{\mathrm{stab}}\;f_B\;f_{\mathrm{moon}}\;f_{\mathrm{size}}\;f_{\omega}\;f_{\varepsilon}\;f_{H_2O}\;f_{\mathrm{CHNOPS}}\;f_{\mathrm{life}}\;f_x
       \]
       \[
       d = \frac{\Gamma(1+1/3)}{\left(\frac{N}{A\cdot h}\cdot\frac{4\pi}{3}\right)^{1/3}}
@@ -79,42 +77,82 @@ License: Custom source-available attribution license. See LICENSE.md.
 
   <div class="collapsible-section">
     <div class="collapsible-preview">
-              <p>
-          Theoretically, it is entirely possible that the evolution of life, including intelligent forms of life, has already occurred and concluded around other stars long before our Sun formed. The age of our galaxy, the Milky Way, has allowed enough time for older stellar and planetary systems to form, in which worlds with their own life histories could have emerged, evolved, and disappeared. Evidence of these potential worlds may be forever lost, either through destructive astrophysical processes or through sheer inaccessibility across space and time.
-        </p>
+      <p>
+        The Milky Way is far more than a vast system of stars scattered across space. It is a galaxy that has been evolving for billions of years, carrying the record of a long cosmic history. And the Milky Way is only one among countless other galaxies in the observable universe, each with its own generations of stars, planets, and changing environments. Across these vast stretches of space and time, many worlds could have formed long before the Sun and Earth came into existence. Across roughly thirteen billion years of galactic history, many generations of stars, planetary systems, and chemically enriched environments could have formed before the Sun existed. Some worlds may have emerged around older stars, persisted billions of years before Earth, developed their own geological dynamics, and perhaps reached conditions compatible with the emergence or maintenance of life. Some of those worlds may still exist. Others may have become uninhabitable, been destroyed, or remained permanently inaccessible to us because of distance, time, and the limits of observation.
+      </p>
     </div>
 
     <div class="collapsible-body">
-            <p>
-        Current estimates suggest that there are approximately 10²² to 2 × 10²³ stars in the observable universe. To put this into perspective: the lower estimate of 10²² stars corresponds to about 1.25 trillion human populations, each consisting of approximately 8 billion people. The upper estimate of 2 × 10²³ stars would correspond to about 25 trillion such populations.
+      <p>
+        The question of whether we are alone cannot be reduced to the number of planets in space. It also depends on timing: when biospheres emerge, how long complex life persists, whether technological phases arise, and whether any trace of them can be detected from our present position. A biosphere or civilization that existed a billion years ago in another region of the Galaxy may have left no signal that remains detectable today. Even if a signal once existed, cosmic distance, the finite speed of light, short technological lifetimes, the loss of planetary habitability, or destructive astrophysical events could place it beyond practical detection.
       </p>
 
       <p>
-        In addition, many older generations of massive stars have already existed and ended their lives. Some collapsed into neutron stars or black holes, others exploded as supernovae, while less massive stars ended as white dwarfs. Through these processes, interstellar space was enriched with heavier elements, the raw material for new star systems, planets, and even ourselves.
+        In this context, failure to detect something should not be confused with evidence that it never existed. It marks the boundary of our observational position. A basic epistemological caution follows from this: existence, detectability in principle, and actual detection from our current historical moment are separate categories.
       </p>
 
       <p>
-        Hypothetically, if each galaxy hosted, on average, one civilization, intelligent life would be a common feature of the universe rather than a rare anomaly, although this remains unconfirmed. In this view, the visible cosmic structure of galaxies, stars, and planets is not merely a physical formation, but a potential carrier of consciousness. Considering that the number of galaxies ranges from about 200 billion to 2 trillion, the possible number of civilizations could be of the same order of magnitude, with each galaxy serving as a potential incubator for biological, technological, and other forms of complexity.
+        The observable universe contains an enormous but uncertain number of stars. Order of magnitude estimates usually place the total somewhere between 10²² and 10²⁴. These figures are not a direct count of every individual star. They come from astronomical observations, estimates of galaxy populations, stellar mass distributions, galaxy luminosities, and assumptions about faint, distant, and difficult to observe systems. They are best treated as a broad cosmological scale, not as a precisely measured total.
       </p>
 
       <p>
-        Yet such abundance does not guarantee contact: vast distances, relativistic time effects, different stages of development, and the finite speed of light create formidable barriers to information exchange. The likely result is that the isolation of civilizations in space and time is the rule, not the exception.
+        Against that background, estimating the number of Earth-like worlds becomes a methodological problem rather than a simple counting exercise. A meaningful estimate must ask how many planets orbit suitable stars, how many lie within an appropriate orbital zone, how many are rocky, and how many could preserve water, an atmosphere, a stable climate, and the basic chemical conditions needed for more complex processes over long timescales. Each condition acts as a filter. When these filters are multiplied, small changes in assumptions can lead to sharply different results.
       </p>
 
       <p>
-        Within this broader cosmic framework, this calculator offers a structured and explicitly conditional way of estimating how many potentially Earth-like planets may exist in a selected galaxy under a transparent, user-adjustable multiplicative habitability model. It does not claim that such planets are known to exist in those numbers, nor does it directly estimate the number of communicative civilizations. Instead, it examines how astrophysical, geophysical, biochemical, and speculative filters compound under uncertainty.
+        The calculator does not count confirmed Earth-like planets, inhabited worlds, or communicative civilizations. Its purpose is narrower and more cautious. It provides a transparent conditional model for estimating how many modelled Earth-like candidates may remain after a selected chain of astrophysical, planetary, geophysical, biochemical, and optional biological filters has been applied.
       </p>
 
       <p>
-        In this sense, the model is inspired by Drake-style reasoning, but is narrower in scope: it is concerned primarily with the possible occurrence of Earth-like worlds, not with confirming the actual prevalence of intelligence, technology, or interstellar communication. Its purpose is therefore exploratory and comparative rather than predictive in any absolute sense.
+        The model is inspired by Drake-style multiplicative reasoning, although it is not the classical Drake equation. The Drake equation is historically associated with the question of communicative civilizations. This calculator asks a more restricted question: how many Earth-like candidates remain under a given set of explicitly stated assumptions? Questions of intelligence, technology, detectability, and interstellar communication belong to a separate interpretive layer.
       </p>
 
       <p>
-        By combining observationally constrained parameters with more weakly constrained planetary and biological conditions, the calculator functions as a quantitative tool for probing the boundaries of probability, or reasoned plausibility. It is best understood not as a machine for producing certainty, but as a disciplined framework for asking what follows if particular assumptions are accepted.
+        The main value of the calculator lies in its structure, not in any single number. The user can see which assumptions are active, how individual filters combine, which parameters drive the result most strongly, and how the output changes under more optimistic, more conservative, or more restrictive scenarios. The model does not turn uncertainty into certainty. It makes the sensitivity of the question visible.
       </p>
 
       <p>
-        <a href="https://doi.org/10.1017/CBO9781139020739" rel="noopener noreferrer" target="_blank">
+        The calculator is best understood as an exploratory and comparative tool. It does not provide a final answer to whether Earth is unique. It creates a disciplined space for reasoning about what follows when certain assumptions are accepted, modified, or rejected. Its usefulness lies there. It does not replace observation, confirm life elsewhere, or predict civilizations. It helps show how quickly our conclusions about Earth-like worlds can change once hidden assumptions are made explicit.
+      </p>
+
+      <p>
+        <a href="https://www.esa.int/Science_Exploration/Space_Science/How_many_stars_are_there_in_the_Universe" rel="noopener noreferrer" target="_blank">
+          ESA star-count estimate
+          <img
+            src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png"
+            alt="↗"
+            class="link-icon"
+          >
+        </a>
+        ·
+        <a href="https://science.nasa.gov/universe/stars/" rel="noopener noreferrer" target="_blank">
+          NASA Star Basics
+          <img
+            src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png"
+            alt="↗"
+            class="link-icon"
+          >
+        </a>
+        ·
+        <a href="https://doi.org/10.1046/j.1365-8711.2003.06826.x" rel="noopener noreferrer" target="_blank">
+          Liske et al. 2003 / Driver IAU 2003 extrapolation
+          <img
+            src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png"
+            alt="↗"
+            class="link-icon"
+          >
+        </a>
+        ·
+        <a href="https://arxiv.org/abs/1009.5992" rel="noopener noreferrer" target="_blank">
+          van Dokkum & Conroy 2010
+          <img
+            src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png"
+            alt="↗"
+            class="link-icon"
+          >
+        </a>
+        ·
+        <a href="https://doi.org/10.1007/978-3-642-22491-1" rel="noopener noreferrer" target="_blank">
           Matteucci 2012
           <img
             src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png"
@@ -132,7 +170,7 @@ License: Custom source-available attribution license. See LICENSE.md.
           >
         </a>
         ·
-        <a href="https://doi.org/10.1007/s10701-018-0170-6" rel="noopener noreferrer" target="_blank">
+        <a href="https://books.google.com/books?id=G4FZDwAAQBAJ" rel="noopener noreferrer" target="_blank">
           Ćirković 2018
           <img
             src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png"
@@ -170,12 +208,12 @@ License: Custom source-available attribution license. See LICENSE.md.
   <div class="collapsible-section">
     <div class="collapsible-preview">
       <p>
-        The calculator combines astrophysical parameters, biological or geophysical plausibility filters, and optional speculative factors into a single multiplicative estimate of the number of Earth-like planets. Some parameters are observationally constrained, others are only weakly constrained, and some are explicitly hypothetical.
+        The calculator combines astrophysical parameters, planetary and geophysical plausibility filters, and optional speculative factors into a conditional multiplicative estimate of Earth-like planet candidates under the selected assumptions. Some parameters are observationally constrained, others are weakly constrained, and some are explicitly hypothetical.
       </p>
     </div>
     <div class="collapsible-body">
       <p>
-        Inputs can be treated either as fixed point estimates or as uncertain quantities with literature-inspired minimum and maximum bounds. Optional factors such as surface water, CHNOPS availability, complex life, and a wildcard factor can be included or excluded from the calculation.
+        Inputs can be treated either as fixed central values or as uncertain quantities with literature-inspired minimum and maximum bounds. Optional factors such as surface water, CHNOPS availability, complex life, and a wildcard factor can be included or excluded from the calculation. When optional biological or speculative filters are enabled, the output should be read as a filtered model scenario, not as a direct census of Earth-like planets.
       </p>
     </div>
     <button class="read-more-btn" onclick="toggleSection(this)">
@@ -187,12 +225,12 @@ License: Custom source-available attribution license. See LICENSE.md.
   <div class="collapsible-section">
     <div class="collapsible-preview">
       <p>
-        The calculator includes two observational parameter epochs: <strong>Pre-JWST (≤2021)</strong> and <strong>Post-JWST (2022~2025)</strong>. These mainly affect observational priors such as the rocky-planet fraction and habitable-zone occurrence, while the scenario cards load broader literature-style combinations of assumptions.
+        The calculator includes two observational-prior presets: <strong>Conservative Kepler-era</strong> and <strong>Updated Kepler/Gaia</strong>. These mainly adjust the rocky-planet and habitable-zone occurrence terms, while the scenario cards load broader literature-anchored or illustrative assumption sets.
       </p>
     </div>
     <div class="collapsible-body">
       <p>
-        These should be interpreted as parameter presets, not as a formal Bayesian posterior inference engine. In addition to the epoch toggle, the calculator provides named scenario presets such as <strong>Consensus</strong>, <strong>Optimist</strong>, <strong>Pessimist</strong>, and <strong>JWST</strong>, each paired with a short provenance note so the user can see which literature framing or interpretive stance is being loaded.
+        These should be interpreted as parameter presets, not as a formal Bayesian posterior inference engine. In addition to the prior toggle, the calculator provides named scenario presets such as <strong>Consensus</strong>, <strong>High-End</strong>, <strong>Pessimist</strong>, and <strong>Kepler/Gaia</strong>, each paired with a short provenance note so the user can see which literature framing or interpretive stance is being loaded.
       </p>
     </div>
     <button class="read-more-btn" onclick="toggleSection(this)">
@@ -204,12 +242,12 @@ License: Custom source-available attribution license. See LICENSE.md.
   <div class="collapsible-section">
     <div class="collapsible-preview">
       <p>
-        The Monte Carlo simulation estimates how uncertainty propagates through the full multiplicative model. For each enabled parameter, the simulation samples values according to the user-selected distribution: log-normal, normal, or uniform. The default engine is standard Monte Carlo, with optional Latin Hypercube sampling for more even coverage of the parameter space.
+        The Monte Carlo simulation estimates how uncertainty propagates through the active multiplicative model. Active parameters with usable uncertainty intervals are sampled according to the selected distribution: adaptive log/logit-normal, bounded normal, or uniform interval sampling. The baseline profile uses standard Monte Carlo with independent factors, while broader exploratory profiles may use Latin Hypercube Sampling for more even coverage of the parameter space.
       </p>
     </div>
     <div class="collapsible-body">
       <p>
-        When no interval is defined, the parameter remains fixed at its mean value. The current model also includes an optional heuristic correlation scaffold between selected parameters, or it can be run in an independent-factor mode. In particular, larger suitable-size values slightly increase the sampled magnetic-field term, and higher lunar-stability values slightly increase the sampled tilt term when the heuristic mode is active. In addition to the output distribution itself, the calculator can now report a convergence diagnostic for the running mean, a parameterwise robust interval envelope, and a sensitivity summary highlighting the strongest positive and negative log-sensitivity drivers.
+        Parameters without usable uncertainty intervals remain fixed at their central value. Disabled optional filters are treated as neutral multiplicative factors. Active advanced modules may add or replace factors before the final planet count is computed. The default uncertainty mode keeps factors independent; an optional heuristic correlation scaffold can be enabled, but it is a modelling assumption, not a measured covariance matrix. The optional robust envelope is a parameterwise min/max bounds check, separate from the empirical q2.5–q97.5 Monte Carlo interval.
       </p>
     </div>
     <button class="read-more-btn" onclick="toggleSection(this)">
@@ -221,12 +259,12 @@ License: Custom source-available attribution license. See LICENSE.md.
   <div class="collapsible-section">
     <div class="collapsible-preview">
       <p>
-        After a Monte Carlo run, the calculator estimates the expected distance to the nearest Earth-like planet using a Poisson nearest-neighbor framework under selectable spatial assumptions: a 2D GHZ annulus, a 3D GHZ disk, and a 3D shell-style reference model.
+        After a Monte Carlo run, the calculator estimates nearest-neighbour distance scales for the selected model output. For Milky Way-style internal geometry, it can use a radial-density GHZ model, a 2D GHZ annulus, a 3D GHZ disk, and a 3D shell-style reference model. The radial-density model is the default non-uniform baseline when enabled; the uniform models are comparison models.
       </p>
     </div>
     <div class="collapsible-body">
       <p>
-        These distance estimates are derived from the estimated number density of Earth-like planets under the selected geometry. When custom galaxy settings are enabled, the geometry can be rescaled to alternative galaxy presets or user-defined diameters and thicknesses. For external galaxies, the current implementation still uses the Earth-to-galaxy value as a reference distance rather than estimating the nearest planet inside that target galaxy, and the Fermi contextualisation panel can be viewed in either Monte Carlo or deterministic mode for comparison.
+        The distance estimates are derived from the estimated number or intensity density implied by the selected model output and geometry. The main distance panel uses the Monte Carlo q50 median and, where applicable, q2.5–q97.5 sampled count bounds to show sampled distance intervals. If the expected count is below one, the nearest-neighbour estimate is suppressed and the calculator reports the probability of at least one such candidate. For external galaxies, the current implementation uses the Earth-to-galaxy value as a reference distance rather than estimating the nearest planet inside that target galaxy. The Fermi contextualisation panel can be viewed in either Monte Carlo or deterministic mode for comparison.
       </p>
     </div>
     <button class="read-more-btn" onclick="toggleSection(this)">
@@ -238,12 +276,12 @@ License: Custom source-available attribution license. See LICENSE.md.
   <div class="collapsible-section">
     <div class="collapsible-preview">
       <p>
-        The calculator reports the deterministic point estimate, the Monte Carlo mean, the empirical 95% interval based on q2.5~q97.5, and the simulation-output charts. When relevant, it also surfaces configuration alerts, nearest-distance estimates, and catalogue-based Fermi contextualisation.
+        The calculator reports the deterministic point estimate, the Monte Carlo q50 median, the Monte Carlo arithmetic mean, the empirical 95% sampled model interval based on q2.5–q97.5, and the simulation-output charts. This interval is not an observational confidence interval or a Bayesian posterior interval. When relevant, it also surfaces configuration alerts, nearest-distance estimates, existence-probability notices for sparse scenarios, and catalogue-anchored reference comparisons for Fermi contextualisation.
       </p>
     </div>
     <div class="collapsible-body">
       <p>
-        The output area combines the histogram and empirical kernel density estimate (KDE) with convergence diagnostics, top-driver sensitivity summaries, and model-health warnings for edge cases such as disabled distance models or normalized host fractions. These visualizations and notices are intended to help users interpret the result, not just read a single headline number.
+        The output area combines the histogram and empirical kernel density estimate (KDE) with convergence diagnostics, top-driver sensitivity summaries, optional robust-envelope diagnostics, and model-health warnings for edge cases such as disabled distance models, sparse expected counts, or normalized host fractions. These visualizations and notices are intended to help users interpret the result, not just read a single headline number.
       </p>
     </div>
     <button class="read-more-btn" onclick="toggleSection(this)">
@@ -254,59 +292,57 @@ License: Custom source-available attribution license. See LICENSE.md.
    <div class="panel">
   <div class="panel-title">
     Input Parameters
-    <span style="margin-left:auto;font-size:9px;font-weight:600;color:var(--text-dim);">
-      <span style="color:var(--accent);">■</span> Astrophysical
-      <span style="color:var(--orange);">■</span> Biological
-      <span style="color:var(--accent3);">■</span> Hypothetical
-    </span>
   </div>
 
   <div class="preset-hub">
     <div class="preset-section">
-      <div class="preset-section-title">
+      <div class="preset-section-title dashed-divider">
         Scientific Scenario Presets
       </div>
       <div class="preset-helper">
-        Select a published scenario to load literature values:
+        Select a literature-anchored scenario or illustrative stress-test:
+      </div>
+      <div class="preset-helper">
+        <em>(The calculator uses the Kepler/Gaia preset as its primary reference baseline, as it is most consistent with currently available observational data. The other presets are not presented as definitive estimates, but as research-oriented scenarios for examining how the result changes under different theoretical assumptions.)</em>
       </div>
       <div class="preset-grid">
+        <button class="preset-btn kepler" data-preset="kepler" onclick="loadPreset('kepler')" type="button">
+          <strong>Kepler/Gaia · Bryson</strong>
+          <span>Bryson et al. 2021</span>
+          <small>Updated occurrence-rate priors.</small>
+        </button>
         <button class="preset-btn consensus" data-preset="consensus" onclick="loadPreset('consensus')" type="button">
           <strong>Consensus · Lineweaver</strong>
           <span>Lineweaver 2004</span>
-          <small>Moderate, empirically anchored baseline.</small>
+          <small>Lineweaver-anchored GHZ and age baseline.</small>
         </button>
         <button class="preset-btn optimist" data-preset="optimist" onclick="loadPreset('optimist')" type="button">
-          <strong>Optimist · Dissolving Fermi</strong>
-          <span>Sandberg et al. 2018</span>
-          <small>High-habitability assumptions across the chain.</small>
+          <strong>High-End · Literature Bounds</strong>
+          <span>Illustrative upper-range</span>
+          <small>High-side values within displayed ranges.</small>
         </button>
         <button class="preset-btn pessimist" data-preset="pessimist" onclick="loadPreset('pessimist')" type="button">
-          <strong>Pessimist · Great Filter</strong>
-          <span>Hart 1975 / Rare Earth</span>
-          <small>Strong filters and low biological success rates.</small>
-        </button>
-        <button class="preset-btn jwst" data-preset="jwst" onclick="loadPreset('jwst')" type="button">
-          <strong>Post-JWST · 2023~2025</strong>
-          <span>Bryson + JWST Data</span>
-          <small>Updated rocky and habitable-zone fractions.</small>
+          <strong>Pessimist · Rare Earth</strong>
+          <span>Hart / Hanson / Rare Earth</span>
+          <small>Restrictive biological stress-test.</small>
         </button>
       </div>
 
       <div class="preset-description" id="preset-description">
-        <strong>Consensus · Lineweaver.</strong> <em>Moderate literature values across the full chain, giving a middle estimate compatible with both common-life and rare-life readings.</em>
+        <strong>Kepler/Gaia · Bryson.</strong> <em>Kepler/Gaia · Bryson is the recommended empirical baseline for the astronomical part of the chain. It is anchored in Kepler/Gaia occurrence-rate literature and should not be read as a complete prediction of life.</em>
       </div>
     </div>
 
     <div class="preset-section">
-      <div class="preset-section-title">
-        Observational Prior Preset <span>Parameter Epoch</span>
+      <div class="preset-section-title no-divider">
+        Observational Source Toggle <span>Separate Control</span>
       </div>
       <div class="bayes-row">
-        <span class="epoch-label">Active preset:</span>
-        <button class="bayes-btn" id="bayes-pre" onclick="setBayesian('pre')" type="button">Pre-JWST (≤2021)</button>
-        <button class="bayes-btn" id="bayes-post" onclick="setBayesian('post')" type="button">Post-JWST (2022~2025)</button>
+        <span class="epoch-label">f_HZ / f_rocky source:</span>
+        <button class="bayes-btn" id="bayes-pre" aria-pressed="false" onclick="setBayesian('pre')" type="button">Conservative Kepler-era</button>
+        <button class="bayes-btn active" id="bayes-post" aria-pressed="true" onclick="setBayesian('post')" type="button">Updated Kepler/Gaia</button>
         <span class="bayes-note" id="bayes-note">
-          Pre-JWST literature values for f_HZ and f_rocky.
+          <strong>Default - most up-to-date empirical baseline.</strong> Updated Kepler/Gaia occurrence priors for f_HZ and f_rocky, anchored in Bryson et al. 2021 using the Kepler DR25 planet-candidate catalog and Gaia-based stellar properties. Later Gaia releases further refine stellar radii but are not part of the original Bryson 2021 analysis. Switch to Conservative Kepler-era only for direct comparison with older Kepler-era literature.
         </span>
       </div>
     </div>
@@ -320,35 +356,40 @@ License: Custom source-available attribution license. See LICENSE.md.
       Show ±min/max
     </button>
     <span style="font-size:10px;color:var(--text-dim);">
-      Expand each card to set min/max bounds used in Monte Carlo sampling
+      Expand each card to inspect or edit custom min/max bounds; named presets reset visible bounds and default to scenario-local Monte Carlo uncertainty
     </span>
   </div>
 
   <div class="param-section-header">
     <span class="section-dot physical"></span>
-    Astrophysical Parameters
-    <span style="font-size:9px;font-weight:500;margin-left:6px;color:var(--text-dim);">
-      observationally constrained
-    </span>
+    Astrophysical / Geophysical / Geochemical Parameters
+  </div>
+
+  <div class="calibration-legend" aria-label="Calibration status legend for main parameters">
+    <strong>Calibration status:</strong>
+    <span><span class="calibration-badge calibration-lc" tabindex="0" aria-label="Calibration status: direct literature or reference value" data-tooltip="Direct literature/reference value. This value is directly anchored in the cited literature or is a standard astronomical reference default.">LC</span> direct literature/reference value.</span>
+    <span><span class="calibration-badge calibration-li" tabindex="0" aria-label="Calibration status: literature-informed numerical prior" data-tooltip="Literature-informed numerical prior. The cited literature supports the approximate numerical context, but this displayed value is a model prior rather than a directly quoted value.">LI</span> literature-informed numerical prior.</span>
+    <span><span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. The cited literature supports the mechanism, but it does not provide this exact numerical value or range.">MS</span> mechanism-supported model prior.</span>
+    <span><span class="calibration-badge calibration-mp" tabindex="0" aria-label="Calibration status: speculative or user model prior" data-tooltip="Speculative/user model prior. This value is a scenario or user-defined assumption, not a directly literature-calibrated quantity.">MP</span> speculative/user model prior.</span>
   </div>
 
   <div class="input-grid">
     
     <div class="input-card physical" id="card-N_GHZ">
       <div class="card-icons">
+        <span class="calibration-badge calibration-li" tabindex="0" aria-label="Calibration status: literature-informed numerical prior" data-tooltip="Literature-informed numerical prior. Lineweaver et al. support the Galactic Habitable Zone framework, but this displayed star count is a model prior rather than a directly quoted value.">LI</span>
         <div class="tooltip">
           <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
           <span class="tooltiptext">
             <strong>Stars in GHZ (N_GHZ)</strong><br>
             Stars in the galactic habitable zone ∼ not too close to galactic center (supernovae, radiation) nor too far (insufficient metals).<br>
             <span class="lit">
-              Literature: 1×10¹⁰ ~ 1×10¹¹<br>
-              Lineweaver 2004: ~5×10⁹<br>
-              Gaia/migration models: up to 10¹¹
+              Lineweaver et al. define the Galactic Habitable Zone as a time-dependent annular region rather than a fixed star-count value. This field converts GHZ reasoning into a conservative star-count prior using an adopted Milky Way star-count range. The value is literature-informed, not directly quoted.<br>
+              5×10⁹ = strict lower-bound prior; 1×10¹⁰ = balanced conservative default; 4×10¹⁰ = upper Lineweaver-style prior.
             </span>
           </span>
         </div>
-        <a href="https://science.sciencemag.org/content/303/5654/59" target="_blank" rel="noopener noreferrer">
+        <a href="https://doi.org/10.1126/science.1092322" target="_blank" rel="noopener noreferrer">
           <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
         </a>
       </div>
@@ -356,23 +397,27 @@ License: Custom source-available attribution license. See LICENSE.md.
       <label>Stars in GHZ</label>
       <div class="param-inputs">
         <div class="param-mean-row">
-          <input id="N_GHZ" min="0" step="1000000" type="number" value="100000000000">
+          <input id="N_GHZ" min="0" step="1000000" type="number" value="10000000000">
           <button class="interval-toggle" onclick="toggleInterval('N_GHZ')">±</button>
         </div>
         <div class="interval-row" id="interval-N_GHZ">
           <span class="interval-label">min</span>
           <input id="N_GHZ_min" min="0" step="1000000" type="number" value="5000000000">
           <span class="interval-label">max</span>
-          <input id="N_GHZ_max" min="0" step="1000000" type="number" value="200000000000">
+          <input id="N_GHZ_max" min="0" step="1000000" type="number" value="40000000000">
         </div>
       </div>
-      <div class="input-note">Estimated stars in the galactic habitable zone.</div>
-      <div class="lit-range">Lit. range: 5×10⁹ ~ 2×10¹¹ · Lineweaver 2004</div>
+      <div class="input-note">Literature-informed GHZ star-count prior, not directly quoted by Lineweaver.</div>
+      <div class="lit-range source-links">
+        <span>GHZ concept and age framing; 5×10⁹ ~ 4×10¹⁰ is a model prior, not directly quoted ·</span>
+        <a class="source-link" href="https://doi.org/10.1126/science.1092322" target="_blank" rel="noopener noreferrer" aria-label="Open source: Lineweaver et al. 2004">Lineweaver et al. 2004 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+      </div>
     </div>
 
     
     <div class="input-card physical" id="card-f_sun_type">
       <div class="card-icons">
+        <span class="calibration-badge calibration-li" tabindex="0" aria-label="Calibration status: literature-informed numerical prior" data-tooltip="Literature-informed numerical prior. Stellar demographic literature supports the approximate host-star fractions, but the displayed value depends on the chosen denominator and is a model prior rather than a directly quoted value.">LI</span>
         <div class="tooltip">
           <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
           <span class="tooltiptext">
@@ -385,7 +430,7 @@ License: Custom source-available attribution license. See LICENSE.md.
             </span>
           </span>
         </div>
-        <a href="https://iopscience.iop.org/article/10.1086/507268" target="_blank" rel="noopener noreferrer">
+        <a href="https://doi.org/10.1086/508233" target="_blank" rel="noopener noreferrer">
           <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
         </a>
       </div>
@@ -404,12 +449,18 @@ License: Custom source-available attribution license. See LICENSE.md.
         </div>
       </div>
       <div class="input-note">Fraction of G-type stars in the base model.</div>
-      <div class="lit-range">Lit. range: 0.07 ~ 0.20 · Henry 2006, Gaia 2022</div>
+      <div class="lit-range source-links">
+        <span>Literature-informed range: 0.07 ~ 0.20 ·</span>
+        <a class="source-link" href="https://doi.org/10.1086/508233" target="_blank" rel="noopener noreferrer" aria-label="Open source: Henry 2006">Henry 2006 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1051/0004-6361/202243940" target="_blank" rel="noopener noreferrer" aria-label="Open source: Gaia DR3 2022/2023">Gaia DR3 2022/2023 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+      </div>
     </div>
 
     
     <div class="input-card physical" id="card-f_sun_age">
       <div class="card-icons">
+        <span class="calibration-badge calibration-lc" tabindex="0" aria-label="Calibration status: direct literature or reference value" data-tooltip="Direct literature/reference value. This value is directly anchored in Lineweaver et al. 2004, which reports that 75% of stars in the GHZ are older than the Sun.">LC</span>
         <div class="tooltip">
           <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
           <span class="tooltiptext">
@@ -421,7 +472,7 @@ License: Custom source-available attribution license. See LICENSE.md.
             </span>
           </span>
         </div>
-        <a href="https://science.sciencemag.org/content/303/5654/59" target="_blank" rel="noopener noreferrer">
+        <a href="https://doi.org/10.1126/science.1092322" target="_blank" rel="noopener noreferrer">
           <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
         </a>
       </div>
@@ -429,7 +480,7 @@ License: Custom source-available attribution license. See LICENSE.md.
       <label>Old Enough Stars (f_age)</label>
       <div class="param-inputs">
         <div class="param-mean-row">
-          <input id="f_sun_age" max="1" min="0" step="0.01" type="number" value="0.70">
+          <input id="f_sun_age" max="1" min="0" step="0.01" type="number" value="0.75">
           <button class="interval-toggle" onclick="toggleInterval('f_sun_age')">±</button>
         </div>
         <div class="interval-row" id="interval-f_sun_age">
@@ -440,25 +491,29 @@ License: Custom source-available attribution license. See LICENSE.md.
         </div>
       </div>
       <div class="input-note">Fraction old enough for long biological evolution.</div>
-      <div class="lit-range">Lit. range: 0.60 ~ 0.80 · Lineweaver 2004</div>
+      <div class="lit-range source-links">
+        <span>Literature-informed range: 0.60 ~ 0.80 ·</span>
+        <a class="source-link" href="https://doi.org/10.1126/science.1092322" target="_blank" rel="noopener noreferrer" aria-label="Open source: Lineweaver et al. 2004">Lineweaver et al. 2004 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+      </div>
     </div>
 
     
     <div class="input-card physical" id="card-N_p_star">
       <div class="card-icons">
+        <span class="calibration-badge calibration-li" tabindex="0" aria-label="Calibration status: literature-informed numerical prior" data-tooltip="Literature-informed numerical prior. Planet-occurrence studies support the approximate numerical context, but the displayed value combines occurrence domains and is a model prior rather than a directly quoted value.">LI</span>
         <div class="tooltip">
           <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
           <span class="tooltiptext">
             <strong>Planets per star (N_p)</strong><br>
             Average number of planets per suitable stellar host, interpreted here as a broad planetary multiplicity term in the habitability chain.<br>
             <span class="lit">
-              Petigura 2013: 1.6<br>
-              Hsu et al. 2019: 1.4~2.0<br>
-              Later estimates often remain in roughly this range
+              Cassan et al. 2012: one or more bound planets per star<br>
+              Hsu et al. 2019: Kepler/Gaia occurrence-rate constraints<br>
+              Interpreted here as a broad multiplicity term
             </span>
           </span>
         </div>
-        <a href="https://www.pnas.org/doi/10.1073/pnas.1319909110" target="_blank" rel="noopener noreferrer">
+        <a href="https://www.nature.com/articles/nature10684" target="_blank" rel="noopener noreferrer">
           <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
         </a>
       </div>
@@ -477,12 +532,18 @@ License: Custom source-available attribution license. See LICENSE.md.
         </div>
       </div>
       <div class="input-note">Average planets per star.</div>
-      <div class="lit-range">Lit. range: 1.0 ~ 2.5 · Petigura 2013, Hsu 2019</div>
+      <div class="lit-range source-links">
+        <span>Literature-informed range: 1.0 ~ 2.5 ·</span>
+        <a class="source-link" href="https://doi.org/10.1038/nature10684" target="_blank" rel="noopener noreferrer" aria-label="Open source: Cassan et al. 2012">Cassan et al. 2012 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.3847/1538-3881/ab31ab" target="_blank" rel="noopener noreferrer" aria-label="Open source: Hsu et al. 2019">Hsu et al. 2019 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+      </div>
     </div>
 
     
     <div class="input-card physical" id="card-f_composition">
       <div class="card-icons">
+        <span class="calibration-badge calibration-li" tabindex="0" aria-label="Calibration status: literature-informed numerical prior" data-tooltip="Literature-informed numerical prior. Radius-valley and rocky/non-rocky transition literature supports the approximate numerical context, but the displayed value is a model prior rather than a directly quoted occurrence value.">LI</span>
         <div class="tooltip">
           <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
           <span class="tooltiptext">
@@ -503,7 +564,7 @@ License: Custom source-available attribution license. See LICENSE.md.
       <label>Rocky Planets (f_rocky)</label>
       <div class="param-inputs">
         <div class="param-mean-row">
-          <input id="f_composition" max="1" min="0" step="0.01" type="number" value="0.20">
+          <input id="f_composition" max="1" min="0" step="0.01" type="number" value="0.25">
           <button class="interval-toggle" onclick="toggleInterval('f_composition')">±</button>
         </div>
         <div class="interval-row" id="interval-f_composition">
@@ -514,25 +575,29 @@ License: Custom source-available attribution license. See LICENSE.md.
         </div>
       </div>
       <div class="input-note">Fraction of rocky planets in the base model.</div>
-      <div class="lit-range">Lit. range: 0.15 ~ 0.35 · Dressing 2015, Rogers 2015</div>
+      <div class="lit-range source-links">
+        <span>Literature-informed model range: 0.15 ~ 0.35 ·</span>
+        <a class="source-link" href="https://doi.org/10.1088/0004-637X/807/1/45" target="_blank" rel="noopener noreferrer" aria-label="Open source: Dressing &amp; Charbonneau 2015">Dressing &amp; Charbonneau 2015 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1088/0004-637X/801/1/41" target="_blank" rel="noopener noreferrer" aria-label="Open source: Rogers 2015">Rogers 2015 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+      </div>
     </div>
 
     
     <div class="input-card physical" id="card-f_orbit">
       <div class="card-icons">
+        <span class="calibration-badge calibration-li" tabindex="0" aria-label="Calibration status: literature-informed numerical prior" data-tooltip="Literature-informed numerical prior. Bryson and Kopparapu support the approximate habitable-zone occurrence and boundary context, but this displayed value is a model factor, not a directly quoted single-paper probability.">LI</span>
         <div class="tooltip">
           <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
           <span class="tooltiptext">
             <strong>Habitable zone orbit (f_HZ)</strong><br>
             Fraction of rocky planets in the liquid-water habitable zone, understood here as a broad orbital habitability prior.<br>
             <span class="lit">
-              Petigura 2013: 0.10~0.15<br>
-              Bryson et al. 2021: ~0.18<br>
-              Kopparapu et al.: ~0.12~0.21
+              Bryson et al. 2021 supports rocky habitable-zone occurrence estimates from Kepler DR25 and Gaia-based stellar properties. Kopparapu et al. 2013 supports habitable-zone boundary calculations. The displayed f_orbit value is a model factor in this calculator, not a directly quoted single-paper probability.
             </span>
           </span>
         </div>
-        <a href="https://www.pnas.org/doi/10.1073/pnas.1319909110" target="_blank" rel="noopener noreferrer">
+        <a href="https://doi.org/10.3847/1538-3881/abc418" target="_blank" rel="noopener noreferrer">
           <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
         </a>
       </div>
@@ -540,35 +605,41 @@ License: Custom source-available attribution license. See LICENSE.md.
       <label>Habitable Zone (f_HZ)</label>
       <div class="param-inputs">
         <div class="param-mean-row">
-          <input id="f_orbit" max="1" min="0" step="0.01" type="number" value="0.20">
+          <input id="f_orbit" max="1" min="0" step="0.01" type="number" value="0.21">
           <button class="interval-toggle" onclick="toggleInterval('f_orbit')">±</button>
         </div>
         <div class="interval-row" id="interval-f_orbit">
           <span class="interval-label">min</span>
           <input id="f_orbit_min" max="1" min="0" step="0.01" type="number" value="0.10">
           <span class="interval-label">max</span>
-          <input id="f_orbit_max" max="1" min="0" step="0.01" type="number" value="0.40">
+          <input id="f_orbit_max" max="1" min="0" step="0.01" type="number" value="0.21">
         </div>
       </div>
       <div class="input-note">Fraction of rocky planets inside the habitable zone.</div>
-      <div class="lit-range">Lit. range: 0.10 ~ 0.40 · Bryson 2021, Kopparapu</div>
+      <div class="lit-range source-links">
+        <span>Literature-informed model range: 0.10 ~ 0.21 ·</span>
+        <a class="source-link" href="https://doi.org/10.3847/1538-3881/abc418" target="_blank" rel="noopener noreferrer" aria-label="Open source: Bryson et al. 2021">Bryson et al. 2021 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1088/0004-637X/765/2/131" target="_blank" rel="noopener noreferrer" aria-label="Open source: Kopparapu et al. 2013">Kopparapu et al. 2013 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+      </div>
     </div>
 
     
     <div class="input-card physical" id="card-f_stability">
       <div class="card-icons">
+        <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. Long-term orbital stability is physically necessary, but the cited literature does not provide this exact numerical range.">MS</span>
         <div class="tooltip">
           <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
           <span class="tooltiptext">
             <strong>Orbital stability (f_stab)</strong><br>
             Fraction of systems with long-term stable, non-disruptive orbital architectures compatible with sustained climate stability.<br>
             <span class="lit">
-              Zink &amp; Hansen 2019: 0.40~0.60<br>
-              Chambers 1999: ~0.50
+              Long-term orbital stability is a necessary dynamical condition, but the displayed 0.30–0.70 interval is a simplified mechanism-supported model range, not a measured universal occurrence fraction.<br>
+              Lissauer et al. 2011, Steffen et al. 2012, and Tamayo et al. 2020 are used as dynamical stability context, not direct calibration.
             </span>
           </span>
         </div>
-        <a href="https://academic.oup.com/mnras/article/487/1/246/5480568" target="_blank" rel="noopener noreferrer">
+        <a href="https://ui.adsabs.harvard.edu/abs/2011ApJS..197....8L/abstract" target="_blank" rel="noopener noreferrer">
           <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
         </a>
       </div>
@@ -587,34 +658,30 @@ License: Custom source-available attribution license. See LICENSE.md.
         </div>
       </div>
       <div class="input-note">Fraction of systems with stable orbits.</div>
-      <div class="lit-range">Lit. range: 0.30 ~ 0.70 · Zink &amp; Hansen 2019</div>
+      <div class="lit-range source-links">
+        <span>Mechanism-supported model range: 0.30 ~ 0.70; not a measured universal occurrence fraction ·</span>
+        <a class="source-link" href="https://ui.adsabs.harvard.edu/abs/2011ApJS..197....8L/abstract" target="_blank" rel="noopener noreferrer" aria-label="Open source: Lissauer et al. 2011">Lissauer et al. 2011 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1093/mnras/sts090" target="_blank" rel="noopener noreferrer" aria-label="Open source: Steffen et al. 2012">Steffen et al. 2012 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7414196/" target="_blank" rel="noopener noreferrer" aria-label="Open source: Tamayo et al. 2020">Tamayo et al. 2020 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+      </div>
     </div>
-  </div>
 
-  <div class="param-section-header" style="margin-top:10px;">
-    <span class="section-dot biological"></span>
-    Biological / Geophysical Parameters
-    <span style="font-size:9px;font-weight:500;margin-left:6px;color:var(--text-dim);">
-      partially constrained
-    </span>
-  </div>
-
-  <div class="input-grid">
-    
-    <div class="input-card biological" id="card-f_magnetosphere">
+    <div class="input-card physical" id="card-f_magnetosphere">
       <div class="card-icons">
+        <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. Planetary magnetic fields can contribute to atmospheric shielding and long-term habitability, but the cited literature does not provide this exact numerical range.">MS</span>
         <div class="tooltip">
           <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
           <span class="tooltiptext">
             <strong>Magnetic field (f_B)</strong><br>
-            Fraction retaining a long-term planetary magnetosphere, used here as a proxy for atmospheric shielding against stellar wind erosion.<br>
+            Planetary magnetic fields can contribute to atmospheric shielding and long-term habitability. The cited literature supports the mechanism, but the displayed 0.20–0.70 range is a model prior rather than a directly measured occurrence fraction.<br>
             <span class="lit">
-              Zuluaga et al. 2013: ~0.50<br>
-              Driscoll &amp; Bercovici 2014: 0.30~0.60
+              Zuluaga et al. 2013 · Driscoll &amp; Bercovici 2014
             </span>
           </span>
         </div>
-        <a href="https://iopscience.iop.org/article/10.1088/0004-637X/770/1/23" target="_blank" rel="noopener noreferrer">
+        <a href="https://doi.org/10.1088/0004-637X/770/1/23" target="_blank" rel="noopener noreferrer">
           <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
         </a>
       </div>
@@ -633,24 +700,32 @@ License: Custom source-available attribution license. See LICENSE.md.
         </div>
       </div>
       <div class="input-note">Long-term magnetosphere retention.</div>
-      <div class="lit-range">Lit. range: 0.20 ~ 0.70 · Zuluaga 2013</div>
+      <div class="input-note overlap-note" style="font-size:9.5px;color:var(--text-dim);font-style:italic;">
+        Related radiation and space-weather modules may stack with this factor; the multiplication is a modelling choice rather than proof of independent probabilities.
+      </div>
+      <div class="lit-range source-links">
+        <span>Mechanism-supported model range: 0.20 ~ 0.70 ·</span>
+        <a class="source-link" href="https://doi.org/10.1088/0004-637X/770/1/23" target="_blank" rel="noopener noreferrer" aria-label="Open source: Zuluaga et al. 2013">Zuluaga et al. 2013 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1016/j.pepi.2014.08.004" target="_blank" rel="noopener noreferrer" aria-label="Open source: Driscoll &amp; Bercovici 2014">Driscoll &amp; Bercovici 2014 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+      </div>
     </div>
 
     
-    <div class="input-card biological" id="card-f_lunar_stability">
+    <div class="input-card physical" id="card-f_lunar_stability">
       <div class="card-icons">
+        <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. Large moons can affect obliquity stability, but the cited literature does not provide this exact occurrence range for lunar stabilizers.">MS</span>
         <div class="tooltip">
           <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
           <span class="tooltiptext">
             <strong>Lunar stabilizer (f_moon)</strong><br>
-            Large moon or equivalent stabilizing architecture may reduce large obliquity chaos, though the necessity of a large moon remains debated.<br>
+            Large moons can affect obliquity stability, and the cited literature supports the stabilizing mechanism. The displayed 0.20–0.80 range is an exploratory model prior, not a measured occurrence rate for lunar stabilizers.<br>
             <span class="lit">
-              Ćuk &amp; Stewart 2012: 0.30~0.60<br>
-              Lissauer et al. 2012: may be much less restrictive
+              Laskar et al. 1993 · Lissauer et al. 2012 · Ćuk &amp; Stewart 2012 (Moon-formation context)
             </span>
           </span>
         </div>
-        <a href="https://www.science.org/doi/10.1126/science.1225542" target="_blank" rel="noopener noreferrer">
+        <a href="https://doi.org/10.1038/361615a0" target="_blank" rel="noopener noreferrer">
           <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
         </a>
       </div>
@@ -669,24 +744,29 @@ License: Custom source-available attribution license. See LICENSE.md.
         </div>
       </div>
       <div class="input-note">Large moon or equivalent stabilizer.</div>
-      <div class="lit-range">Lit. range: 0.20 ~ 0.80 · Ćuk 2012, Lissauer 2012</div>
+      <div class="lit-range source-links">
+        <span>Mechanism-supported model range: 0.20 ~ 0.80 ·</span>
+        <a class="source-link" href="https://doi.org/10.1038/361615a0" target="_blank" rel="noopener noreferrer" aria-label="Open source: Laskar et al. 1993">Laskar et al. 1993 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1016/j.icarus.2011.10.013" target="_blank" rel="noopener noreferrer" aria-label="Open source: Lissauer et al. 2012">Lissauer et al. 2012 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+      </div>
     </div>
 
     
-    <div class="input-card biological" id="card-f_size">
+    <div class="input-card physical" id="card-f_size">
       <div class="card-icons">
+        <span class="calibration-badge calibration-li" tabindex="0" aria-label="Calibration status: literature-informed numerical prior" data-tooltip="Literature-informed numerical prior. Rogers and Fulton support the rocky/non-rocky transition and radius-valley context, but this displayed value is still a model factor.">LI</span>
         <div class="tooltip">
           <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
           <span class="tooltiptext">
             <strong>Suitable size (f_size)</strong><br>
-            Planetary radius/mass window compatible with terrestrial composition and long-term atmosphere retention without crossing into sub-Neptune territory.<br>
+            Rogers 2015 and Fulton 2017 support the rocky/non-rocky transition and radius-valley context. The displayed 0.30–0.65 range is a literature-informed model range for this calculator, not a directly quoted occurrence value.<br>
             <span class="lit">
-              Rogers 2015: 0.40~0.60<br>
-              Fulton et al. 2017 radius valley supports a restricted rocky window
+              Rogers 2015 · Fulton et al. 2017
             </span>
           </span>
         </div>
-        <a href="https://iopscience.iop.org/article/10.1088/0004-637X/801/1/41" target="_blank" rel="noopener noreferrer">
+        <a href="https://doi.org/10.1088/0004-637X/801/1/41" target="_blank" rel="noopener noreferrer">
           <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
         </a>
       </div>
@@ -705,24 +785,29 @@ License: Custom source-available attribution license. See LICENSE.md.
         </div>
       </div>
       <div class="input-note">Earth-like size window in the base model.</div>
-      <div class="lit-range">Lit. range: 0.30 ~ 0.65 · Rogers 2015, Fulton 2017</div>
+      <div class="lit-range source-links">
+        <span>Literature-informed range: 0.30 ~ 0.65 ·</span>
+        <a class="source-link" href="https://doi.org/10.1088/0004-637X/801/1/41" target="_blank" rel="noopener noreferrer" aria-label="Open source: Rogers 2015">Rogers 2015 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.3847/1538-3881/aa80eb" target="_blank" rel="noopener noreferrer" aria-label="Open source: Fulton et al. 2017">Fulton et al. 2017 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+      </div>
     </div>
 
     
-    <div class="input-card biological" id="card-f_rotation">
+    <div class="input-card physical" id="card-f_rotation">
       <div class="card-icons">
+        <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. Rotation affects atmospheric circulation, climate regime and possibly dynamo behavior, but the cited literature does not provide this exact numerical range.">MS</span>
         <div class="tooltip">
           <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
           <span class="tooltiptext">
             <strong>Suitable rotation (f_ω)</strong><br>
-            Rotation-related climate and dynamo suitability; very slow or tidally locked cases can become more problematic depending on host star and atmosphere.<br>
+            Rotation affects atmospheric circulation, climate regime and possibly dynamo behavior. The cited literature supports rotation as a relevant habitability mechanism, but the displayed 0.15–0.35 range is an exploratory model prior, not a directly measured occurrence fraction.<br>
             <span class="lit">
-              Dobos et al. 2021: 0.20~0.35<br>
-              G-star analog estimates often center near ~0.27
+              Edson et al. 2011 · Way &amp; Del Genio 2020
             </span>
           </span>
         </div>
-        <a href="https://www.aanda.org/articles/aa/full_html/2021/09/aa40791-21/aa40791-21.html" target="_blank" rel="noopener noreferrer">
+        <a href="https://doi.org/10.1016/j.icarus.2010.11.023" target="_blank" rel="noopener noreferrer">
           <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
         </a>
       </div>
@@ -737,28 +822,33 @@ License: Custom source-available attribution license. See LICENSE.md.
           <span class="interval-label">min</span>
           <input id="f_rotation_min" max="1" min="0" step="0.01" type="number" value="0.15">
           <span class="interval-label">max</span>
-          <input id="f_rotation_max" max="1" min="0" step="0.01" type="number" value="0.40">
+          <input id="f_rotation_max" max="1" min="0" step="0.01" type="number" value="0.35">
         </div>
       </div>
       <div class="input-note">Rotation-related climate and dynamo suitability.</div>
-      <div class="lit-range">Lit. range: 0.15 ~ 0.40 · Dobos 2021</div>
+      <div class="lit-range source-links">
+        <span>Mechanism-supported model range: 0.15 ~ 0.35 ·</span>
+        <a class="source-link" href="https://doi.org/10.1016/j.icarus.2010.11.023" target="_blank" rel="noopener noreferrer" aria-label="Open source: Edson et al. 2011">Edson et al. 2011 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1029/2019JE006276" target="_blank" rel="noopener noreferrer" aria-label="Open source: Way &amp; Del Genio 2020">Way &amp; Del Genio 2020 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+      </div>
     </div>
 
     
-    <div class="input-card biological" id="card-f_tilt">
+    <div class="input-card physical" id="card-f_tilt">
       <div class="card-icons">
+        <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. Obliquity affects seasonality and climate stability, but the displayed value is not a directly measured occurrence fraction.">MS</span>
         <div class="tooltip">
           <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
           <span class="tooltiptext">
             <strong>Favorable axial tilt (f_ε)</strong><br>
-            Low-to-moderate obliquity is usually treated as more climate-stable than extreme tilt regimes, though exact habitability dependence is model-sensitive.<br>
+            Obliquity affects seasonality, climate stability and habitability conditions. The cited literature supports the mechanism, but the displayed 0.30–0.65 range is an interpretive model prior, not a directly measured universal frequency.<br>
             <span class="lit">
-              Linsenmeier et al. 2015: ~0.50<br>
-              Williams &amp; Pollard 2003: 0.40~0.60
+              Williams &amp; Pollard 2002 · Linsenmeier et al. 2015
             </span>
           </span>
         </div>
-        <a href="https://www.sciencedirect.com/science/article/pii/S0012821X15003510" target="_blank" rel="noopener noreferrer">
+        <a href="https://doi.org/10.1016/j.pss.2014.11.003" target="_blank" rel="noopener noreferrer">
           <img src="https://static.wixstatic.com/media/313d4b_ea315c11da1945b3ad75d59197cba292~mv2.png" alt="Link">
         </a>
       </div>
@@ -777,25 +867,30 @@ License: Custom source-available attribution license. See LICENSE.md.
         </div>
       </div>
       <div class="input-note">Obliquity-related climate suitability.</div>
-      <div class="lit-range">Lit. range: 0.30 ~ 0.65 · Linsenmeier 2015</div>
+      <div class="lit-range source-links">
+        <span>Mechanism-supported model range: 0.30 ~ 0.65 ·</span>
+        <a class="source-link" href="https://doi.org/10.1017/S1473550402001064" target="_blank" rel="noopener noreferrer" aria-label="Open source: Williams &amp; Pollard 2002">Williams &amp; Pollard 2002 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1016/j.pss.2014.11.003" target="_blank" rel="noopener noreferrer" aria-label="Open source: Linsenmeier et al. 2015">Linsenmeier et al. 2015 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+      </div>
     </div>
 
     
-    <div class="input-card biological" id="card-f_H2O">
+    <div class="input-card physical" id="card-f_H2O">
       <div class="toggle-row">
         <span class="toggle-box enabled" id="H2O-toggle"></span>
         <span class="toggle-label-text">Include in calculation</span>
       </div>
 
       <div class="card-icons">
+        <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. Volatile delivery is supported by the cited literature, but this is not a measured frequency of planets with surface liquid water.">MS</span>
         <div class="tooltip">
           <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
           <span class="tooltiptext">
             <strong>Surface water (f_H₂O)</strong><br>
-            Fraction of otherwise suitable planets with sufficient long-term liquid surface water, treated as a broad volatile-delivery/retention filter.<br>
+            Volatile delivery is a literature-supported mechanism, but the displayed 0.05–0.30 range is an exploratory model prior rather than a measured frequency of planets with surface liquid water.<br>
             <span class="lit">
-              Morbidelli et al. 2012: ~0.10~0.30<br>
-              Solar-system style volatile-delivery arguments often motivate low-to-moderate values
+              Morbidelli et al. 2012
             </span>
           </span>
         </div>
@@ -818,25 +913,31 @@ License: Custom source-available attribution license. See LICENSE.md.
         </div>
       </div>
       <div class="input-note">Surface liquid water filter.</div>
-      <div class="lit-range">Lit. range: 0.05 ~ 0.30 · Morbidelli 2012</div>
+      <div class="input-note overlap-note" style="font-size:9.5px;color:var(--text-dim);font-style:italic;">
+        Surface-water availability depends partly on atmospheric retention and volatile delivery. If those advanced modules are enabled separately, the model may apply multiple related constraints.
+      </div>
+      <div class="lit-range source-links">
+        <span>Mechanism-supported model range: 0.05 ~ 0.30 ·</span>
+        <a class="source-link" href="https://doi.org/10.1146/annurev-earth-042711-105319" target="_blank" rel="noopener noreferrer" aria-label="Open source: Morbidelli et al. 2012">Morbidelli et al. 2012 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+      </div>
     </div>
 
     
-    <div class="input-card biological" id="card-f_CHNOPS">
+    <div class="input-card physical" id="card-f_CHNOPS">
       <div class="toggle-row">
         <span class="toggle-box enabled" id="CHNOPS-toggle"></span>
         <span class="toggle-label-text">Include in calculation</span>
       </div>
 
       <div class="card-icons">
+        <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. Stellar abundance literature supports the elemental context, but planetary CHNOPS accessibility is uncertain and not directly measured by this range.">MS</span>
         <div class="tooltip">
           <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
           <span class="tooltiptext">
             <strong>CHNOPS elements (f_CHNOPS)</strong><br>
-            Availability of the six canonical biogenic elements in sufficient local abundance and accessible form for Earth-like chemistry.<br>
+            Asplund 2009 supports the baseline stellar/solar abundance context for biogenic elements. The displayed 0.05–0.50 range represents uncertain planetary accessibility and is an exploratory model prior, not a directly measured CHNOPS availability fraction.<br>
             <span class="lit">
-              Asplund et al. 2009 solar abundances<br>
-              Planetary accessibility remains much more uncertain than stellar abundance itself
+              Asplund et al. 2009 (solar abundances) · planetary accessibility remains uncertain
             </span>
           </span>
         </div>
@@ -859,13 +960,17 @@ License: Custom source-available attribution license. See LICENSE.md.
         </div>
       </div>
       <div class="input-note">Essential biochemistry availability.</div>
-      <div class="lit-range">Lit. range: 0.05 ~ 0.50 · Asplund 2009, speculative planetary availability</div>
+      <div class="lit-range source-links">
+        <span>Model range: 0.05 ~ 0.50 ·</span>
+        <a class="source-link" href="https://doi.org/10.1146/annurev.astro.46.060407.145222" target="_blank" rel="noopener noreferrer" aria-label="Open source: Asplund et al. 2009">Asplund et al. 2009 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">· planetary accessibility uncertain</span>
+      </div>
     </div>
   </div>
 
   <div class="param-section-header" style="margin-top:10px;">
     <span class="section-dot hypothetical"></span>
-    Hypothetical Parameters
+    Hypothetical and Monte Carlo Parameters
     <span style="font-size:9px;font-weight:500;margin-left:6px;color:var(--text-dim);">
       speculative
     </span>
@@ -880,6 +985,7 @@ License: Custom source-available attribution license. See LICENSE.md.
       </div>
 
       <div class="card-icons">
+        <span class="calibration-badge calibration-mp" tabindex="0" aria-label="Calibration status: speculative or user model prior" data-tooltip="Speculative/user model prior. Complex life probability is not empirically calibrated; this value is a scenario prior used for exploration.">MP</span>
         <div class="tooltip">
           <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
           <span class="tooltiptext">
@@ -899,7 +1005,7 @@ License: Custom source-available attribution license. See LICENSE.md.
       <label>Complex Life (f_life)</label>
       <div class="param-inputs">
         <div class="param-mean-row">
-          <input id="f_complex_life" max="1" min="0" step="0.001" type="number" value="0.01">
+          <input id="f_complex_life" max="1" min="0" step="0.000001" type="number" value="0.01">
           <button class="interval-toggle" onclick="toggleInterval('f_complex_life')">±</button>
         </div>
         <div class="interval-row" id="interval-f_complex_life">
@@ -910,7 +1016,12 @@ License: Custom source-available attribution license. See LICENSE.md.
         </div>
       </div>
       <div class="input-note">P(complex life | habitable planet).</div>
-      <div class="lit-range">Lit. range: 10⁻⁹ ~ 1.0 · Sandberg 2018, Rare Earth debate</div>
+      <div class="lit-range source-links">
+        <span>Speculative model-prior range: 10⁻⁹ ~ 1.0; not empirically calibrated ·</span>
+        <a class="source-link" href="https://arxiv.org/abs/1806.02404" target="_blank" rel="noopener noreferrer" aria-label="Open source: Sandberg et al. 2018">Sandberg et al. 2018 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1073/pnas.1921655117" target="_blank" rel="noopener noreferrer" aria-label="Open source: Kipping 2020">Kipping 2020 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+      </div>
     </div>
 
     
@@ -921,12 +1032,13 @@ License: Custom source-available attribution license. See LICENSE.md.
       </div>
 
       <div class="card-icons">
+        <span class="calibration-badge calibration-mp" tabindex="0" aria-label="Calibration status: speculative or user model prior" data-tooltip="Speculative/user model prior. This is a user-defined catch-all factor for unknown filters and has no fixed literature source.">MP</span>
         <div class="tooltip">
           <img src="https://static.wixstatic.com/media/313d4b_985297ebf91f420d84da1292d1d68f68~mv2.webp" alt="Info">
           <span class="tooltiptext">
             <strong>Wildcard factor (f_x)</strong><br>
             Catch-all multiplicative factor for unknown or omitted filters. Neutral default is 1.0. This is explicitly user-defined and not tied to a single literature source.<br>
-            <span class="lit">No fixed literature source ∼ methodological placeholder</span>
+            <span class="lit">User-defined model factor; no fixed literature source.</span>
           </span>
         </div>
       </div>
@@ -945,7 +1057,7 @@ License: Custom source-available attribution license. See LICENSE.md.
         </div>
       </div>
       <div class="input-note">Catch-all factor for unknown filters.</div>
-      <div class="lit-range">Lit. range: User defined · no fixed literature source</div>
+      <div class="lit-range">User-defined model factor; no fixed literature source.</div>
     </div>
 
     
@@ -962,29 +1074,44 @@ License: Custom source-available attribution license. See LICENSE.md.
 
     
     <div class="input-card hypothetical" id="card-sampling-uncertainty">
+      <div class="card-icons">
+        <span class="calibration-badge calibration-mp" tabindex="0" aria-label="Calibration status: speculative or user model prior" data-tooltip="Speculative/user model prior. This numerical/model setting controls uncertainty propagation and is not a directly measured scientific constant.">MP</span>
+      </div>
+
       <label>Uncertainty (%)</label>
       <div class="param-inputs">
         <div class="param-mean-row">
           <input id="sampling_uncertainty" max="100" min="1" step="1" type="number" value="50">
         </div>
       </div>
-      <div class="input-note">Controls sampling spread around the input values. Default: 50%.</div>
+      <div class="input-note">Controls sampling spread around the input values. Default: 50%. This is a model uncertainty setting, not an observational error bar.</div>
     </div>
 
     
     <div class="input-card hypothetical" id="card-distribution">
       <label>Sampling Distribution</label>
       <select id="distribution">
-        <option selected value="lognormal">Log-normal (recommended)</option>
+        <option selected value="lognormal">Adaptive log/logit-normal (recommended)</option>
         <option value="normal">Normal (symmetric)</option>
         <option value="uniform">Uniform (from min/max)</option>
       </select>
-      <div class="input-note">Log-normal is usually more appropriate for multiplicative uncertainty.</div>
+      <div class="input-note">Adaptive mode uses log-normal sampling for positive counts and logit-normal sampling for bounded probability-like factors.</div>
     </div>
 
     <div class="input-card hypothetical input-card-wide" id="card-sim-options">
       <label>Advanced Simulation Options</label>
       <div class="sim-options-grid">
+        <div class="sim-option-field">
+          <div class="sim-option-shell">
+            <div class="sim-option-label">Uncertainty Profile</div>
+            <select class="sim-control-input" id="uncertainty-profile">
+              <option value="conservative">Conservative/narrow</option>
+              <option selected value="baseline">Balanced/default</option>
+              <option value="broad">Broad exploratory</option>
+              <option value="stress">Stress-test extremes</option>
+            </select>
+          </div>
+        </div>
         <div class="sim-option-field">
           <div class="sim-option-shell">
             <div class="sim-option-label">Sampling Engine</div>
@@ -996,10 +1123,21 @@ License: Custom source-available attribution license. See LICENSE.md.
         </div>
         <div class="sim-option-field">
           <div class="sim-option-shell">
+            <div class="sim-option-label">MC Basis</div>
+            <select class="sim-control-input" id="mc-basis-mode">
+              <option selected value="auto">Auto: preset-local/custom</option>
+              <option value="presetLocal">Scenario-local preset uncertainty</option>
+              <option value="customInput">Custom input uncertainty</option>
+              <option value="globalEnvelope">Global exploratory envelope</option>
+            </select>
+          </div>
+        </div>
+        <div class="sim-option-field">
+          <div class="sim-option-shell">
             <div class="sim-option-label">Correlation Model</div>
             <select class="sim-control-input" id="correlation-model">
-              <option selected value="heuristic">Heuristic correlation scaffold</option>
-              <option value="independent">Independent factors</option>
+              <option selected value="independent">Independent factors</option>
+              <option value="heuristic">Exploratory heuristic scaffold</option>
             </select>
           </div>
         </div>
@@ -1014,7 +1152,7 @@ License: Custom source-available attribution license. See LICENSE.md.
           </div>
         </div>
       </div>
-      <div class="input-note">These options affect Monte Carlo sampling and diagnostics only. The deterministic calculation remains unchanged.</div>
+      <div class="input-note">These options affect Monte Carlo sampling and diagnostics only. They do not make the result a Bayesian posterior or an observational confidence interval. The deterministic calculation remains unchanged.</div>
     </div>
   </div>
 </div>
@@ -1036,6 +1174,13 @@ License: Custom source-available attribution license. See LICENSE.md.
      <div style="font-size:10px;color:var(--text-dim);margin:0 0 16px;line-height:1.6;">
       When disabled, the calculator behaves exactly like the base model. When enabled, only the modules you explicitly switch on modify the chain.
      </div>
+     <div class="calibration-legend" aria-label="Calibration status legend">
+      <strong>Calibration status:</strong>
+      <span><span class="calibration-badge calibration-lc" tabindex="0" aria-label="Calibration status: direct literature or reference value" data-tooltip="Direct literature/reference value. This value is directly anchored in the cited literature or is a standard astronomical reference default.">LC</span> direct literature/reference value.</span>
+      <span><span class="calibration-badge calibration-li" tabindex="0" aria-label="Calibration status: literature-informed numerical prior" data-tooltip="Literature-informed numerical prior. The cited literature supports the approximate numerical context, but this displayed value is a model prior rather than a directly quoted value.">LI</span> literature-informed numerical prior.</span>
+      <span><span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. The cited literature supports the mechanism, but it does not provide this exact numerical value or range.">MS</span> mechanism-supported model prior.</span>
+      <span><span class="calibration-badge calibration-mp" tabindex="0" aria-label="Calibration status: speculative or user model prior" data-tooltip="Speculative/user model prior. This value is a scenario or user-defined assumption, not a directly literature-calibrated quantity.">MP</span> speculative/user model prior.</span>
+     </div>
      <div class="adv-module-card" id="adv-hostChannels">
       <div class="adv-module-header">
        <span class="toggle-box" id="toggle-hostChannels">
@@ -1055,6 +1200,7 @@ License: Custom source-available attribution license. See LICENSE.md.
         <div class="adv-field">
          <label>
           G-type fraction
+          <span class="calibration-badge calibration-li" tabindex="0" aria-label="Calibration status: literature-informed numerical prior" data-tooltip="Literature-informed numerical prior. Stellar-demographic literature supports the approximate numerical context, but exact denominators can vary by sample definition.">LI</span>
          </label>
          <input id="adv_f_G" max="1" min="0" step="0.001" type="number" value="0.076"/>
          <span class="adv-note">
@@ -1064,18 +1210,21 @@ License: Custom source-available attribution license. See LICENSE.md.
         <div class="adv-field">
          <label>
           G-type HZ weight
+          <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. Literature supports different habitability contexts for G, K and M stars, but it does not provide this exact numerical value or range.">MS</span>
          </label>
          <input id="adv_w_G_hz" max="2" min="0" step="0.01" type="number" value="1.00"/>
         </div>
         <div class="adv-field">
          <label>
           G-type activity penalty
+          <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. The cited literature supports the mechanism, but it does not provide this exact numerical value or range.">MS</span>
          </label>
          <input id="adv_w_G_act" max="1" min="0" step="0.01" type="number" value="0.95"/>
         </div>
         <div class="adv-field">
          <label>
           K-type fraction
+          <span class="calibration-badge calibration-li" tabindex="0" aria-label="Calibration status: literature-informed numerical prior" data-tooltip="Literature-informed numerical prior. Stellar-demographic literature supports the approximate numerical context, but exact denominators can vary by sample definition.">LI</span>
          </label>
          <input id="adv_f_K" max="1" min="0" step="0.001" type="number" value="0.121"/>
          <span class="adv-note">
@@ -1085,18 +1234,21 @@ License: Custom source-available attribution license. See LICENSE.md.
         <div class="adv-field">
          <label>
           K-type HZ weight
+          <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. Literature supports different habitability contexts for G, K and M stars, but it does not provide this exact numerical value or range.">MS</span>
          </label>
          <input id="adv_w_K_hz" max="2" min="0" step="0.01" type="number" value="1.15"/>
         </div>
         <div class="adv-field">
          <label>
           K-type activity penalty
+          <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. The cited literature supports the mechanism, but it does not provide this exact numerical value or range.">MS</span>
          </label>
          <input id="adv_w_K_act" max="1" min="0" step="0.01" type="number" value="0.85"/>
         </div>
         <div class="adv-field">
          <label>
           M-type fraction
+          <span class="calibration-badge calibration-li" tabindex="0" aria-label="Calibration status: literature-informed numerical prior" data-tooltip="Literature-informed numerical prior. Stellar-demographic literature supports the approximate numerical context, but exact denominators can vary by sample definition.">LI</span>
          </label>
          <input id="adv_f_M" max="1" min="0" step="0.001" type="number" value="0.703"/>
          <span class="adv-note">
@@ -1106,24 +1258,33 @@ License: Custom source-available attribution license. See LICENSE.md.
         <div class="adv-field">
          <label>
           M-type HZ weight
+          <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. Literature supports different habitability contexts for G, K and M stars, but it does not provide this exact numerical value or range.">MS</span>
          </label>
          <input id="adv_w_M_hz" max="2" min="0" step="0.01" type="number" value="0.80"/>
         </div>
         <div class="adv-field">
          <label>
           M-type activity penalty
+          <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. The cited literature supports the mechanism, but it does not provide this exact numerical value or range.">MS</span>
          </label>
          <input id="adv_w_M_act" max="1" min="0" step="0.01" type="number" value="0.30"/>
         </div>
         <div class="adv-field">
          <label>
           M-type tidal-lock penalty
+          <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. The cited literature supports the mechanism, but it does not provide this exact numerical value or range.">MS</span>
          </label>
          <input id="adv_w_M_lock" max="1" min="0" step="0.01" type="number" value="0.55"/>
         </div>
        </div>
-       <div class="lit-range">
-        Henry 2006 · Gaia DR3 2022 · Dressing &amp; Charbonneau 2015 · Shields et al. 2016
+       <div class="lit-range source-links">
+        <a class="source-link" href="https://doi.org/10.1086/508233" target="_blank" rel="noopener noreferrer" aria-label="Open source: Henry 2006">Henry 2006 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1051/0004-6361/202243940" target="_blank" rel="noopener noreferrer" aria-label="Open source: Gaia DR3 2022">Gaia DR3 2022 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1088/0004-637X/807/1/45" target="_blank" rel="noopener noreferrer" aria-label="Open source: Dressing &amp; Charbonneau 2015">Dressing &amp; Charbonneau 2015 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1016/j.physrep.2016.10.003" target="_blank" rel="noopener noreferrer" aria-label="Open source: Shields et al. 2016">Shields et al. 2016 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
      </div>
@@ -1142,10 +1303,14 @@ License: Custom source-available attribution license. See LICENSE.md.
        <p class="adv-desc">
         Explicit atmospheric-retention factor for secondary atmospheres on Gyr timescales.
        </p>
+       <p class="adv-overlap-note" style="font-size:9.5px;color:var(--text-dim);margin:4px 0 8px 0;">
+        Atmospheric retention can overlap conceptually with surface-water retention because long-term surface water usually requires atmospheric persistence. If both modules are restrictive, interpret the result as a conservative compound habitability filter.
+       </p>
        <div class="adv-grid">
         <div class="adv-field">
          <label>
           f_atm_ret
+          <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. The cited literature supports the mechanism, but it does not provide this exact numerical value or range.">MS</span>
          </label>
          <input id="adv_f_atm_ret" max="1" min="0" step="0.01" type="number" value="0.50"/>
         </div>
@@ -1162,8 +1327,8 @@ License: Custom source-available attribution license. See LICENSE.md.
          <input id="adv_f_atm_ret_max" max="1" min="0" step="0.01" type="number" value="0.80"/>
         </div>
        </div>
-       <div class="lit-range">
-        Owen &amp; Wu 2017 · Johnstone et al. 2018
+       <div class="lit-range source-links">
+        <a class="source-link" href="https://doi.org/10.3847/1538-4357/aa890a" target="_blank" rel="noopener noreferrer" aria-label="Open source: Owen &amp; Wu 2017">Owen &amp; Wu 2017 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
      </div>
@@ -1186,6 +1351,7 @@ License: Custom source-available attribution license. See LICENSE.md.
         <div class="adv-field">
          <label>
           f_volatile_delivery
+          <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. The cited literature supports the mechanism, but it does not provide this exact numerical value or range.">MS</span>
          </label>
          <input id="adv_f_vol_del" max="1" min="0" step="0.01" type="number" value="0.40"/>
         </div>
@@ -1204,6 +1370,7 @@ License: Custom source-available attribution license. See LICENSE.md.
         <div class="adv-field">
          <label>
           f_water_retention
+          <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. The cited literature supports the mechanism, but it does not provide this exact numerical value or range.">MS</span>
          </label>
          <input id="adv_f_wat_ret" max="1" min="0" step="0.01" type="number" value="0.35"/>
         </div>
@@ -1222,8 +1389,12 @@ License: Custom source-available attribution license. See LICENSE.md.
        </div>
        <div class="adv-inline-note" id="adv-vol-note">
        </div>
-       <div class="lit-range">
-        Morbidelli et al. 2012 · Raymond et al. 2004 · Tian 2015
+       <div class="lit-range source-links">
+        <a class="source-link" href="https://doi.org/10.1146/annurev-earth-042711-105319" target="_blank" rel="noopener noreferrer" aria-label="Open source: Morbidelli et al. 2012">Morbidelli et al. 2012 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1016/j.icarus.2003.11.019" target="_blank" rel="noopener noreferrer" aria-label="Open source: Raymond et al. 2004">Raymond et al. 2004 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1146/annurev-earth-060313-054834" target="_blank" rel="noopener noreferrer" aria-label="Open source: Tian 2015">Tian 2015 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
      </div>
@@ -1246,6 +1417,7 @@ License: Custom source-available attribution license. See LICENSE.md.
         <div class="adv-field">
          <label>
           f_tectonics
+          <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. The cited literature supports the mechanism, but it does not provide this exact numerical value or range.">MS</span>
          </label>
          <input id="adv_f_tect" max="1" min="0" step="0.01" type="number" value="0.15"/>
         </div>
@@ -1264,6 +1436,7 @@ License: Custom source-available attribution license. See LICENSE.md.
         <div class="adv-field">
          <label>
           f_radiogenic
+          <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. The cited literature supports the mechanism, but it does not provide this exact numerical value or range.">MS</span>
          </label>
          <input id="adv_f_radio" max="1" min="0" step="0.01" type="number" value="0.70"/>
         </div>
@@ -1282,6 +1455,7 @@ License: Custom source-available attribution license. See LICENSE.md.
         <div class="adv-field">
          <label>
           f_climate_feedback
+          <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. The cited literature supports the mechanism, but it does not provide this exact numerical value or range.">MS</span>
          </label>
          <input id="adv_f_clim" max="1" min="0" step="0.01" type="number" value="0.50"/>
         </div>
@@ -1300,8 +1474,12 @@ License: Custom source-available attribution license. See LICENSE.md.
        </div>
        <div class="adv-inline-note" id="adv-long-note">
        </div>
-       <div class="lit-range">
-        Foley &amp; Smye 2018 · Korenaga 2010 · Noack &amp; Breuer 2014
+       <div class="lit-range source-links">
+        <a class="source-link" href="https://doi.org/10.1089/ast.2017.1695" target="_blank" rel="noopener noreferrer" aria-label="Open source: Foley &amp; Smye 2018">Foley &amp; Smye 2018 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1088/2041-8205/725/1/L43" target="_blank" rel="noopener noreferrer" aria-label="Open source: Korenaga 2010">Korenaga 2010 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1016/j.pss.2013.06.020" target="_blank" rel="noopener noreferrer" aria-label="Open source: Noack &amp; Breuer 2014">Noack &amp; Breuer 2014 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
      </div>
@@ -1324,30 +1502,38 @@ License: Custom source-available attribution license. See LICENSE.md.
         <div class="adv-field">
          <label>
           f_spin_climate (G-host)
+          <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. The cited literature supports the mechanism, but it does not provide this exact numerical value or range.">MS</span>
          </label>
          <input id="adv_f_spin_G" max="1" min="0" step="0.01" type="number" value="0.35"/>
         </div>
         <div class="adv-field">
          <label>
           f_spin_climate (K-host)
+          <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. The cited literature supports the mechanism, but it does not provide this exact numerical value or range.">MS</span>
          </label>
          <input id="adv_f_spin_K" max="1" min="0" step="0.01" type="number" value="0.25"/>
         </div>
         <div class="adv-field">
          <label>
           f_spin_climate (M-host)
+          <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. The cited literature supports the mechanism, but it does not provide this exact numerical value or range.">MS</span>
          </label>
          <input id="adv_f_spin_M" max="1" min="0" step="0.01" type="number" value="0.08"/>
         </div>
         <div class="adv-field">
          <label>
           Moon boost factor
+          <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. The cited literature supports the mechanism, but it does not provide this exact numerical value or range.">MS</span>
          </label>
          <input id="adv_moon_boost" max="3" min="1" step="0.05" type="number" value="1.40"/>
         </div>
        </div>
-       <div class="lit-range">
-        Barnes 2017 · Lissauer et al. 2012 · Leconte et al. 2015
+       <div class="lit-range source-links">
+        <a class="source-link" href="https://doi.org/10.1007/s10569-017-9783-7" target="_blank" rel="noopener noreferrer" aria-label="Open source: Barnes 2017">Barnes 2017 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1016/j.icarus.2011.10.013" target="_blank" rel="noopener noreferrer" aria-label="Open source: Lissauer et al. 2012">Lissauer et al. 2012 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1126/science.1258686" target="_blank" rel="noopener noreferrer" aria-label="Open source: Leconte et al. 2015">Leconte et al. 2015 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
      </div>
@@ -1370,6 +1556,7 @@ License: Custom source-available attribution license. See LICENSE.md.
         <div class="adv-field">
          <label>
           P_rocky_true
+          <span class="calibration-badge calibration-li" tabindex="0" aria-label="Calibration status: literature-informed numerical prior" data-tooltip="Literature-informed numerical prior. The cited literature supports the approximate numerical context, but this displayed value is a model prior rather than a directly quoted value.">LI</span>
          </label>
          <input id="adv_P_rocky" max="1" min="0" step="0.01" type="number" value="0.12"/>
         </div>
@@ -1389,8 +1576,12 @@ License: Custom source-available attribution license. See LICENSE.md.
        <div class="adv-inline-note">
         Base comparison: f_rocky × f_size = 0.20 × 0.50 = 0.10.
        </div>
-       <div class="lit-range">
-        Fulton et al. 2017 · Rogers 2015 · Berger et al. 2020
+       <div class="lit-range source-links">
+        <a class="source-link" href="https://doi.org/10.3847/1538-3881/aa80eb" target="_blank" rel="noopener noreferrer" aria-label="Open source: Fulton et al. 2017">Fulton et al. 2017 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1088/0004-637X/801/1/41" target="_blank" rel="noopener noreferrer" aria-label="Open source: Rogers 2015">Rogers 2015 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.3847/1538-3881/aba18a" target="_blank" rel="noopener noreferrer" aria-label="Open source: Berger et al. 2020">Berger et al. 2020 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
      </div>
@@ -1413,30 +1604,35 @@ License: Custom source-available attribution license. See LICENSE.md.
         <div class="adv-field">
          <label>
           Total stars in galaxy
+          <span class="calibration-badge calibration-li" tabindex="0" aria-label="Calibration status: literature-informed numerical prior" data-tooltip="Literature-informed numerical prior. The cited literature supports the approximate numerical context, but this displayed value is a model prior rather than a directly quoted value.">LI</span>
          </label>
          <input id="adv_N_total_stars" min="0" step="1000000000" type="number" value="200000000000"/>
         </div>
         <div class="adv-field">
          <label>
           Scale length (kpc)
+          <span class="calibration-badge calibration-li" tabindex="0" aria-label="Calibration status: literature-informed numerical prior" data-tooltip="Literature-informed numerical prior. The cited literature supports the approximate numerical context, but this displayed value is a model prior rather than a directly quoted value.">LI</span>
          </label>
          <input id="adv_scale_length" max="10" min="0.5" step="0.1" type="number" value="2.6"/>
         </div>
         <div class="adv-field">
          <label>
           Inner GHZ boundary (kpc)
+          <span class="calibration-badge calibration-li" tabindex="0" aria-label="Calibration status: literature-informed numerical prior" data-tooltip="Literature-informed numerical prior. The cited literature supports the approximate numerical context, but this displayed value is a model prior rather than a directly quoted value.">LI</span>
          </label>
          <input id="adv_ghz_inner" max="20" min="0" step="0.5" type="number" value="4.0"/>
         </div>
         <div class="adv-field">
          <label>
           Outer GHZ boundary (kpc)
+          <span class="calibration-badge calibration-li" tabindex="0" aria-label="Calibration status: literature-informed numerical prior" data-tooltip="Literature-informed numerical prior. The cited literature supports the approximate numerical context, but this displayed value is a model prior rather than a directly quoted value.">LI</span>
          </label>
          <input id="adv_ghz_outer" max="30" min="0" step="0.5" type="number" value="13.0"/>
         </div>
         <div class="adv-field">
          <label>
           Metallicity threshold [Fe/H]
+          <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. The cited literature supports the mechanism, but it does not provide this exact numerical value or range.">MS</span>
          </label>
          <input id="adv_met_thresh" max="1" min="-3" step="0.1" type="number" value="-1.0"/>
         </div>
@@ -1449,8 +1645,12 @@ License: Custom source-available attribution license. See LICENSE.md.
        </div>
        <div class="adv-inline-note" id="adv-ghz-result">
        </div>
-       <div class="lit-range">
-        Lineweaver et al. 2004 · Prantzos 2008 · Gowanlock et al. 2011
+       <div class="lit-range source-links">
+        <a class="source-link" href="https://doi.org/10.1126/science.1092322" target="_blank" rel="noopener noreferrer" aria-label="Open source: Lineweaver et al. 2004">Lineweaver et al. 2004 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1007/s11214-007-9236-9" target="_blank" rel="noopener noreferrer" aria-label="Open source: Prantzos 2008">Prantzos 2008 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1089/ast.2010.0555" target="_blank" rel="noopener noreferrer" aria-label="Open source: Gowanlock et al. 2011">Gowanlock et al. 2011 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
      </div>
@@ -1469,10 +1669,14 @@ License: Custom source-available attribution license. See LICENSE.md.
        <p class="adv-desc">
         Surface-habitability penalty due to sustained XUV flux, flares and CMEs.
        </p>
+       <p class="adv-overlap-note" style="font-size:9.5px;color:var(--text-dim);margin:4px 0 8px 0;">
+        This module can overlap conceptually with magnetosphere and radiation-survival terms because all involve high-energy stellar or cosmic radiation exposure. It remains multiplicative by design.
+       </p>
        <div class="adv-grid">
         <div class="adv-field">
          <label>
           f_XUV_quiet
+          <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. The cited literature supports the mechanism, but it does not provide this exact numerical value or range.">MS</span>
          </label>
          <input id="adv_f_xuv" max="1" min="0" step="0.01" type="number" value="0.60"/>
         </div>
@@ -1489,8 +1693,10 @@ License: Custom source-available attribution license. See LICENSE.md.
          <input id="adv_f_xuv_max" max="1" min="0" step="0.01" type="number" value="0.90"/>
         </div>
        </div>
-       <div class="lit-range">
-        Tilley et al. 2019 · Segura et al. 2010
+       <div class="lit-range source-links">
+        <a class="source-link" href="https://doi.org/10.1089/ast.2017.1794" target="_blank" rel="noopener noreferrer" aria-label="Open source: Tilley et al. 2019">Tilley et al. 2019 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1089/ast.2009.0376" target="_blank" rel="noopener noreferrer" aria-label="Open source: Segura et al. 2010">Segura et al. 2010 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
      </div>
@@ -1513,6 +1719,7 @@ License: Custom source-available attribution license. See LICENSE.md.
         <div class="adv-field">
          <label>
           f_uv
+          <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. The cited literature supports the mechanism, but it does not provide this exact numerical value or range.">MS</span>
          </label>
          <input id="adv_f_uv" max="1" min="0" step="0.01" type="number" value="0.45"/>
         </div>
@@ -1529,8 +1736,12 @@ License: Custom source-available attribution license. See LICENSE.md.
          <input id="adv_f_uv_max" max="1" min="0" step="0.01" type="number" value="0.70"/>
         </div>
        </div>
-       <div class="lit-range">
-        Rimmer et al. 2018 · Ranjan &amp; Sasselov 2016
+       <div class="lit-range source-links">
+        <a class="source-link" href="https://doi.org/10.1126/sciadv.aar3302" target="_blank" rel="noopener noreferrer" aria-label="Open source: Rimmer et al. 2018">Rimmer et al. 2018 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.3847/1538-4357/aa773e" target="_blank" rel="noopener noreferrer" aria-label="Open source: Ranjan et al. 2017">Ranjan et al. 2017 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1089/ast.2020.2422" target="_blank" rel="noopener noreferrer" aria-label="Open source: Ranjan et al. 2022">Ranjan et al. 2022 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
      </div>
@@ -1549,10 +1760,14 @@ License: Custom source-available attribution license. See LICENSE.md.
        <p class="adv-desc">
         Fraction of systems permitting stable habitable-zone orbits in binaries or multiples.
        </p>
+       <p class="adv-overlap-note" style="font-size:9.5px;color:var(--text-dim);margin:4px 0 8px 0;">
+        This module multiplies on top of the base orbital-stability factor (f_stab). It is useful for binary-specific dynamical filtering, but restrictive values can stack with f_stability.
+       </p>
        <div class="adv-grid">
         <div class="adv-field">
          <label>
           f_binary
+          <span class="calibration-badge calibration-li" tabindex="0" aria-label="Calibration status: literature-informed numerical prior" data-tooltip="Literature-informed numerical prior. The cited literature supports the approximate numerical context, but this displayed value is a model prior rather than a directly quoted value.">LI</span>
          </label>
          <input id="adv_f_binary" max="1" min="0" step="0.01" type="number" value="0.65"/>
         </div>
@@ -1569,8 +1784,10 @@ License: Custom source-available attribution license. See LICENSE.md.
          <input id="adv_f_binary_max" max="1" min="0" step="0.01" type="number" value="0.80"/>
         </div>
        </div>
-       <div class="lit-range">
-        Raghavan et al. 2010 · Eggl et al. 2012
+       <div class="lit-range source-links">
+        <a class="source-link" href="https://doi.org/10.1088/0067-0049/190/1/1" target="_blank" rel="noopener noreferrer" aria-label="Open source: Raghavan et al. 2010">Raghavan et al. 2010 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://ui.adsabs.harvard.edu/abs/2012ApJ...752...74E/abstract" target="_blank" rel="noopener noreferrer" aria-label="Open source: Eggl et al. 2012">Eggl et al. 2012 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
      </div>
@@ -1589,10 +1806,14 @@ License: Custom source-available attribution license. See LICENSE.md.
        <p class="adv-desc">
         Fraction surviving lethal GRB/SN exposure over multi-Gyr timescales.
        </p>
+       <p class="adv-overlap-note" style="font-size:9.5px;color:var(--text-dim);margin:4px 0 8px 0;">
+        This module can overlap conceptually with magnetosphere and space-weather shielding assumptions. Treat restrictive combined settings as a conservative compound-radiation scenario.
+       </p>
        <div class="adv-grid">
         <div class="adv-field">
          <label>
           f_rad
+          <span class="calibration-badge calibration-li" tabindex="0" aria-label="Calibration status: literature-informed numerical prior" data-tooltip="Literature-informed numerical prior. The cited literature supports the approximate numerical context, but this displayed value is a model prior rather than a directly quoted value.">LI</span>
          </label>
          <input id="adv_f_rad" max="1" min="0" step="0.01" type="number" value="0.90"/>
         </div>
@@ -1609,8 +1830,10 @@ License: Custom source-available attribution license. See LICENSE.md.
          <input id="adv_f_rad_max" max="1" min="0" step="0.01" type="number" value="0.95"/>
         </div>
        </div>
-       <div class="lit-range">
-        Piran &amp; Jiménez 2014 · Lingam &amp; Loeb 2019
+       <div class="lit-range source-links">
+        <a class="source-link" href="https://doi.org/10.1103/PhysRevLett.113.231102" target="_blank" rel="noopener noreferrer" aria-label="Open source: Piran &amp; Jiménez 2014">Piran &amp; Jiménez 2014 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1103/RevModPhys.91.021002" target="_blank" rel="noopener noreferrer" aria-label="Open source: Lingam &amp; Loeb 2019">Lingam &amp; Loeb 2019 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
      </div>
@@ -1633,6 +1856,7 @@ License: Custom source-available attribution license. See LICENSE.md.
         <div class="adv-field">
          <label>
           Stellar mass (M☉)
+          <span class="calibration-badge calibration-lc" tabindex="0" aria-label="Calibration status: literature-calibrated or reference default" data-tooltip="Solar-reference default. This value is used as a standard astronomical reference point, not as an uncertain biological prior.">LC</span>
          </label>
          <input id="adv_ard_mass" max="2.0" min="0.1" step="0.1" type="number" value="1.0"/>
         </div>
@@ -1651,15 +1875,18 @@ License: Custom source-available attribution license. See LICENSE.md.
         </div>
         <div class="adv-field">
          <label>
-          System age (Gyr)
+         System age (Gyr)
+          <span class="calibration-badge calibration-lc" tabindex="0" aria-label="Calibration status: literature-calibrated or reference default" data-tooltip="Solar-age reference default. This value is used as a standard astronomical reference point for the current Sun-Earth context.">LC</span>
          </label>
          <input id="adv_ard_age" max="12" min="0.5" step="0.5" type="number" value="4.6"/>
         </div>
        </div>
        <div class="adv-inline-note" id="adv-ard-result">
        </div>
-       <div class="lit-range">
-        Ribas et al. 2005 · Van Looveren et al. 2025
+       <div class="lit-range source-links">
+        <a class="source-link" href="https://doi.org/10.1086/427977" target="_blank" rel="noopener noreferrer" aria-label="Open source: Ribas et al. 2005">Ribas et al. 2005 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1051/0004-6361/202452998" target="_blank" rel="noopener noreferrer" aria-label="Open source: Van Looveren et al. 2025">Van Looveren et al. 2025 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
      </div>
@@ -1701,6 +1928,7 @@ License: Custom source-available attribution license. See LICENSE.md.
         <div class="adv-field">
          <label>
           Galactocentric R (kpc)
+          <span class="calibration-badge calibration-lc" tabindex="0" aria-label="Calibration status: literature-calibrated or reference default" data-tooltip="Solar-neighborhood reference default. The value is used as a standard galactocentric reference point for the model.">LC</span>
          </label>
          <input id="adv_temporal_R" max="20" min="1" step="0.5" type="number" value="8.0"/>
         </div>
@@ -1709,8 +1937,10 @@ License: Custom source-available attribution license. See LICENSE.md.
        </div>
        <div class="adv-inline-note" id="adv-temporal-text">
        </div>
-       <div class="lit-range">
-        Lineweaver et al. 2004 · Gowanlock et al. 2011
+       <div class="lit-range source-links">
+        <a class="source-link" href="https://doi.org/10.1126/science.1092322" target="_blank" rel="noopener noreferrer" aria-label="Open source: Lineweaver et al. 2004">Lineweaver et al. 2004 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">·</span>
+        <a class="source-link" href="https://doi.org/10.1089/ast.2010.0555" target="_blank" rel="noopener noreferrer" aria-label="Open source: Gowanlock et al. 2011">Gowanlock et al. 2011 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
      </div>
@@ -1784,14 +2014,24 @@ License: Custom source-available attribution license. See LICENSE.md.
         </div>
        </div>
        <div class="input-note">
-        Optional reference distance for external or custom galaxies.
+       Optional reference distance for external or custom galaxies.
        </div>
       </div>
+     </div>
+     <div class="input-note galaxy-source-note">
+      Galaxy presets are model inputs. Star counts and geometry are approximate and should be treated as configurable priors unless a specific source table is selected.
+      <span class="calibration-badge calibration-li" tabindex="0" aria-label="Calibration status: literature-informed numerical prior" data-tooltip="Literature-informed numerical prior. Galaxy preset star counts and geometry use approximate numerical context, but each displayed value is a model prior rather than a directly quoted value from one source table. M31 and Centaurus A require future recalibration from a consistent stellar-mass/star-count source table.">LI</span>
      </div>
      <div class="distance-models-title">
       Distance Models
      </div>
      <div class="distance-models-row">
+      <label class="distance-model-option" for="model-radial">
+       <input checked="" id="model-radial" type="checkbox"/>
+       <span class="toggle-label-text">
+        Radial density model
+       </span>
+      </label>
       <label class="distance-model-option" for="model-2d">
        <input checked="" id="model-2d" type="checkbox"/>
        <span class="toggle-label-text">
@@ -1811,9 +2051,54 @@ License: Custom source-available attribution license. See LICENSE.md.
        </span>
       </label>
      </div>
+     <div class="input-note">The radial density model uses a non-uniform exponential-disk Poisson approximation for the Milky Way. The other distance models remain comparison geometries.</div>
     </div>
    </div>
    <div class="results-panel">
+   <details class="core-equations-panel" id="core-equations-panel">
+    <summary class="core-equations-title">Core equations used by the calculator</summary>
+    <div class="core-equations-body">
+
+     <div class="ceq-group">
+      <div class="ceq-label">Deterministic modelled candidate count</div>
+      <div class="ceq-formula">
+       \[ N = N_{\mathrm{GHZ}}\;f_{\odot}\;f_{\mathrm{age}}\;N_p\;f_{\mathrm{rocky}}\;f_{\mathrm{HZ}}\;f_{\mathrm{stab}}\;f_B\;f_{\mathrm{moon}}\;f_{\mathrm{size}}\;f_{\omega}\;f_{\varepsilon}\;f_{H_2O}\;f_{\mathrm{CHNOPS}}\;f_{\mathrm{life}}\;f_x \]
+      </div>
+      <div class="ceq-note">Disabled optional filters are treated as 1. Advanced module factors multiply this base product.</div>
+     </div>
+
+     <div class="ceq-group">
+      <div class="ceq-label">Poisson existence probability</div>
+      <div class="ceq-formula">\[ P(\geq 1) = 1 - e^{-N} \]</div>
+      <div class="ceq-note">Used when the expected count is below one and nearest-neighbour distance is suppressed.</div>
+     </div>
+
+     <div class="ceq-group">
+      <div class="ceq-label">Observable-universe scaling</div>
+      <div class="ceq-formula">\[ Y_{\star} = \frac{N}{N_{\mathrm{GHZ}}} \qquad N_{\mathrm{universe}} = Y_{\star}\, N_{\star,\mathrm{obs}} \quad (N_{\star,\mathrm{obs}} \approx 10^{22}\text{–}10^{24}) \]</div>
+      <div class="ceq-note">Scaling uses per-star yield, not direct galaxy multiplication. N<sub>GHZ</sub> changes the galaxy count and the per-star yield simultaneously.</div>
+     </div>
+
+     <div class="ceq-group">
+      <div class="ceq-label">Nearest-neighbour distance — uniform models</div>
+      <div class="ceq-formula">\[ \text{2D annulus:}\quad \lambda = \frac{N}{A_{\mathrm{GHZ}}}, \quad E[R] = \frac{\Gamma(3/2)}{(\lambda \pi)^{1/2}} \]</div>
+      <div class="ceq-formula">\[ \text{3D disk:}\quad \lambda = \frac{N}{V_{\mathrm{disk}}}, \quad E[R] = \frac{\Gamma(4/3)}{\left(\lambda \cdot \frac{4\pi}{3}\right)^{1/3}} \]</div>
+      <div class="ceq-note">The radial GHZ model uses a non-uniform density profile instead of a flat λ; see Distance Model Method docs.</div>
+     </div>
+
+     <div class="ceq-group">
+      <div class="ceq-label">Fermi / detectability context</div>
+      <div class="ceq-formula">\[ N_{\mathrm{tx}} = N\, f_{\mathrm{tx}} \]</div>
+      <div class="ceq-formula">\[ N_{\mathrm{det}} = N_{\mathrm{tx}} \cdot \frac{A_{\mathrm{horizon}}}{A_{\mathrm{GHZ}}} \cdot \frac{L}{T_{\mathrm{gal}}} \]</div>
+      <div class="ceq-formula">\[ P(\geq 1\ \text{detectable}) = 1 - e^{-N_{\mathrm{det}}} \]</div>
+      <div class="ceq-note">L = assumed transmitter lifetime (yr); T<sub>gal</sub> = 13.5 × 10⁹ yr; A<sub>horizon</sub> = detection-range area.</div>
+     </div>
+
+     <div class="ceq-caution">These equations describe modelled candidates under the selected scenario. They are not a direct census of confirmed planets.</div>
+
+    </div>
+   </details>
+
    <h2>
      Results
     </h2>
@@ -1824,12 +2109,22 @@ License: Custom source-available attribution license. See LICENSE.md.
      <div id="config-alerts-body">
      </div>
     </div>
-    <p class="result-line" id="deterministicResult">
-    </p>
-    <p class="result-line" id="monteCarloResult">
-    </p>
-    <p class="result-line" id="stats">
-    </p>
+    <div class="result-summary-box" id="result-summary-box">
+     <p class="result-line" id="deterministicResult">
+     </p>
+     <p class="result-line" id="monteCarloResult">
+     </p>
+     <p class="result-line" id="monteCarloMedian">
+     </p>
+     <p class="result-line" id="stats">
+     </p>
+     <p class="result-line" id="simulationModel" style="display:none;">
+     </p>
+     <p class="result-line" id="robustEnvelopeResult" style="display:none;">
+     </p>
+     <p class="result-line" id="distance">
+     </p>
+    </div>
     <div class="status-box result-reality-check" id="result-reality-check">
      <div class="status-title">
       ⚠ Earth Reality Check
@@ -1837,22 +2132,16 @@ License: Custom source-available attribution license. See LICENSE.md.
      <div class="status-copy" id="result-reality-copy">
      </div>
     </div>
-    <p class="result-line" id="simulationModel" style="display:none;">
-    </p>
-    <p class="result-line" id="robustEnvelopeResult" style="display:none;">
-    </p>
-    <p class="result-line" id="distance">
-    </p>
     <div class="fermi-box" id="fermi-box">
      <div class="fermi-head">
       <div class="fermi-title">
-       ⚡ Interpretation &amp; Fermi Context
+       ∴ Interpretation &amp; Fermi Context
       </div>
       <div class="fermi-toggle" id="fermi-toggle">
-       <button class="fermi-toggle-btn active" id="fermi-mode-mc" type="button">
+       <button class="fermi-toggle-btn" id="fermi-mode-mc" type="button">
         MC Result
        </button>
-       <button class="fermi-toggle-btn" id="fermi-mode-dt" type="button">
+       <button class="fermi-toggle-btn active" id="fermi-mode-dt" type="button">
        DT Result
        </button>
       </div>
@@ -2011,7 +2300,7 @@ License: Custom source-available attribution license. See LICENSE.md.
     </div>
     <div class="nt-intro">
      <strong>What this shows 〰 in plain terms:</strong> The galaxy is about 13.5 billion years old 〰 almost three times the age of our Sun. This chart shows how the population of potentially habitable planets grew over that vast stretch of time. The answer is far from uniform.<br><br>
-     In the very early galaxy, rocky Earth-like planets simply <em>could not exist</em>. The heavy elements needed to build them 〰 iron, silicon, magnesium, carbon 〰 had not yet been forged inside stars and scattered by supernovae. The universe started almost entirely as hydrogen and helium. Only after billions of years of stellar generations did enough "cosmic ingredients" accumulate for rocky planets to form.<br><br>
+     In the very early galaxy, rocky Earth-like worlds simply <em>could not exist</em>. The heavy elements needed to build them 〰 iron, silicon, magnesium, carbon 〰 had not yet been forged inside stars and scattered by supernovae. The universe started almost entirely as hydrogen and helium. Only after billions of years of stellar generations did enough "cosmic ingredients" accumulate for rocky planets to form.<br><br>
      <strong style="color:rgba(224,92,92,0.85);">Red region (left) = pre-metallicity era.</strong> Too early. Rocky planets could not yet form in sufficient numbers.<br>
      <strong style="color:rgba(78,204,163,0.85);">Green region (right) = biological window.</strong> Enough heavy elements exist; conditions are suitable.<br>
      <strong style="color:#d4a843;">Yellow dashed line = when our Sun was born</strong> (~8.9 billion years after the Big Bang).<br><br>
@@ -2029,21 +2318,25 @@ License: Custom source-available attribution license. See LICENSE.md.
      <span>· Detection Horizon &amp; Timing Filter</span>
     </div>
    <div class="nt-intro">
-     <strong>The problem in plain terms:</strong> The calculator tells you how many Earth-like planets <em>may exist</em>. But existence is not the same as detectability. Even if a million civilisations are out there, most of them are invisible to us 〰 either too far away, or transmitting at the wrong time in history.<br><br>
+     <strong>The problem in plain terms:</strong> The calculator estimates how many modelled Earth-like candidates a scenario implies <em>may exist</em>. But existence is not the same as detectability. Even if a million civilisations are out there, most of them are invisible to us 〰 either too far away, or transmitting at the wrong time in history.<br><br>
      There are two separate barriers working against detection:<br><br>
      <strong>1 · The distance barrier.</strong> Signals travel at the speed of light 〰 1 light-year per year. If a civilisation is 10,000 light-years away, their signal needs 10,000 years to reach us. So we can only hear from civilisations within a certain range, determined by how long they have been transmitting. That range is called the <em>detection horizon</em>.<br><br>
      <strong>2 · The timing barrier.</strong> Even a civilisation within range is only detectable if it happens to be transmitting <em>right now</em>. The galaxy is 13.5 billion years old. If a civilisation transmits for only 1,000 years and then goes quiet, the odds that their broadcast window overlaps with ours today is roughly 1,000 ÷ 13,500,000,000 〰 about one in thirteen million.<br><br>
-     <strong>Both barriers multiply together.</strong> A civilisation must be close enough <em>and</em> transmitting at the same time as us. This is why the detectable number is often drastically smaller than the raw count of habitable planets.<br><br>
-     <strong>One more assumption is needed:</strong> the calculator itself estimates Earth-like planets, not confirmed transmitting societies. The <strong>f_tx</strong> control below is an explicit conversion factor: the share of Earth-like planets you assume eventually produce a detectable transmitter. Setting <strong>f_tx = 1</strong> is an intentionally optimistic upper bound.<br><br>
+     <strong>Both barriers multiply together.</strong> A civilisation must be close enough <em>and</em> transmitting at the same time as us. This is why the detectable number is often drastically smaller than the raw modelled candidate count.<br><br>
+     <strong>One more assumption is needed:</strong> the calculator itself estimates modelled Earth-like candidates, not confirmed transmitting societies. The <strong>f_tx</strong> control below is an explicit conversion factor: the share of modelled Earth-like candidates you assume eventually produce a detectable transmitter. Setting <strong>f_tx = 1</strong> is an intentionally optimistic upper bound.<br><br>
      <strong>How to use the controls below:</strong> Set <strong>L</strong> to your assumed detectable-lifetime in years and <strong>f_tx</strong> to your civilisation/transmitter prior. Try different values 〰 both assumptions have a very large effect on the answer.
     </div>
     <div class="det-input-row">
-     <label for="detection-L">How long does a civilisation remain detectable? L =</label>
+     <label for="detection-L">How long does a civilisation remain detectable? L =
+      <span class="calibration-badge calibration-mp" tabindex="0" aria-label="Calibration status: user-supplied model prior" data-tooltip="User-supplied model prior. This detectable-lifetime assumption is not an observed probability and does not change the calculator's Earth-like planet estimate. This badge does not mean the module is invalid.">MP</span>
+     </label>
      <input type="number" id="detection-L" value="30000" min="1" max="10000000000" step="100" style="width:130px;padding:5px 8px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'Nunito',sans-serif;font-size:12px;">
      <span style="font-size:10px;color:var(--text-dim);">years</span>
-     <label for="detection-f_tx" style="margin-left:10px;">Transmitter fraction f_tx =</label>
+     <label for="detection-f_tx" style="margin-left:10px;">Transmitter fraction f_tx =
+      <span class="calibration-badge calibration-mp" tabindex="0" aria-label="Calibration status: user-supplied model prior" data-tooltip="User-supplied model prior. This transmitter fraction represents whether an Earth-like planet ever produces a detectable transmitter; it is not observed. This badge does not mean the module is invalid.">MP</span>
+     </label>
      <input type="number" id="detection-f_tx" value="0.01" min="0" max="1" step="0.0001" style="width:110px;padding:5px 8px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'Nunito',sans-serif;font-size:12px;">
-     <span style="font-size:10px;color:var(--text-dim);">share of Earth-like planets that reach detectable signalling</span>
+     <span style="font-size:10px;color:var(--text-dim);">share of modelled Earth-like candidates that reach detectable signalling</span>
      <button class="btn" id="recomputeDetBtn" type="button" style="padding:5px 10px;font-size:10px;">Recompute</button>
     </div>
     <div class="det-preset-row">
@@ -2052,6 +2345,8 @@ License: Custom source-available attribution license. See LICENSE.md.
      <button class="det-mini-btn" data-detection-preset="optimistic" data-tone="optimistic" id="det-preset-optimistic" type="button">Optimistic</button>
      <span style="font-size:9.5px;color:var(--text-dim);">Pessimistic = L 3,000 and f_tx 0.0001 · Optimistic = L 30,000 and f_tx 0.01</span>
     </div>
+    <div class="input-note detection-prior-note">Detection L and f_tx are user-supplied model priors. The timing term L / galaxy age is a temporal-overlap factor and does not include f_tx.</div>
+    <div class="input-note detection-prior-note">The combined result is an expected-value model result: modelled Earth-like candidates are filtered by f_tx, geometric reach, and temporal overlap. When this expected value is below 1, the display may show it as "1 in X" so the tiny Poisson mean is readable; it is not a confirmed detection count.</div>
     <div id="detection-results"></div>
    </div>
 
@@ -2093,16 +2388,16 @@ License: Custom source-available attribution license. See LICENSE.md.
         Galaxy
        </th>
        <th>
-        Average
+        MC q50
        </th>
        <th>
-        95% CI Low
+        95% Model Low
        </th>
        <th>
-        95% CI High
+        95% Model High
        </th>
        <th>
-        Dist. 2D (ly)
+        Displayed distance basis
        </th>
       </tr>
      </thead>
@@ -2118,12 +2413,13 @@ License: Custom source-available attribution license. See LICENSE.md.
     </div>
    </div>
    <div class="footer">
-    <span>Are We Alone in the Universe? Earth-like Planet Calculator · © Roman Jerše · https://www.arewealoneintheuniverse.com/</span>
+    <span>© Are We Alone in the Universe? Research modelling tool v2.13 · Also by the author of: <a href="https://www.apocalypseclock.com/" rel="noopener noreferrer" target="_blank" style="text-decoration:none;color:inherit;">Apocalypse Clock</a></span>
    </div>
   </div>
   <div id="copy-tooltip">
    Copied!
   </div>
+  <script src="src/scientific-parameters.js"></script>
   <script src="src/calculator-core.js"></script>
 <script src="src/charts.js"></script>
 <script src="src/share.js"></script>

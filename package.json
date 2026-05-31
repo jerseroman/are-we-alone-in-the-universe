@@ -1,0 +1,32 @@
+{
+  "name": "are-we-alone-in-the-universe",
+  "version": "2.13.0",
+  "description": "Static browser-based Earth-like planet calculator for transparent astrobiological scenario modelling.",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jerseroman/are-we-alone-in-the-universe"
+  },
+  "license": "SEE LICENSE IN LICENSE.md",
+  "scripts": {
+    "verify": "node tools/verify-static-site.mjs",
+    "check:syntax": "node tools/check-syntax.mjs",
+    "test:numerics": "node tools/test-numerics.mjs",
+    "test:strings": "node tools/test-strings.mjs",
+    "test:presets": "node tools/test-presets.mjs",
+    "test:montecarlo": "node tools/test-montecarlo.mjs",
+    "test:pessimist-mc": "node tools/test-pessimist-mc.mjs",
+    "test:scenario-coherence": "node tools/test-scenario-coherence.mjs",
+    "test:universe-scale": "node tools/test-universe-scale-coherence.mjs",
+    "test:state-transition": "npm run test:state-transition:core",
+    "test:state-transition:core": "node tools/test-state-transition-coherence.mjs --core",
+    "test:state-transition:deep": "node tools/test-state-transition-coherence.mjs --deep",
+    "test:preset-state-reset": "node tools/test-preset-state-reset.mjs",
+    "test:calibration": "node tools/test-calibration-markers.mjs",
+    "test:source-links": "node tools/test-visible-source-links.mjs",
+    "test:biogeo-sources": "node tools/test-bio-geophysical-sources.mjs",
+    "test:absolute": "node tools/test-absolute-deep-audit.mjs",
+    "test:deep": "npm run test:state-transition:deep",
+    "test:all": "npm run verify && npm run check:syntax && npm run test:numerics && npm run test:strings && npm run test:presets && npm run test:montecarlo && npm run test:pessimist-mc && npm run test:scenario-coherence && npm run test:universe-scale && npm run test:state-transition:core && npm run test:preset-state-reset && npm run test:calibration && npm run test:source-links && npm run test:biogeo-sources"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "creators": [
+    {
+      "name": "Jerše, Roman"
+    }
+  ],
+  "title": "Are We Alone in the Universe? Earth-like Planet Calculator",
+  "version": "2.13",
+  "publication_date": "2026-05-23",
+  "upload_type": "software",
+  "access_right": "open",
+  "license": "other-nc",
+  "language": "eng",
+  "keywords": [
+    "astrobiology",
+    "exoplanets",
+    "habitability",
+    "planetary habitability",
+    "Galactic Habitable Zone",
+    "Earth-like candidates",
+    "modelled Earth-like candidates",
+    "Drake equation",
+    "Fermi paradox",
+    "rare Earth hypothesis",
+    "Monte Carlo uncertainty propagation",
+    "scenario analysis",
+    "scientific calculator",
+    "browser-based software",
+    "source-available research software",
+    "reproducible modelling",
+    "uncertainty modelling",
+    "Poisson point process",
+    "nearest-neighbour distance scale",
+    "Milky Way"
+  ],
+  "description": "<p>Are We Alone in the Universe? Earth-like Planet Calculator is a static browser-based scientific modelling tool for exploring assumptions about potentially Earth-like candidates across the Milky Way and the observable universe.</p><p>The calculator uses transparent astrophysical and planetary factors, scenario presets, Monte Carlo uncertainty propagation, calibration-status badges, source links, and nearest-neighbour distance models. Version 2.13 improves source traceability, calibration wording, Monte Carlo interval semantics, and radial-density nearest-distance modelling while preserving the core multiplicative model structure.</p><p>This software is exploratory. It is not an observational exoplanet catalogue and must not be interpreted as direct observational evidence or as a confirmed count of life-bearing or technological worlds.</p>",
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/jerseroman/are-we-alone-in-the-universe",
+      "relation": "isDerivedFrom",
+      "resource_type": "software"
+    },
+    {
+      "identifier": "https://www.arewealoneintheuniverse.com/",
+      "relation": "isSupplementTo",
+      "resource_type": "other"
+    },
+    {
+      "identifier": "https://jerseroman.github.io/are-we-alone-in-the-universe/",
+      "relation": "isSupplementTo",
+      "resource_type": "other"
+    }
+  ],
+  "notes": "Zenodo license identifier other-nc is used as the closest controlled-vocabulary match for the project's custom source-available non-commercial attribution license. The authoritative reuse terms are in LICENSE.md, NOTICE.md, and docs/REUSE_AND_ATTRIBUTION.md. Source-available does not mean open source. Commercial use requires prior explicit written permission from Roman Jerše."
+}

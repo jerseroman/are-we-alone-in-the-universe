@@ -1,14 +1,15 @@
-/*
-Are We Alone in the Universe? Earth-like Planet Calculator
-Author: Roman Jerše
-Website: https://www.arewealoneintheuniverse.com/
-Version: 2.12
-License: Custom source-available attribution license. See ../LICENSE.md.
-*/
-
 let monteCarloChart = null;
 
 let gaussianChart = null;
+
+function markChartStale(stale) {
+  ['monteCarloChart', 'gaussianChart'].forEach(id => {
+    const el = byId(id);
+    if (!el) return;
+    if (!el.dataset) el.dataset = {};
+    el.dataset.stale = stale ? 'true' : 'false';
+  });
+}
 
 const SENS = {
   storage: {},
@@ -172,7 +173,11 @@ function getModeEstimate(results, useLogScale) {
 
 function rebuildCharts(results) {
   const n = results.length;
-  if (!n || !monteCarloChart || !gaussianChart) return;
+  if (!n || !monteCarloChart || !gaussianChart) {
+    if (!n) markChartStale(true);
+    return;
+  }
+  markChartStale(false);
 
   const canUseLog = currentScale === 'log' && results.every(v => v > 0);
   const numBins = Math.max(20, Math.ceil(1 + Math.log2(n)) * 3);
@@ -264,7 +269,7 @@ function rebuildCharts(results) {
         categories: histLabels,
         tickAmount: 6,
         title: {
-          text: canUseLog ? 'log-scaled planet count bins' : 'Number of Earth-like Planets',
+          text: canUseLog ? 'log-scaled candidate-count bins' : 'Model-selected candidate count',
           style: {
             fontSize: '9px',
             fontFamily: 'Nunito,sans-serif',
@@ -293,6 +298,25 @@ function rebuildCharts(results) {
   );
 }
 
+function clearCharts() {
+  markChartStale(true);
+
+  if (monteCarloChart && typeof monteCarloChart.updateSeries === 'function') {
+    monteCarloChart.updateSeries([{ name: 'Frequency (%)', data: [] }], true);
+    if (typeof monteCarloChart.updateOptions === 'function') {
+      monteCarloChart.updateOptions({ xaxis: { categories: [] } }, true);
+    }
+  }
+
+  if (gaussianChart && typeof gaussianChart.updateSeries === 'function') {
+    gaussianChart.updateSeries([{ name: 'KDE Density', data: [] }], true);
+    if (typeof gaussianChart.updateOptions === 'function') {
+      gaussianChart.updateOptions({ xaxis: { categories: [] } }, true);
+    }
+  }
+}
+window.clearCharts = clearCharts;
+
 function initCharts() {
   monteCarloChart = new ApexCharts(byId('monteCarloChart'), {
     chart: {
@@ -309,7 +333,7 @@ function initCharts() {
     xaxis: {
       categories: [],
       title: {
-        text: 'Number of Earth-like Planets',
+        text: 'Model-selected candidate count',
         style: { fontSize: '9px', fontFamily: 'Nunito,sans-serif', color: '#6b7280' }
       },
       labels: {

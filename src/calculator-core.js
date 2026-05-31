@@ -1,11 +1,3 @@
-/*
-Are We Alone in the Universe? Earth-like Planet Calculator
-Author: Roman Jerše
-Website: https://www.arewealoneintheuniverse.com/
-Version: 2.12
-License: Custom source-available attribution license. See ../LICENSE.md.
-*/
-
 function byId(id) {
   return document.getElementById(id);
 }
@@ -92,6 +84,40 @@ function fmtPct(p) {
   return '1 in ' + Math.round(inv).toLocaleString();
 }
 
+// Format a Poisson existence probability (value in [0, 1]).
+// For very small but nonzero probabilities (< 0.01 %) the plain .toFixed(1/2)
+// formatters would display "0.0%" or "0.00%", which looks like exactly zero.
+// This function always shows the actual nonzero value and, below the 0.01%
+// threshold, also appends the "1 in X" odds for readability.
+// plain=true returns ASCII-only text (for HTML title/tooltip attributes).
+function fmtExistencePct(prob, plain = false) {
+  if (!Number.isFinite(prob) || prob <= 0) return '0%';
+  if (prob >= 1) return '100%';
+
+  const pct = prob * 100;
+
+  // Normal range (>= 0.01 %): delegate to the standard fmtPct which already
+  // handles precision well down to 0.0001 % before switching to "1 in X".
+  if (pct >= 0.01) return fmtPct(pct);
+
+  // Sub-0.01 % range: always show the numeric percentage AND the odds.
+  const pctStr = pct >= 1e-6
+    ? '≈ ' + pct.toFixed(8).replace(/\.?0+$/, '') + '%'
+    : '≈ ' + pct.toExponential(2) + '%';
+
+  const inv = 1 / prob;
+  let odds;
+  if (inv >= 1e12)      odds = 'about 1 in ' + (inv / 1e12).toFixed(1) + ' trillion';
+  else if (inv >= 1e9)  odds = 'about 1 in ' + (inv / 1e9).toFixed(1) + ' billion';
+  else if (inv >= 1e6)  odds = 'about 1 in ' + (inv / 1e6).toFixed(1) + ' million';
+  else                  odds = 'about 1 in ' + Math.round(inv).toLocaleString();
+
+  const sep = plain ? ' / ' : ' · ';
+  return pctStr + sep + odds;
+}
+
+globalThis.fmtExistencePct = fmtExistencePct;
+
 function percentile(sorted, p) {
   if (!sorted.length) return 0;
   const idx = (sorted.length - 1) * p;
@@ -115,6 +141,64 @@ function stdev(arr, m = null) {
   return Math.sqrt(Math.max(0, variance));
 }
 
+const UNIVERSE_STAR_RANGE = {
+  min: 1e22,
+  max: 1e24
+};
+
+function computeUniverseScaleFromYield(perStarYield, starRange = UNIVERSE_STAR_RANGE) {
+  const yieldValue = Number.isFinite(perStarYield) ? Math.max(0, perStarYield) : 0;
+  const minStars = Number.isFinite(starRange.min) ? Math.max(0, starRange.min) : UNIVERSE_STAR_RANGE.min;
+  const maxStars = Number.isFinite(starRange.max) ? Math.max(minStars, starRange.max) : UNIVERSE_STAR_RANGE.max;
+
+  return {
+    perStarYield: yieldValue,
+    minStars,
+    maxStars,
+    min: yieldValue * minStars,
+    max: yieldValue * maxStars
+  };
+}
+
+function summarizePerStarYields(samples) {
+  const valid = (samples || [])
+    .filter(value => Number.isFinite(value) && value >= 0)
+    .slice()
+    .sort((a, b) => a - b);
+
+  if (!valid.length) {
+    return {
+      n: 0,
+      mean: 0,
+      p025: 0,
+      p975: 0,
+      scaleMean: computeUniverseScaleFromYield(0),
+      scaleP025: computeUniverseScaleFromYield(0),
+      scaleP975: computeUniverseScaleFromYield(0),
+      basis: 'none'
+    };
+  }
+
+  const yieldMean = mean(valid);
+  const yieldP025 = percentile(valid, 0.025);
+  const yieldP500 = percentile(valid, 0.500);
+  const yieldP975 = percentile(valid, 0.975);
+
+  return {
+    n: valid.length,
+    mean: yieldMean,
+    median: yieldP500,
+    p025: yieldP025,
+    p500: yieldP500,
+    p975: yieldP975,
+    scaleMean: computeUniverseScaleFromYield(yieldMean),
+    scaleMedian: computeUniverseScaleFromYield(yieldP500),
+    scaleP025: computeUniverseScaleFromYield(yieldP025),
+    scaleP975: computeUniverseScaleFromYield(yieldP975),
+    basis: 'per-sample-yield'
+  };
+}
+
 function lifeLabel() {
   if (isComplexLifeEnabled && isXEnabled) return ' (incl. complex life + f_x)';
   if (isComplexLifeEnabled) return ' (incl. complex life)';
@@ -132,11 +216,16 @@ function sanitizePositive(v, fallback = 0) {
 
 let deterministicPlanets = 0;
 
-let averagePlanets = 0;
+// Primary Monte Carlo point estimate: the q50 median of the sample
+// distribution. The arithmetic mean is tracked separately so exports and UI
+// never label the median as an average.
+let mcMedianQ50 = 0;
 
-let percentile5 = 0;
+let mcArithmeticMean = 0;
 
-let percentile95 = 0;
+let mcQ025 = 0;
+
+let mcQ975 = 0;
 
 let mostFrequent = 0;
 
@@ -160,6 +249,22 @@ let minDistance3DSphere = Infinity;
 
 let maxDistance3DSphere = Infinity;
 
+let distanceRadial = Infinity;
+
+let minDistanceRadial = Infinity;
+
+let maxDistanceRadial = Infinity;
+
+let activeDistanceModel = null;
+
+let activeDistanceBasis = 'not calculated';
+
+let activeDistanceCountBasis = 'not calculated';
+
+let displayedDistanceValue = null;
+
+let displayedDistanceLabel = 'not calculated';
+
 let areaGHZ = 0;
 
 let volumeGHZDisk = 0;
@@ -167,6 +272,12 @@ let volumeGHZDisk = 0;
 let volumeGHZSphere = 0;
 
 let simulationCompleted = false;
+
+// Tri-state Monte Carlo lifecycle, distinct from the boolean simulationCompleted:
+//   'not-run' - MC has never completed for the current scenario/session state
+//   'current' - MC completed and still matches the current input state
+//   'stale'   - MC completed previously but was invalidated by a state change
+let monteCarloState = 'not-run';
 
 let distanceCalculated = false;
 
@@ -184,9 +295,14 @@ let galaxyName = 'Milky Way (MW)';
 
 let galaxySettingsBaseline = null;
 
-let bayesianMode = 'pre';
+let bayesianMode = 'post';
 
-let fermiMode = 'mc';
+// Default Interpretation & Fermi Context view uses the DETERMINISTIC result.
+// For scenario-based presets, the deterministic chain product represents the
+// scenario's point answer; the MC distribution propagates full literature-
+// informed uncertainty and is best treated as a secondary informational view
+// available via the MC RESULT toggle in the Fermi panel.
+let fermiMode = 'dt';
 
 let fermiContexts = { mc: null, dt: null };
 
@@ -194,15 +310,46 @@ let currentScale = 'log';
 
 let activePreset = '';
 
+let scenarioState = 'custom';
+
+let modifiedPresetOrigin = '';
+
+// Backwards-compatible no-ops: the per-field edit tracking that powered the
+// hybrid modified-Pessimist mode has been removed. The functions remain so
+// callers in app.js continue to work without conditional checks.
+function clearParameterFieldEdits() {}
+function recordParameterFieldEdit() {}
+function isParameterFieldEdited() {
+  return false;
+}
+
 let intervalsVisible = false;
 
 let lastResults = [];
+
+let lastSampleYields = [];
+
+let monteCarloYieldStats = null;
 
 let convergenceSummary = null;
 
 let simulationEnvelope = null;
 
+let monteCarloBoundsMode = '';
+
+let monteCarloBoundsLabel = '';
+
+let monteCarloUncertaintyBasisLabel = '';
+
+let monteCarloIntervalComparison = null;
+
 let hasDeterministicCalculation = false;
+
+let inputValidationWarnings = [];
+
+let boundIntervalWarnings = [];
+
+let boundValidationWarnings = [];
 
 const DETECTION_PRESETS = {
   pessimistic: { L: 3000, f_tx: 0.0001 },
@@ -284,6 +431,9 @@ const POSITIVE_FIELDS = new Set([
   'adv_N_total_stars'
 ]);
 
+// Export so app.js (and tests) can use the canonical set without duplication.
+globalThis.PROBABILITY_FIELDS_GLOBAL = PROBABILITY_FIELDS;
+
 const BASE_SAMPLE_IDS = [
   'N_GHZ',
   'f_sun_type',
@@ -302,6 +452,25 @@ const BASE_SAMPLE_IDS = [
   'f_complex_life',
   'f_x'
 ];
+
+const DEFAULT_PARAMETER_BOUNDS = Object.freeze({
+  N_GHZ: Object.freeze({ min: 5000000000, max: 40000000000 }),
+  f_sun_type: Object.freeze({ min: 0.07, max: 0.20 }),
+  f_sun_age: Object.freeze({ min: 0.60, max: 0.80 }),
+  N_p_star: Object.freeze({ min: 1.0, max: 2.5 }),
+  f_composition: Object.freeze({ min: 0.15, max: 0.35 }),
+  f_orbit: Object.freeze({ min: 0.10, max: 0.21 }),
+  f_stability: Object.freeze({ min: 0.30, max: 0.70 }),
+  f_magnetosphere: Object.freeze({ min: 0.20, max: 0.70 }),
+  f_lunar_stability: Object.freeze({ min: 0.20, max: 0.80 }),
+  f_size: Object.freeze({ min: 0.30, max: 0.65 }),
+  f_rotation: Object.freeze({ min: 0.15, max: 0.35 }),
+  f_tilt: Object.freeze({ min: 0.30, max: 0.65 }),
+  f_H2O: Object.freeze({ min: 0.05, max: 0.30 }),
+  f_CHNOPS: Object.freeze({ min: 0.05, max: 0.50 }),
+  f_complex_life: Object.freeze({ min: 0.000000001, max: 1.0 }),
+  f_x: Object.freeze({ min: 0.5, max: 1.0 })
+});
 
 const ADV_SAMPLE_IDS = [
   'adv_f_atm_ret',
@@ -331,6 +500,168 @@ const ADV_SOBOL_CONFIG = {
   adv_P_rocky: { module: 'radiusValley', key: 'f_composition' }
 };
 
+function getControlBound(el, attrName, fallback) {
+  if (!el) return fallback;
+  const raw =
+    typeof el.getAttribute === 'function'
+      ? el.getAttribute(attrName)
+      : el[attrName];
+  if (raw === null || raw === undefined || String(raw).trim() === '') return fallback;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function formatValidationValue(value) {
+  if (value === '') return 'empty';
+  if (value === null || value === undefined) return 'missing';
+  return String(value);
+}
+
+function getValidationLabel(id) {
+  return (typeof SENS_LABELS !== 'undefined' && SENS_LABELS[id]) || id;
+}
+
+function beginInputValidationPass() {
+  inputValidationWarnings = [];
+}
+
+function clearInputValidationWarnings() {
+  inputValidationWarnings = [];
+  clearBoundIntervalWarnings();
+}
+
+function getInputValidationWarnings() {
+  return inputValidationWarnings.slice();
+}
+
+function clearBoundIntervalWarnings() {
+  boundIntervalWarnings = [];
+  boundValidationWarnings = [];
+}
+
+function getBoundIntervalWarnings() {
+  return boundIntervalWarnings.slice();
+}
+
+function getBoundValidationWarnings() {
+  return boundValidationWarnings.slice();
+}
+
+function recordBoundIntervalWarning(id, centralValue, min, max) {
+  const existingIndex = boundIntervalWarnings.findIndex(w => w.id === id);
+  const label = getValidationLabel(id);
+  const warning = {
+    id,
+    label,
+    centralValue,
+    min,
+    max,
+    text:
+      `${label}: central value ${formatValidationValue(centralValue)} lies outside the configured ` +
+      `Monte Carlo interval [${formatValidationValue(min)}, ${formatValidationValue(max)}]. ` +
+      'The sampler expands the interval to include the central value.',
+    shortText:
+      'Central value lies outside the configured Monte Carlo interval; the sampler expands the interval to include the central value.'
+  };
+
+  if (existingIndex >= 0) boundIntervalWarnings[existingIndex] = warning;
+  else boundIntervalWarnings.push(warning);
+}
+
+function recordBoundValidationWarning(id, originalValue, normalizedValue, reason) {
+  const existingIndex = boundValidationWarnings.findIndex(w => w.id === id && w.reason === reason);
+  const label = getValidationLabel(id.replace(/_(min|max)$/, ''));
+  const warning = {
+    id,
+    label,
+    originalValue: formatValidationValue(originalValue),
+    normalizedValue,
+    reason,
+    text:
+      `${label}: Monte Carlo bound ${id} was ${formatValidationValue(originalValue)} and ` +
+      `was normalized to ${normalizedValue}. ${reason}`,
+    shortText: 'Monte Carlo bounds were normalized before sampling.'
+  };
+
+  if (existingIndex >= 0) boundValidationWarnings[existingIndex] = warning;
+  else boundValidationWarnings.push(warning);
+}
+
+function recordInputValidationWarning(id, originalValue, normalizedValue, min, max) {
+  const existingIndex = inputValidationWarnings.findIndex(w => w.id === id);
+  const label = getValidationLabel(id);
+  const hasMax = Number.isFinite(max);
+  const rangeText = hasMax ? `${min} to ${max}` : `${min} or greater`;
+  const warning = {
+    id,
+    label,
+    originalValue: formatValidationValue(originalValue),
+    normalizedValue,
+    min,
+    max: hasMax ? max : null,
+    text:
+      `${label}: input was outside the allowed range or was not numeric and ` +
+      `was normalized to ${normalizedValue}. Allowed range: ${rangeText}.`,
+    shortText: 'Input was outside the allowed range and was clamped to the nearest valid value.'
+  };
+
+  if (existingIndex >= 0) inputValidationWarnings[existingIndex] = warning;
+  else inputValidationWarnings.push(warning);
+}
+
+function sanitizeNumberInput(id, fallback = 0, kind = 'number') {
+  const el = byId(id);
+  if (!el) return fallback;
+
+  const originalValue = el.value;
+  const trimmed = String(originalValue ?? '').trim();
+  let parsed = Number(trimmed);
+  let normalized = parsed;
+  let changed = false;
+
+  if (trimmed === '' || !Number.isFinite(parsed)) {
+    normalized = fallback;
+    changed = true;
+  }
+
+  let min = getControlBound(el, 'min', kind === 'positive' || kind === 'probability' ? 0 : -Infinity);
+  let max = getControlBound(el, 'max', kind === 'probability' ? 1 : Infinity);
+
+  if (kind === 'probability') {
+    min = Math.max(0, min);
+    max = Math.min(1, max);
+  }
+
+  if (kind === 'positive') {
+    min = Math.max(0, min);
+  }
+
+  if (normalized < min) {
+    normalized = min;
+    changed = true;
+  }
+
+  if (normalized > max) {
+    normalized = max;
+    changed = true;
+  }
+
+  if (changed) {
+    recordInputValidationWarning(id, originalValue, normalized, min, max);
+    el.value = String(normalized);
+  }
+
+  return normalized;
+}
+
+function sanitizeProbabilityInput(id, fallback = 0) {
+  return sanitizeNumberInput(id, fallback, 'probability');
+}
+
+function sanitizePositiveInput(id, fallback = 0) {
+  return sanitizeNumberInput(id, fallback, 'positive');
+}
+
 const SAMPLABLE_PARAM_IDS = [...new Set([...BASE_SAMPLE_IDS, ...ADV_SAMPLE_IDS])];
 
 const SIM_ENGINE_LABELS = {
@@ -341,6 +672,95 @@ const SIM_ENGINE_LABELS = {
 const SIM_CORRELATION_LABELS = {
   heuristic: 'Heuristic correlation scaffold',
   independent: 'Independent factors'
+};
+
+const MONTE_CARLO_BOUNDS_LABELS = {
+  presetLocal: 'Scenario-local preset uncertainty',
+  modifiedPresetLocal: 'Modified preset-local uncertainty · Uses visible bounds for edited fields and preset-local uncertainty for unchanged preset fields',
+  customInput: 'Custom input uncertainty · Uses visible input bounds',
+  globalEnvelope: 'Global exploratory envelope · Not local preset uncertainty'
+};
+
+const PRESET_PUBLIC_LABELS = {
+  pessimist: 'Pessimist / Rare Earth',
+  consensus: 'Consensus',
+  optimist: 'High-End / Optimist',
+  kepler: 'Kepler/Gaia'
+};
+
+const MONTE_CARLO_BASIS_MODES = {
+  presetLocal: 'presetLocal',
+  modifiedPresetLocal: 'modifiedPresetLocal',
+  customInput: 'customInput',
+  globalEnvelope: 'globalEnvelope'
+};
+
+const PRESET_LOCAL_WIDTH_PROFILES = {
+  narrow: Object.freeze({
+    positiveLogHalfWidth: Math.log(1.35),
+    probabilityLogitHalfWidth: Math.log(1.35)
+  }),
+  medium: Object.freeze({
+    positiveLogHalfWidth: Math.log(2),
+    probabilityLogitHalfWidth: Math.log(2)
+  }),
+  broad: Object.freeze({
+    positiveLogHalfWidth: Math.log(3),
+    probabilityLogitHalfWidth: Math.log(3)
+  }),
+  ultraBroad: Object.freeze({
+    positiveLogHalfWidth: Math.log(10),
+    probabilityLogitHalfWidth: Math.log(10)
+  })
+};
+
+const PRESET_LOCAL_PARAM_WIDTHS = Object.freeze({
+  N_GHZ: 'medium',
+  N_p_star: 'medium',
+  f_sun_type: 'medium',
+  f_sun_age: 'narrow',
+  f_composition: 'medium',
+  f_orbit: 'medium',
+  f_stability: 'medium',
+  f_magnetosphere: 'medium',
+  f_lunar_stability: 'medium',
+  f_size: 'medium',
+  f_rotation: 'medium',
+  f_tilt: 'medium',
+  f_H2O: 'medium',
+  f_CHNOPS: 'medium',
+  f_complex_life: 'broad',
+  f_x: 'broad',
+  adv_f_atm_ret: 'medium',
+  adv_f_vol_del: 'medium',
+  adv_f_wat_ret: 'medium',
+  adv_f_tect: 'medium',
+  adv_f_radio: 'medium',
+  adv_f_clim: 'medium',
+  adv_f_xuv: 'medium',
+  adv_f_uv: 'medium',
+  adv_f_binary: 'medium',
+  adv_f_rad: 'medium',
+  adv_P_rocky: 'medium'
+});
+
+const PRESET_LOCAL_UNCERTAINTY_BASIS =
+  'Scenario-local transformed-space bands centered on the selected preset central values; not observational confidence intervals.';
+
+const MODIFIED_PRESET_LOCAL_BASIS =
+  'Modified preset-local uncertainty: edited fields use their visible min/max bounds, while unchanged preset fields keep scenario-local preset uncertainty. Not an observational confidence interval.';
+
+const GLOBAL_ENVELOPE_BASIS =
+  'Global exploratory envelope using visible registry/user min/max bounds; not local preset uncertainty.';
+
+const CUSTOM_INPUT_BASIS =
+  'Custom input uncertainty using the visible central values and visible min/max bounds.';
+
+const PRESET_BOUND_PROFILES = {
+  pessimist: 'presetLocal',
+  consensus: 'presetLocal',
+  optimist: 'presetLocal',
+  kepler: 'presetLocal'
 };
 
 const ADV = {
@@ -365,11 +785,11 @@ const ADV = {
 
 const PRESETS = {
   pessimist: {
-    label: 'Pessimist · Great Filter',
-    source: 'Hart 1975 / Rare Earth',
+    label: 'Pessimist · Rare Earth Stress Test',
+    source: 'Rare Earth / Hart 1975 / Hanson 1998',
     description:
-      'Low host fractions, strong astrophysical filters and an extremely small complex-life prior. This is the most restrictive published-style scenario in the tool.',
-    N_GHZ: 50000000000,
+      'An illustrative restrictive stress-test: Hart motivates the Fermi-absence tension, Rare Earth motivates strong biological/geophysical filters, and Hanson motivates the Great Filter framing. The numeric chain is not a Hart point-estimate table.',
+    N_GHZ: 5000000000,
     f_sun_type: 0.07,
     f_sun_age: 0.60,
     N_p_star: 1.0,
@@ -383,7 +803,7 @@ const PRESETS = {
     f_tilt: 0.30,
     f_H2O: 0.05,
     f_CHNOPS: 0.05,
-    f_complex_life: 0.01,
+    f_complex_life: 0.000001,
     f_x: 1,
     enableComplex: true,
     enableX: false
@@ -392,13 +812,13 @@ const PRESETS = {
     label: 'Consensus · Lineweaver',
     source: 'Lineweaver 2004',
     description:
-      'Moderate literature values across the full chain, giving a middle estimate anchored near Lineweaver-style assumptions rather than a strongly rare or strongly abundant universe.',
-    N_GHZ: 100000000000,
+      'Lineweaver anchors the Galactic Habitable Zone and age terms; N_GHZ is a balanced conservative GHZ star-count prior, not directly quoted by Lineweaver.',
+    N_GHZ: 10000000000,
     f_sun_type: 0.08,
-    f_sun_age: 0.70,
+    f_sun_age: 0.75,
     N_p_star: 1.5,
     f_composition: 0.20,
-    f_orbit: 0.20,
+    f_orbit: 0.18,
     f_stability: 0.50,
     f_magnetosphere: 0.50,
     f_lunar_stability: 0.50,
@@ -413,21 +833,21 @@ const PRESETS = {
     enableX: false
   },
   optimist: {
-    label: 'Optimist · Dissolving Fermi',
-    source: 'Sandberg et al. 2018',
+    label: 'High-End · Literature Bounds',
+    source: 'Illustrative upper-range stress test',
     description:
-      'Higher rocky, habitable-zone and survivability fractions, together with a permissive biological chain. It probes how quickly the Fermi tension rises under optimistic priors.',
-    N_GHZ: 100000000000,
+      'High-end values drawn from the upper side of the displayed literature-informed ranges. N_GHZ is an upper Lineweaver-style GHZ prior, not a direct star-count reported by Lineweaver.',
+    N_GHZ: 40000000000,
     f_sun_type: 0.20,
     f_sun_age: 0.75,
     N_p_star: 2.0,
     f_composition: 0.35,
-    f_orbit: 0.40,
+    f_orbit: 0.21,
     f_stability: 0.70,
     f_magnetosphere: 0.70,
     f_lunar_stability: 0.80,
     f_size: 0.65,
-    f_rotation: 0.40,
+    f_rotation: 0.35,
     f_tilt: 0.65,
     f_H2O: 0.30,
     f_CHNOPS: 0.50,
@@ -436,17 +856,17 @@ const PRESETS = {
     enableComplex: true,
     enableX: false
   },
-  jwst: {
-    label: 'Post-JWST · 2023~2025',
-    source: 'Bryson + JWST Data',
+  kepler: {
+    label: 'Kepler/Gaia · Bryson',
+    source: 'Bryson et al. 2021',
     description:
-      'Keeps the broader consensus structure but updates key observational terms such as rocky-planet and habitable-zone fractions to match the newer post-2022 exoplanet literature.',
-    N_GHZ: 100000000000,
+      'Updates the observational rocky/HZ priors using Kepler DR25 plus Gaia-era occurrence-rate constraints. Bryson reports eta-Earth as a combined occurrence metric, so this split into factors is a model approximation; N_GHZ remains the balanced Lineweaver-informed GHZ prior.',
+    N_GHZ: 10000000000,
     f_sun_type: 0.08,
-    f_sun_age: 0.70,
-    N_p_star: 1.8,
-    f_composition: 0.28,
-    f_orbit: 0.30,
+    f_sun_age: 0.75,
+    N_p_star: 1.6,
+    f_composition: 0.25,
+    f_orbit: 0.21,
     f_stability: 0.50,
     f_magnetosphere: 0.50,
     f_lunar_stability: 0.50,
@@ -462,16 +882,248 @@ const PRESETS = {
   }
 };
 
+function getPresetPublicLabel(key) {
+  if (!key) return 'Custom scenario';
+  return PRESET_PUBLIC_LABELS[key] || (PRESETS[key] && PRESETS[key].label) || key;
+}
+
+function setScenarioPreset(key) {
+  activePreset = key;
+  scenarioState = 'preset';
+  modifiedPresetOrigin = '';
+}
+
+function setScenarioCustom() {
+  activePreset = 'custom';
+  scenarioState = 'custom';
+  modifiedPresetOrigin = '';
+}
+
+function markScenarioModified() {
+  if (scenarioState === 'modified' && modifiedPresetOrigin && PRESETS[modifiedPresetOrigin]) {
+    return;
+  }
+
+  if (activePreset && activePreset !== 'custom' && PRESETS[activePreset]) {
+    modifiedPresetOrigin = activePreset;
+    scenarioState = 'modified';
+    return;
+  }
+
+  setScenarioCustom();
+}
+
+function numericControlMatches(id, expected) {
+  const el = byId(id);
+  if (!el) return true;
+  const actual = Number(String(el.value ?? '').trim());
+  const target = Number(expected);
+  if (!Number.isFinite(actual) || !Number.isFinite(target)) return false;
+  const tolerance = Math.max(1e-12, Math.abs(target) * 1e-12);
+  return Math.abs(actual - target) <= tolerance;
+}
+
+function isAdvancedScenarioAtPresetDefault() {
+  if (ADV.enabled) return false;
+  if (Object.values(ADV.modules).some(module => module.enabled)) return false;
+  if (typeof areAdvancedControlsAtDefaults === 'function') {
+    return areAdvancedControlsAtDefaults();
+  }
+  return true;
+}
+
+function isVisibleStateEquivalentToPreset(key) {
+  const preset = PRESETS[key];
+  if (!preset) return false;
+
+  for (const id of BASE_SAMPLE_IDS) {
+    if (preset[id] !== undefined && !numericControlMatches(id, preset[id])) return false;
+
+    const bounds = getPresetVisibleBounds(preset, id);
+    if (bounds) {
+      if (!numericControlMatches(id + '_min', bounds.min)) return false;
+      if (!numericControlMatches(id + '_max', bounds.max)) return false;
+    }
+  }
+
+  if (isH2OEnabled !== (preset.enableH2O !== false)) return false;
+  if (isCHNOPSEnabled !== (preset.enableCHNOPS !== false)) return false;
+  if (isComplexLifeEnabled !== !!preset.enableComplex) return false;
+  if (isXEnabled !== !!preset.enableX) return false;
+
+  return isAdvancedScenarioAtPresetDefault();
+}
+
+// The preset key a modified scenario was derived from (or the active clean
+// preset). Null for a true custom scenario with no preset baseline.
+function getScenarioOriginPreset() {
+  if (scenarioState === 'modified' && modifiedPresetOrigin && PRESETS[modifiedPresetOrigin]) return modifiedPresetOrigin;
+  if (scenarioState === 'preset' && activePreset && activePreset !== 'custom' && PRESETS[activePreset]) return activePreset;
+  return null;
+}
+
+// A preset-owned parameter is "edited" when its visible central value or either
+// visible bound differs from the preset default. Derived from visible state, so
+// restoring a field exactly to the default automatically clears its edited flag.
+function isParameterEditedFromPreset(id, presetKey) {
+  const preset = PRESETS[presetKey];
+  if (!preset) return true;
+  if (preset[id] !== undefined && !numericControlMatches(id, preset[id])) return true;
+  const bounds = getPresetVisibleBounds(preset, id);
+  if (bounds) {
+    if (!numericControlMatches(id + '_min', bounds.min)) return true;
+    if (!numericControlMatches(id + '_max', bounds.max)) return true;
+  }
+  return false;
+}
+
+function reconcileScenarioStateWithVisiblePreset() {
+  const origin =
+    scenarioState === 'modified' && modifiedPresetOrigin && PRESETS[modifiedPresetOrigin]
+      ? modifiedPresetOrigin
+      : activePreset && activePreset !== 'custom' && PRESETS[activePreset]
+        ? activePreset
+        : null;
+
+  if (!origin) return false;
+  if (!isVisibleStateEquivalentToPreset(origin)) return false;
+
+  setScenarioPreset(origin);
+  return true;
+}
+
+function getScenarioState() {
+  const isModified = scenarioState === 'modified' && modifiedPresetOrigin && PRESETS[modifiedPresetOrigin];
+  const isPreset = scenarioState === 'preset' && activePreset && PRESETS[activePreset];
+
+  if (isModified) {
+    const originLabel = getPresetPublicLabel(modifiedPresetOrigin);
+    return {
+      state: 'modified',
+      activePreset,
+      originPreset: modifiedPresetOrigin,
+      originLabel,
+      label: `Modified ${originLabel}`,
+      isModified: true,
+      isPreset: false,
+      isCustom: false
+    };
+  }
+
+  if (isPreset) {
+    const label = getPresetPublicLabel(activePreset);
+    return {
+      state: 'preset',
+      activePreset,
+      originPreset: activePreset,
+      originLabel: label,
+      label,
+      isModified: false,
+      isPreset: true,
+      isCustom: false
+    };
+  }
+
+  return {
+    state: 'custom',
+    activePreset: 'custom',
+    originPreset: '',
+    originLabel: '',
+    label: 'Custom scenario',
+    isModified: false,
+    isPreset: false,
+    isCustom: true
+  };
+}
+
+function getScenarioExportLabel() {
+  return getScenarioState().label;
+}
+
+function getModifiedPresetWarningText() {
+  const scenario = getScenarioState();
+  if (!scenario.isModified) return '';
+
+  return (
+    `You edited a ${scenario.originLabel} value. Monte Carlo now uses modified preset-local uncertainty: ` +
+    `edited fields use their visible central values and min/max bounds, while unchanged preset fields keep ` +
+    `clean scenario-local preset uncertainty.`
+  );
+}
+
+function getDefaultParameterBounds(id) {
+  const registryParameter =
+    typeof SCIENTIFIC_PARAMETER_REGISTRY !== 'undefined' &&
+    SCIENTIFIC_PARAMETER_REGISTRY.parameters
+      ? SCIENTIFIC_PARAMETER_REGISTRY.parameters[id]
+      : null;
+  const fallback = DEFAULT_PARAMETER_BOUNDS[id];
+
+  if (!registryParameter && !fallback) return null;
+
+  const min = Number(registryParameter?.min ?? fallback?.min);
+  const max = Number(registryParameter?.max ?? fallback?.max);
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return null;
+
+  return { min, max };
+}
+
+function getPresetVisibleBounds(preset, id) {
+  const boundsSpec = preset?.bounds?.[id];
+  if (Array.isArray(boundsSpec) && boundsSpec.length >= 2) {
+    const min = Number(boundsSpec[0]);
+    const max = Number(boundsSpec[1]);
+    return Number.isFinite(min) && Number.isFinite(max) ? { min, max } : null;
+  }
+
+  if (boundsSpec && typeof boundsSpec === 'object') {
+    const min = Number(boundsSpec.min);
+    const max = Number(boundsSpec.max);
+    return Number.isFinite(min) && Number.isFinite(max) ? { min, max } : null;
+  }
+
+  // Fall back to the registry's literature-informed default min/max. These are
+  // the values the per-card UI citations (Henry 2006, Bryson 2021, etc.)
+  // explicitly anchor; we must NOT silently overwrite them with a generic
+  // ±0.3 dex convention, because that would make the visible field values
+  // inconsistent with the cited literature-informed ranges shown below.
+  // Per-preset preset.bounds[id] still wins when explicitly provided.
+  return getDefaultParameterBounds(id);
+}
+
+function resetPresetParameterBounds(preset, ids = BASE_SAMPLE_IDS) {
+  ids.forEach(id => {
+    const bounds = getPresetVisibleBounds(preset, id);
+    if (!bounds) return;
+
+    const minEl = byId(id + '_min');
+    const maxEl = byId(id + '_max');
+    if (minEl) minEl.value = String(bounds.min);
+    if (maxEl) maxEl.value = String(bounds.max);
+  });
+}
+
+function applyPresetParameterState(preset, ids = BASE_SAMPLE_IDS) {
+  resetPresetParameterBounds(preset, ids);
+
+  ids.forEach(id => {
+    const el = byId(id);
+    if (el && preset && preset[id] !== undefined) {
+      el.value = preset[id];
+    }
+  });
+}
+
 const BAYES = {
   pre: {
-    f_orbit: 0.20,
+    f_orbit: 0.18,
     f_composition: 0.20,
-    note: 'Pre-JWST literature values (≤2021) for f_HZ and f_rocky.'
+    note: 'Conservative Kepler-era literature values for f_HZ and f_rocky. Historical baseline (pre-Gaia stellar-radius corrections), retained for comparison, not recommended as the default.'
   },
   post: {
-    f_orbit: 0.30,
-    f_composition: 0.28,
-    note: 'Post-JWST literature values (2022~2025) for f_HZ and f_rocky.'
+    f_orbit: 0.21,
+    f_composition: 0.25,
+    note: 'Default. Updated Kepler/Gaia occurrence priors for f_HZ and f_rocky, anchored in Bryson et al. 2021 using the Kepler DR25 planet-candidate catalog and Gaia-based stellar properties. Later Gaia releases further refine stellar radii but are not part of the original Bryson 2021 analysis. Not a direct atmospheric-spectroscopy occurrence-rate measurement.'
   }
 };
 
@@ -791,6 +1443,52 @@ function getHistoricalContext(years) {
 
 function getConfigurationWarnings() {
   const warnings = [];
+  const validationWarnings = getInputValidationWarnings();
+  const intervalWarnings = getBoundIntervalWarnings();
+  const normalizedBounds = getBoundValidationWarnings();
+  const scenario = getScenarioState();
+
+  if (scenario.isModified) {
+    warnings.push({
+      label: 'Modified preset',
+      text: getModifiedPresetWarningText()
+    });
+  }
+
+  const mcBlockingErrors = getMonteCarloBoundsBlockingErrors();
+  if (mcBlockingErrors.length) {
+    warnings.push({
+      label: 'Monte Carlo blocked',
+      text: getMonteCarloBlockingWarningText(mcBlockingErrors)
+    });
+  }
+
+  if (validationWarnings.length) {
+    warnings.push({
+      label: 'Input validation',
+      text:
+        'Input was outside the allowed range and was clamped to the nearest valid value. ' +
+        validationWarnings.map(w => `${w.label}: ${w.originalValue} -> ${w.normalizedValue}`).join('; ')
+    });
+  }
+
+  if (intervalWarnings.length) {
+    warnings.push({
+      label: 'Monte Carlo interval expanded',
+      text:
+        'Central value lies outside the configured Monte Carlo interval; the sampler expands the interval to include the central value. ' +
+        intervalWarnings.map(w => `${w.label}: ${w.centralValue} outside [${w.min}, ${w.max}]`).join('; ')
+    });
+  }
+
+  if (normalizedBounds.length) {
+    warnings.push({
+      label: 'Monte Carlo bounds normalized',
+      text:
+        'Monte Carlo min/max fields were outside their allowed domain or had min greater than max, and were normalized before sampling. ' +
+        normalizedBounds.map(w => `${w.id}: ${w.originalValue} -> ${w.normalizedValue}`).join('; ')
+    });
+  }
 
   if (ADV.enabled && ADV.modules.hostChannels.enabled) {
     const rawSum =
@@ -816,7 +1514,7 @@ function getConfigurationWarnings() {
     });
   }
 
-  if (allDistanceModelsDisabled()) {
+  if (typeof allDistanceModelsDisabled === 'function' && allDistanceModelsDisabled()) {
     warnings.push({
       label: 'Distance models disabled',
       text:
@@ -831,6 +1529,53 @@ function getConfigurationWarnings() {
         `Complex life is enabled with f_life = ${pf('f_complex_life', 0).toExponential(2)}. ` +
         'This single term will strongly dominate the final result and can suppress otherwise optimistic astrophysical settings.'
     });
+  }
+
+  if (ADV.enabled) {
+    const isSuppressive = (id, threshold) => pf(id, 1) > 0 && pf(id, 1) <= threshold;
+    const moduleOn = key => ADV.modules[key] && ADV.modules[key].enabled;
+
+    const atmRelatedActive = [
+      moduleOn('atmRet') && isSuppressive('adv_f_atm_ret', 0.5),
+      moduleOn('spaceWeather') && isSuppressive('adv_f_xuv', 0.5),
+      moduleOn('radiation') && isSuppressive('adv_f_rad', 0.5),
+      moduleOn('volatileSplit') &&
+        (isSuppressive('adv_f_vol_del', 0.4) || isSuppressive('adv_f_wat_ret', 0.4))
+    ].filter(Boolean).length;
+    const baseMagLow = pf('f_magnetosphere', 1) <= 0.4;
+    const baseH2OLow = isH2OEnabled && pf('f_H2O', 1) <= 0.1;
+
+    if (atmRelatedActive >= 2 || (atmRelatedActive >= 1 && (baseMagLow || baseH2OLow))) {
+      warnings.push({
+        label: 'Compound atmosphere/shielding stack',
+        text:
+          'Several atmospheric, water-retention, radiation, or shielding filters are enabled together. ' +
+          'These factors are intentionally multiplicative, but they may represent overlapping physical constraints. ' +
+          'Interpret strongly suppressed outputs as a compound-stress scenario, not a direct independent probability.'
+      });
+    }
+
+    if (moduleOn('binary') && isSuppressive('adv_f_binary', 0.6) && pf('f_stability', 1) <= 0.5) {
+      warnings.push({
+        label: 'Binary + stability stack',
+        text:
+          'The binary-star filter multiplies on top of the base orbital-stability factor. ' +
+          'If both are restrictive, the model may represent a deliberately conservative dynamical-stability scenario.'
+      });
+    }
+
+    const radiationShieldingActive = [
+      moduleOn('spaceWeather') && isSuppressive('adv_f_xuv', 0.6),
+      moduleOn('radiation') && isSuppressive('adv_f_rad', 0.85)
+    ].filter(Boolean).length;
+    if (radiationShieldingActive >= 2 || (radiationShieldingActive >= 1 && baseMagLow)) {
+      warnings.push({
+        label: 'Radiation/shielding stack',
+        text:
+          'Space-weather, radiation-survival, and magnetosphere terms can overlap conceptually through atmospheric shielding and high-energy radiation exposure. ' +
+          'Their product should be interpreted as a conservative compound filter.'
+      });
+    }
   }
 
   return warnings;
@@ -879,7 +1624,7 @@ function getConvergenceAlert(summary) {
       text:
         suggestedIterations !== null
           ? `This run has <strong>not converged cleanly</strong>. Increase the iteration count to about <strong>${suggestedIterations.toLocaleString()}</strong> and run Monte Carlo again before trusting the mean too much.`
-          : 'This run has <strong>not converged cleanly</strong> even at the current iteration cap. Re-run cautiously and treat the Monte Carlo mean as provisional.'
+          : 'This run has <strong>not converged cleanly</strong> even at the current iteration cap. Re-run cautiously and treat the Monte Carlo arithmetic mean as provisional.'
     };
   }
 
@@ -897,25 +1642,26 @@ function getConvergenceAlert(summary) {
 }
 
 function getInputs() {
+  beginInputValidationPass();
   return {
-    N_GHZ: sanitizePositive(pf('N_GHZ')),
-    f_sun_type: sanitizeProbability(pf('f_sun_type')),
-    f_sun_age: sanitizeProbability(pf('f_sun_age')),
-    N_p_star: sanitizePositive(pf('N_p_star')),
-    f_composition: sanitizeProbability(pf('f_composition')),
-    f_orbit: sanitizeProbability(pf('f_orbit')),
-    f_stability: sanitizeProbability(pf('f_stability')),
-    f_magnetosphere: sanitizeProbability(pf('f_magnetosphere')),
-    f_lunar_stability: sanitizeProbability(pf('f_lunar_stability')),
-    f_size: sanitizeProbability(pf('f_size')),
-    f_rotation: sanitizeProbability(pf('f_rotation')),
-    f_tilt: sanitizeProbability(pf('f_tilt')),
-    f_H2O: isH2OEnabled ? sanitizeProbability(pf('f_H2O')) : 1,
-    f_CHNOPS: isCHNOPSEnabled ? sanitizeProbability(pf('f_CHNOPS')) : 1,
+    N_GHZ: sanitizePositiveInput('N_GHZ'),
+    f_sun_type: sanitizeProbabilityInput('f_sun_type'),
+    f_sun_age: sanitizeProbabilityInput('f_sun_age'),
+    N_p_star: sanitizePositiveInput('N_p_star'),
+    f_composition: sanitizeProbabilityInput('f_composition'),
+    f_orbit: sanitizeProbabilityInput('f_orbit'),
+    f_stability: sanitizeProbabilityInput('f_stability'),
+    f_magnetosphere: sanitizeProbabilityInput('f_magnetosphere'),
+    f_lunar_stability: sanitizeProbabilityInput('f_lunar_stability'),
+    f_size: sanitizeProbabilityInput('f_size'),
+    f_rotation: sanitizeProbabilityInput('f_rotation'),
+    f_tilt: sanitizeProbabilityInput('f_tilt'),
+    f_H2O: isH2OEnabled ? sanitizeProbabilityInput('f_H2O') : 1,
+    f_CHNOPS: isCHNOPSEnabled ? sanitizeProbabilityInput('f_CHNOPS') : 1,
     f_complex_life: isComplexLifeEnabled
-      ? sanitizeProbability(pf('f_complex_life'))
+      ? sanitizeProbabilityInput('f_complex_life')
       : 1,
-    f_x: isXEnabled ? sanitizeProbability(pf('f_x')) : 1
+    f_x: isXEnabled ? sanitizeProbabilityInput('f_x') : 1
   };
 }
 
@@ -960,9 +1706,36 @@ function logit(p) {
   return Math.log(q / (1 - q));
 }
 
-function boxMuller() {
-  const u1 = Math.max(1e-12, Math.random());
-  const u2 = Math.max(1e-12, Math.random());
+function hashSeed(seed) {
+  const text = String(seed);
+  let h = 2166136261;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function createSeededRng(seed) {
+  let state = Number.isFinite(Number(seed)) ? Number(seed) >>> 0 : hashSeed(seed);
+  return function seededRng() {
+    state = (state + 0x6D2B79F5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function resolveRng(options = {}) {
+  if (typeof options.rng === 'function') return options.rng;
+  if (Object.prototype.hasOwnProperty.call(options, 'seed')) return createSeededRng(options.seed);
+  return Math.random;
+}
+
+function boxMuller(rng = Math.random) {
+  const u1 = Math.max(1e-12, rng());
+  const u2 = Math.max(1e-12, rng());
   return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
 }
 
@@ -973,8 +1746,9 @@ function getSamplingUncertaintyFraction() {
 function getSimulationOptions() {
   return {
     engine: ((byId('simulation-engine') || {}).value || 'standard').toLowerCase(),
-    correlation: ((byId('correlation-model') || {}).value || 'heuristic').toLowerCase(),
-    robustBounds: !!((byId('robust-bounds') || {}).checked)
+    correlation: ((byId('correlation-model') || {}).value || 'independent').toLowerCase(),
+    robustBounds: !!((byId('robust-bounds') || {}).checked),
+    mcMode: ((byId('mc-basis-mode') || {}).value || 'auto')
   };
 }
 
@@ -1001,21 +1775,410 @@ function getSamplingDistributionLabels(dist = ((byId('distribution') || {}).valu
 
 function describeSimulationOptions(options = getSimulationOptions(), dist = ((byId('distribution') || {}).value || 'lognormal')) {
   const distLabels = getSamplingDistributionLabels(dist);
+  const bounds = getMonteCarloBoundsDescriptor(options);
 
   return {
     engineLabel: SIM_ENGINE_LABELS[options.engine] || SIM_ENGINE_LABELS.standard,
     correlationLabel: SIM_CORRELATION_LABELS[options.correlation] || SIM_CORRELATION_LABELS.heuristic,
     distributionShort: distLabels.short,
-    distributionLong: distLabels.long
+    distributionLong: distLabels.long,
+    boundsMode: bounds.mode,
+    boundsLabel: bounds.label,
+    uncertaintyBasisLabel: bounds.uncertaintyBasisLabel
   };
 }
 
-function shuffleInPlace(values) {
+function shuffleInPlace(values, rng = Math.random) {
   for (let i = values.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rng() * (i + 1));
     [values[i], values[j]] = [values[j], values[i]];
   }
   return values;
+}
+
+function getActivePresetKeyForBounds() {
+  return scenarioState === 'preset' && activePreset && activePreset !== 'custom' && PRESETS[activePreset]
+    ? activePreset
+    : null;
+}
+
+function getPresetLocalSourcePreset() {
+  const origin = getScenarioOriginPreset();
+  if (origin) return origin;
+  if (activePreset && activePreset !== 'custom' && PRESETS[activePreset]) return activePreset;
+  return null;
+}
+
+function normalizeMonteCarloBasisMode(mode) {
+  const value = String(mode || 'auto').trim();
+  if (/^presetlocal$/i.test(value)) return MONTE_CARLO_BASIS_MODES.presetLocal;
+  if (/^modifiedpresetlocal$/i.test(value)) return MONTE_CARLO_BASIS_MODES.modifiedPresetLocal;
+  if (/^custominput$/i.test(value)) return MONTE_CARLO_BASIS_MODES.customInput;
+  if (/^globalenvelope$/i.test(value)) return MONTE_CARLO_BASIS_MODES.globalEnvelope;
+  return 'auto';
+}
+
+function resolveMonteCarloBasisMode(options = getSimulationOptions()) {
+  const requested = normalizeMonteCarloBasisMode(options.mcMode);
+  const scenario = getScenarioState();
+
+  // Explicit user-selected modes are honored.
+  if (requested === MONTE_CARLO_BASIS_MODES.globalEnvelope) return requested;
+  if (requested === MONTE_CARLO_BASIS_MODES.customInput) return requested;
+  if (requested === MONTE_CARLO_BASIS_MODES.modifiedPresetLocal) return requested;
+  if (requested === MONTE_CARLO_BASIS_MODES.presetLocal) return requested;
+
+  // Auto resolution: a clean preset stays preset-local; an EDITED preset uses
+  // modified preset-local (not full customInput) so unchanged preset fields keep
+  // scenario-local uncertainty; a true custom scenario uses customInput.
+  if (scenario.isPreset) return MONTE_CARLO_BASIS_MODES.presetLocal;
+  if (scenario.isModified) return MONTE_CARLO_BASIS_MODES.modifiedPresetLocal;
+  return MONTE_CARLO_BASIS_MODES.customInput;
+}
+
+function getMonteCarloBoundsDescriptor(options = getSimulationOptions()) {
+  const scenario = getScenarioState();
+  const mode = resolveMonteCarloBasisMode(options);
+  const sourcePreset = getPresetLocalSourcePreset();
+
+  if (mode === MONTE_CARLO_BASIS_MODES.presetLocal) {
+    return {
+      mode,
+      label: MONTE_CARLO_BOUNDS_LABELS.presetLocal,
+      sourcePreset,
+      scenarioLabel: scenario.label,
+      uncertaintyBasisLabel: PRESET_LOCAL_UNCERTAINTY_BASIS
+    };
+  }
+
+  if (mode === MONTE_CARLO_BASIS_MODES.modifiedPresetLocal) {
+    return {
+      mode,
+      label: MONTE_CARLO_BOUNDS_LABELS.modifiedPresetLocal,
+      sourcePreset,
+      scenarioLabel: scenario.label,
+      uncertaintyBasisLabel: MODIFIED_PRESET_LOCAL_BASIS
+    };
+  }
+
+  if (mode === MONTE_CARLO_BASIS_MODES.globalEnvelope) {
+    return {
+      mode,
+      label: MONTE_CARLO_BOUNDS_LABELS.globalEnvelope,
+      scenarioLabel: scenario.label,
+      uncertaintyBasisLabel: GLOBAL_ENVELOPE_BASIS
+    };
+  }
+
+  return {
+    mode: MONTE_CARLO_BASIS_MODES.customInput,
+    label: MONTE_CARLO_BOUNDS_LABELS.customInput,
+    scenarioLabel: scenario.label,
+    uncertaintyBasisLabel: CUSTOM_INPUT_BASIS
+  };
+}
+
+// Parameters that participate in the current Monte Carlo computation: base
+// non-optional factors always, optional factors only when enabled, advanced
+// sampled factors only when their module is enabled.
+function parameterEnabledForBoundsDescriptor(id, boundsDescriptor = getMonteCarloBoundsDescriptor()) {
+  const sourcePreset =
+    boundsDescriptor.mode === MONTE_CARLO_BASIS_MODES.presetLocal
+      ? boundsDescriptor.sourcePreset
+      : null;
+  const preset = sourcePreset && PRESETS[sourcePreset] ? PRESETS[sourcePreset] : null;
+
+  if (id === 'f_H2O') return preset ? preset.enableH2O !== false : isH2OEnabled;
+  if (id === 'f_CHNOPS') return preset ? preset.enableCHNOPS !== false : isCHNOPSEnabled;
+  if (id === 'f_complex_life') return preset ? !!preset.enableComplex : isComplexLifeEnabled;
+  if (id === 'f_x') return preset ? !!preset.enableX : isXEnabled;
+  return true;
+}
+
+function getMonteCarloSampledParameterIds(boundsDescriptor = getMonteCarloBoundsDescriptor()) {
+  const ids = [
+    'N_GHZ', 'f_sun_type', 'f_sun_age', 'N_p_star', 'f_composition', 'f_orbit',
+    'f_stability', 'f_magnetosphere', 'f_lunar_stability', 'f_size', 'f_rotation', 'f_tilt'
+  ];
+  if (parameterEnabledForBoundsDescriptor('f_H2O', boundsDescriptor)) ids.push('f_H2O');
+  if (parameterEnabledForBoundsDescriptor('f_CHNOPS', boundsDescriptor)) ids.push('f_CHNOPS');
+  if (parameterEnabledForBoundsDescriptor('f_complex_life', boundsDescriptor)) ids.push('f_complex_life');
+  if (parameterEnabledForBoundsDescriptor('f_x', boundsDescriptor)) ids.push('f_x');
+  if (ADV.enabled && typeof ADV_SOBOL_CONFIG !== 'undefined') {
+    for (const id of ADV_SAMPLE_IDS) {
+      const cfg = ADV_SOBOL_CONFIG[id];
+      if (cfg && ADV.modules[cfg.module] && ADV.modules[cfg.module].enabled) ids.push(id);
+    }
+  }
+  return ids;
+}
+
+// A parameter is sampled from its visible min/max only in customInput,
+// globalEnvelope, or (for edited fields) modifiedPresetLocal. In presetLocal —
+// and for unedited fields under modifiedPresetLocal — the sampler uses
+// scenario-local bounds and ignores the visible min/max, so inconsistent visible
+// bounds there are not a blocking error.
+function parameterUsesVisibleBoundsForSampling(id, mode, origin) {
+  if (mode === MONTE_CARLO_BASIS_MODES.customInput) return true;
+  if (mode === MONTE_CARLO_BASIS_MODES.globalEnvelope) return true;
+  if (mode === MONTE_CARLO_BASIS_MODES.modifiedPresetLocal) {
+    return origin ? isParameterEditedFromPreset(id, origin) : true;
+  }
+  return false;
+}
+
+// Returns the set of visible-bound inconsistencies that must block Monte Carlo:
+// a sampled-from-visible-bounds parameter whose min > max, or whose central
+// value lies outside [min, max].
+function getMonteCarloBoundsBlockingErrors(boundsDescriptor = getMonteCarloBoundsDescriptor()) {
+  const mode = boundsDescriptor.mode;
+  const origin = getScenarioOriginPreset();
+  const errors = [];
+
+  for (const id of getMonteCarloSampledParameterIds(boundsDescriptor)) {
+    if (!parameterUsesVisibleBoundsForSampling(id, mode, origin)) continue;
+    const minEl = byId(id + '_min');
+    const maxEl = byId(id + '_max');
+    if (!minEl || !maxEl) continue;
+
+    const central = rawNumber(id, NaN);
+    const lo = rawNumber(id + '_min', NaN);
+    const hi = rawNumber(id + '_max', NaN);
+    if (!Number.isFinite(central) || !Number.isFinite(lo) || !Number.isFinite(hi)) continue;
+
+    const label = getValidationLabel(id);
+    if (lo > hi) {
+      errors.push({
+        id,
+        kind: 'min-gt-max',
+        text: `${label}: minimum ${formatValidationValue(lo)} is greater than maximum ${formatValidationValue(hi)}.`
+      });
+    } else if (central < lo || central > hi) {
+      errors.push({
+        id,
+        kind: 'central-outside',
+        text: `${label}: central value ${formatValidationValue(central)} is outside its min/max range [${formatValidationValue(lo)}, ${formatValidationValue(hi)}].`
+      });
+    }
+  }
+
+  return errors;
+}
+
+function getMonteCarloBlockingWarningText(errors) {
+  return (
+    'Monte Carlo cannot run until these bounds are corrected: ' +
+    errors.map(e => e.text).join(' ') +
+    ' Deterministic output is still shown.'
+  );
+}
+
+function getPresetLocalWidth(id) {
+  const key = PRESET_LOCAL_PARAM_WIDTHS[id] || 'medium';
+  return PRESET_LOCAL_WIDTH_PROFILES[key] || PRESET_LOCAL_WIDTH_PROFILES.medium;
+}
+
+function buildPresetLocalBounds(id, meanVal, isProbability, isPositive) {
+  const width = getPresetLocalWidth(id);
+
+  if (isProbability) {
+    const m = clamp01(meanVal);
+    if (m <= 0 || m >= 1) return { lo: m, hi: m, basis: 'scenario-local' };
+
+    const halfWidth = width.probabilityLogitHalfWidth;
+    const center = logit(m);
+    return {
+      lo: logistic(center - halfWidth),
+      hi: logistic(center + halfWidth),
+      basis: 'scenario-local'
+    };
+  }
+
+  if (isPositive) {
+    const m = Math.max(0, meanVal);
+    if (m <= 0) return { lo: 0, hi: 0, basis: 'scenario-local' };
+    const halfWidth = width.positiveLogHalfWidth;
+    return {
+      lo: m / Math.exp(halfWidth),
+      hi: m * Math.exp(halfWidth),
+      basis: 'scenario-local'
+    };
+  }
+
+  return { lo: meanVal, hi: meanVal, basis: 'fixed' };
+}
+
+function getPresetLocalCentralValue(id, boundsDescriptor = getMonteCarloBoundsDescriptor()) {
+  if (boundsDescriptor.mode !== MONTE_CARLO_BASIS_MODES.presetLocal) return NaN;
+  const sourcePreset = boundsDescriptor.sourcePreset || getPresetLocalSourcePreset();
+  const preset = sourcePreset && PRESETS[sourcePreset] ? PRESETS[sourcePreset] : null;
+  if (!preset || !Object.prototype.hasOwnProperty.call(preset, id)) return NaN;
+  const value = Number(preset[id]);
+  return Number.isFinite(value) ? value : NaN;
+}
+
+function getInputsForBoundsDescriptor(boundsDescriptor = getMonteCarloBoundsDescriptor()) {
+  const sourcePreset =
+    boundsDescriptor.mode === MONTE_CARLO_BASIS_MODES.presetLocal
+      ? boundsDescriptor.sourcePreset || getPresetLocalSourcePreset()
+      : null;
+  const preset = sourcePreset && PRESETS[sourcePreset] ? PRESETS[sourcePreset] : null;
+
+  if (!preset) return getInputs();
+
+  return {
+    N_GHZ: Number(preset.N_GHZ),
+    f_sun_type: Number(preset.f_sun_type),
+    f_sun_age: Number(preset.f_sun_age),
+    N_p_star: Number(preset.N_p_star),
+    f_composition: Number(preset.f_composition),
+    f_orbit: Number(preset.f_orbit),
+    f_stability: Number(preset.f_stability),
+    f_magnetosphere: Number(preset.f_magnetosphere),
+    f_lunar_stability: Number(preset.f_lunar_stability),
+    f_size: Number(preset.f_size),
+    f_rotation: Number(preset.f_rotation),
+    f_tilt: Number(preset.f_tilt),
+    f_H2O: preset.enableH2O !== false ? Number(preset.f_H2O) : 1,
+    f_CHNOPS: preset.enableCHNOPS !== false ? Number(preset.f_CHNOPS) : 1,
+    f_complex_life: preset.enableComplex ? Number(preset.f_complex_life) : 1,
+    f_x: preset.enableX ? Number(preset.f_x) : 1
+  };
+}
+
+function normalizeSamplingControlValue(controlId, value, fallback, isProbability, isPositive) {
+  const el = byId(controlId);
+  const original = el ? el.value : value;
+  let normalized = Number.isFinite(value) ? value : fallback;
+  let changed = !Number.isFinite(value);
+  let reason = changed ? 'Non-numeric input was replaced by the fallback value.' : '';
+
+  if (isProbability && normalized < 0) {
+    normalized = 0;
+    changed = true;
+    reason = 'Probability-like bounds must remain in [0, 1].';
+  }
+  if (isProbability && normalized > 1) {
+    normalized = 1;
+    changed = true;
+    reason = 'Probability-like bounds must remain in [0, 1].';
+  }
+  if (isPositive && normalized < 0) {
+    normalized = 0;
+    changed = true;
+    reason = 'Count-like bounds must remain non-negative.';
+  }
+
+  if (changed) {
+    recordBoundValidationWarning(controlId, original, normalized, reason);
+    if (el) el.value = String(normalized);
+  }
+
+  return normalized;
+}
+
+function getParamSamplingState(id, boundsDescriptor = getMonteCarloBoundsDescriptor()) {
+  const isProbability = PROBABILITY_FIELDS.has(id);
+  const isPositive = POSITIVE_FIELDS.has(id);
+  const presetLocalCentralValue = getPresetLocalCentralValue(id, boundsDescriptor);
+
+  if (Number.isFinite(presetLocalCentralValue)) {
+    const meanVal = isProbability
+      ? clamp01(presetLocalCentralValue)
+      : isPositive
+        ? Math.max(0, presetLocalCentralValue)
+        : presetLocalCentralValue;
+    const local = buildPresetLocalBounds(id, meanVal, isProbability, isPositive);
+    return {
+      meanVal,
+      lo: local.lo,
+      hi: local.hi,
+      isProbability,
+      isPositive,
+      hasBounds: true,
+      basis: local.basis || 'scenario-local'
+    };
+  }
+
+  let meanVal = rawNumber(id, NaN);
+  const minEl = byId(id + '_min');
+  const maxEl = byId(id + '_max');
+
+  if (!Number.isFinite(meanVal)) meanVal = 0;
+
+  if (!minEl || !maxEl) {
+    meanVal = normalizeSamplingControlValue(id, meanVal, 0, isProbability, isPositive);
+    return {
+      meanVal,
+      lo: meanVal,
+      hi: meanVal,
+      isProbability,
+      isPositive,
+      hasBounds: false,
+      basis: 'fixed'
+    };
+  }
+
+  meanVal = normalizeSamplingControlValue(id, meanVal, 0, isProbability, isPositive);
+  let lo = normalizeSamplingControlValue(id + '_min', rawNumber(id + '_min', meanVal), meanVal, isProbability, isPositive);
+  let hi = normalizeSamplingControlValue(id + '_max', rawNumber(id + '_max', meanVal), meanVal, isProbability, isPositive);
+
+  if (lo > hi) {
+    recordBoundValidationWarning(
+      id,
+      `${lo} > ${hi}`,
+      `${hi}..${lo}`,
+      'Minimum was greater than maximum; the interval endpoints were swapped before sampling.'
+    );
+    [lo, hi] = [hi, lo];
+    minEl.value = String(lo);
+    maxEl.value = String(hi);
+  }
+
+  const configuredLo = lo;
+  const configuredHi = hi;
+  if (meanVal < lo) {
+    recordBoundIntervalWarning(id, meanVal, configuredLo, configuredHi);
+    lo = meanVal;
+  }
+  if (meanVal > hi) {
+    recordBoundIntervalWarning(id, meanVal, configuredLo, configuredHi);
+    hi = meanVal;
+  }
+
+  let basis = 'visible-input-bounds';
+  if (boundsDescriptor.mode === MONTE_CARLO_BASIS_MODES.presetLocal) {
+    const local = buildPresetLocalBounds(id, meanVal, isProbability, isPositive);
+    lo = local.lo;
+    hi = local.hi;
+    basis = local.basis || 'scenario-local';
+  } else if (boundsDescriptor.mode === MONTE_CARLO_BASIS_MODES.modifiedPresetLocal) {
+    // Edited fields use their visible bounds; unchanged preset fields keep
+    // scenario-local preset uncertainty (so one edit cannot widen unrelated fields).
+    const origin = getScenarioOriginPreset();
+    if (origin && !isParameterEditedFromPreset(id, origin)) {
+      const local = buildPresetLocalBounds(id, meanVal, isProbability, isPositive);
+      lo = local.lo;
+      hi = local.hi;
+      basis = local.basis || 'scenario-local';
+    } else {
+      basis = 'visible-input-bounds';
+    }
+  } else if (boundsDescriptor.mode === MONTE_CARLO_BASIS_MODES.globalEnvelope) {
+    basis = 'global-envelope';
+  }
+
+  if (lo > hi) [lo, hi] = [hi, lo];
+
+  return {
+    meanVal,
+    lo,
+    hi,
+    isProbability,
+    isPositive,
+    hasBounds: true,
+    basis
+  };
 }
 
 function erfApprox(x) {
@@ -1092,45 +2255,55 @@ function inverseNormalCdf(p) {
   );
 }
 
-function sampleNormalBounded(meanVal, lo, hi) {
+function sampleNormalBounded(meanVal, lo, hi, rng = Math.random) {
   const uncertaintyFraction = getSamplingUncertaintyFraction();
   const sd = Math.max((hi - lo) * uncertaintyFraction / 2, 1e-12);
   for (let i = 0; i < 14; i++) {
-    const v = meanVal + sd * boxMuller();
+    const v = meanVal + sd * boxMuller(rng);
     if (v >= lo && v <= hi) return v;
   }
   return clamp(meanVal, lo, hi);
 }
 
-function sampleLogNormalBounded(meanVal, lo, hi) {
+function sampleLogNormalBounded(meanVal, lo, hi, rng = Math.random) {
   if (meanVal <= 0) return 0;
 
+  // Median-anchored log-normal: the preset central value is interpreted as the
+  // MEDIAN of the factor's distribution, not as its arithmetic expectation.
+  // For independent log-normal factors this is the mathematically clean
+  // convention because median(prod Xi) = prod median(Xi). The arithmetic mean
+  // of the product naturally exceeds the median (Jensen's inequality); that
+  // drift is a real propagated-uncertainty effect, not a sampling artifact.
   const uncertaintyFraction = getSamplingUncertaintyFraction();
   const sd = Math.max((hi - lo) * uncertaintyFraction / 2, meanVal * 0.1, 1e-12);
   const variance = sd * sd;
-  const mu =
-    Math.log(meanVal) -
-    0.5 * Math.log(1 + variance / (meanVal * meanVal));
+  const mu = Math.log(meanVal);
   const sigma = Math.sqrt(Math.log(1 + variance / (meanVal * meanVal)));
 
   for (let i = 0; i < 14; i++) {
-    const v = Math.exp(mu + sigma * boxMuller());
+    const v = Math.exp(mu + sigma * boxMuller(rng));
     if (v >= lo && v <= hi) return v;
   }
   return clamp(meanVal, lo, hi);
 }
 
-function sampleLogitNormalBounded(meanVal, lo, hi) {
+function sampleLogitNormalBounded(meanVal, lo, hi, rng = Math.random) {
+  // Median-anchored logit-normal: the preset central value m is interpreted as
+  // the MEDIAN of the probability factor. Then median(logistic(Z)) =
+  // logistic(logit(m)) = m, so MC median for the factor matches the preset
+  // value regardless of how asymmetric the bounds are around m. The previous
+  // moments-correction multiplier on the center pushed E[logistic(Z)] toward
+  // m, which broke down when m sat near the registry edges (Pessimist).
   const m = clamp(meanVal, Math.max(lo, 1e-9), Math.min(hi, 1 - 1e-9));
   const lo2 = clamp(lo, 1e-9, 1 - 1e-9);
   const hi2 = clamp(hi, 1e-9, 1 - 1e-9);
   const uncertaintyFraction = getSamplingUncertaintyFraction();
 
   const spread = Math.max((logit(hi2) - logit(lo2)) * uncertaintyFraction / 2, 1e-6);
-  const center = logit(m) * Math.sqrt(1 + (Math.PI * spread * spread) / 8);
+  const center = logit(m);
 
   for (let i = 0; i < 14; i++) {
-    const z = center + spread * boxMuller();
+    const z = center + spread * boxMuller(rng);
     const v = logistic(z);
     if (v >= lo && v <= hi) return v;
   }
@@ -1152,12 +2325,11 @@ function sampleLogNormalQuantile(meanVal, lo, hi, u) {
   if (meanVal <= 0) return 0;
   if (hi <= lo) return clamp(meanVal, lo, hi);
 
+  // Median-anchored — see sampleLogNormalBounded for the rationale.
   const uncertaintyFraction = getSamplingUncertaintyFraction();
   const sd = Math.max((hi - lo) * uncertaintyFraction / 2, meanVal * 0.1, 1e-12);
   const variance = sd * sd;
-  const mu =
-    Math.log(meanVal) -
-    0.5 * Math.log(1 + variance / (meanVal * meanVal));
+  const mu = Math.log(meanVal);
   const sigma = Math.sqrt(Math.log(1 + variance / (meanVal * meanVal)));
   const cdfLo = lo <= 0 ? 0 : normalCdf((Math.log(Math.max(lo, 1e-12)) - mu) / sigma);
   const cdfHi = normalCdf((Math.log(Math.max(hi, 1e-12)) - mu) / sigma);
@@ -1166,101 +2338,81 @@ function sampleLogNormalQuantile(meanVal, lo, hi, u) {
 }
 
 function sampleLogitNormalQuantile(meanVal, lo, hi, u) {
+  // Median-anchored — see sampleLogitNormalBounded for the rationale.
   const m = clamp(meanVal, Math.max(lo, 1e-9), Math.min(hi, 1 - 1e-9));
   const lo2 = clamp(lo, 1e-9, 1 - 1e-9);
   const hi2 = clamp(hi, 1e-9, 1 - 1e-9);
   const uncertaintyFraction = getSamplingUncertaintyFraction();
 
   const spread = Math.max((logit(hi2) - logit(lo2)) * uncertaintyFraction / 2, 1e-6);
-  const center = logit(m) * Math.sqrt(1 + (Math.PI * spread * spread) / 8);
+  const center = logit(m);
   const cdfLo = normalCdf((logit(lo2) - center) / spread);
   const cdfHi = normalCdf((logit(hi2) - center) / spread);
   const p = cdfLo + u * Math.max(cdfHi - cdfLo, 1e-12);
   return clamp(logistic(center + spread * inverseNormalCdf(p)), lo2, hi2);
 }
 
-function sampleParam(id, dist) {
-  let meanVal = rawNumber(id, NaN);
-  const minEl = byId(id + '_min');
-  const maxEl = byId(id + '_max');
-
-  if (!Number.isFinite(meanVal)) meanVal = 0;
-
-  const isProbability = PROBABILITY_FIELDS.has(id);
-  const isPositive = POSITIVE_FIELDS.has(id);
-
-  if (!minEl || !maxEl) {
-    if (isProbability) return clamp01(meanVal);
-    if (isPositive) return Math.max(0, meanVal);
-    return meanVal;
+function sampleUniformCentered(meanVal, lo, hi, isProbability, isPositive, u) {
+  if (isProbability && lo > 0 && hi < 1) {
+    const center = logit(clamp(meanVal, lo, hi));
+    const loZ = logit(lo);
+    const hiZ = logit(hi);
+    const spanLo = Math.abs(center - loZ);
+    const spanHi = Math.abs(hiZ - center);
+    const halfWidth = Math.min(spanLo, spanHi);
+    if (halfWidth > 0) {
+      return logistic(center - halfWidth + u * 2 * halfWidth);
+    }
   }
 
-  let lo = rawNumber(id + '_min', meanVal);
-  let hi = rawNumber(id + '_max', meanVal);
-  if (lo > hi) [lo, hi] = [hi, lo];
-
-  if (isProbability) {
-    lo = clamp01(lo);
-    hi = clamp01(hi);
-    meanVal = clamp01(meanVal);
-  } else if (isPositive) {
-    lo = Math.max(0, lo);
-    hi = Math.max(0, hi);
-    meanVal = Math.max(0, meanVal);
+  if (isPositive && meanVal > 0 && lo > 0 && hi > lo) {
+    const center = Math.log(meanVal);
+    const loZ = Math.log(lo);
+    const hiZ = Math.log(hi);
+    const spanLo = Math.abs(center - loZ);
+    const spanHi = Math.abs(hiZ - center);
+    const halfWidth = Math.min(spanLo, spanHi);
+    if (halfWidth > 0) {
+      return Math.exp(center - halfWidth + u * 2 * halfWidth);
+    }
   }
 
-  if (meanVal < lo) lo = meanVal;
-  if (meanVal > hi) hi = meanVal;
+  return lo + u * (hi - lo);
+}
 
-  if (dist === 'uniform') return lo + Math.random() * (hi - lo);
+function sampleParam(id, dist, rng = Math.random, boundsDescriptor = getMonteCarloBoundsDescriptor()) {
+  const { meanVal, lo, hi, isProbability, isPositive, hasBounds, basis } = getParamSamplingState(id, boundsDescriptor);
+
+  if (!hasBounds) return meanVal;
+  if (hi <= lo) return clamp(meanVal, lo, hi);
+
+  if (dist === 'uniform') {
+    if (basis === 'scenario-local') return sampleUniformCentered(meanVal, lo, hi, isProbability, isPositive, rng());
+    return lo + rng() * (hi - lo);
+  }
 
   if (isProbability) {
-    if (dist === 'lognormal') return sampleLogitNormalBounded(meanVal, lo, hi);
-    return sampleNormalBounded(meanVal, lo, hi);
+    if (dist === 'lognormal') return sampleLogitNormalBounded(meanVal, lo, hi, rng);
+    return sampleNormalBounded(meanVal, lo, hi, rng);
   }
 
   if (dist === 'lognormal' && lo >= 0) {
-    return sampleLogNormalBounded(meanVal, lo, hi);
+    return sampleLogNormalBounded(meanVal, lo, hi, rng);
   }
 
-  return sampleNormalBounded(meanVal, lo, hi);
+  return sampleNormalBounded(meanVal, lo, hi, rng);
 }
 
-function sampleParamFromQuantile(id, dist, u) {
-  let meanVal = rawNumber(id, NaN);
-  const minEl = byId(id + '_min');
-  const maxEl = byId(id + '_max');
+function sampleParamFromQuantile(id, dist, u, boundsDescriptor = getMonteCarloBoundsDescriptor()) {
+  const { meanVal, lo, hi, isProbability, isPositive, hasBounds, basis } = getParamSamplingState(id, boundsDescriptor);
 
-  if (!Number.isFinite(meanVal)) meanVal = 0;
-
-  const isProbability = PROBABILITY_FIELDS.has(id);
-  const isPositive = POSITIVE_FIELDS.has(id);
-
-  if (!minEl || !maxEl) {
-    if (isProbability) return clamp01(meanVal);
-    if (isPositive) return Math.max(0, meanVal);
-    return meanVal;
-  }
-
-  let lo = rawNumber(id + '_min', meanVal);
-  let hi = rawNumber(id + '_max', meanVal);
-  if (lo > hi) [lo, hi] = [hi, lo];
-
-  if (isProbability) {
-    lo = clamp01(lo);
-    hi = clamp01(hi);
-    meanVal = clamp01(meanVal);
-  } else if (isPositive) {
-    lo = Math.max(0, lo);
-    hi = Math.max(0, hi);
-    meanVal = Math.max(0, meanVal);
-  }
-
-  if (meanVal < lo) lo = meanVal;
-  if (meanVal > hi) hi = meanVal;
+  if (!hasBounds) return meanVal;
   if (hi <= lo) return clamp(meanVal, lo, hi);
 
-  if (dist === 'uniform') return lo + u * (hi - lo);
+  if (dist === 'uniform') {
+    if (basis === 'scenario-local') return sampleUniformCentered(meanVal, lo, hi, isProbability, isPositive, u);
+    return lo + u * (hi - lo);
+  }
 
   if (isProbability) {
     if (dist === 'lognormal') return sampleLogitNormalQuantile(meanVal, lo, hi, u);
@@ -1274,25 +2426,26 @@ function sampleParamFromQuantile(id, dist, u) {
   return sampleNormalQuantile(meanVal, lo, hi, u);
 }
 
-function buildLatinHypercubeSequence(iterations) {
+function buildLatinHypercubeSequence(iterations, rng = Math.random) {
   return shuffleInPlace(
-    Array.from({ length: iterations }, (_, idx) => (idx + Math.random()) / iterations)
+    Array.from({ length: iterations }, (_, idx) => (idx + rng()) / iterations),
+    rng
   );
 }
 
-function createParameterSampler(engine, dist, iterations) {
+function createParameterSampler(engine, dist, iterations, rng = Math.random, boundsDescriptor = getMonteCarloBoundsDescriptor()) {
   if (engine !== 'lhs') {
     return {
       startIteration() {},
       sample(id) {
-        return sampleParam(id, dist);
+        return sampleParam(id, dist, rng, boundsDescriptor);
       }
     };
   }
 
   const plans = {};
   SAMPLABLE_PARAM_IDS.forEach(id => {
-    plans[id] = buildLatinHypercubeSequence(iterations);
+    plans[id] = buildLatinHypercubeSequence(iterations, rng);
   });
 
   let iterationIndex = 0;
@@ -1303,44 +2456,14 @@ function createParameterSampler(engine, dist, iterations) {
     },
     sample(id) {
       const plan = plans[id];
-      const u = plan && Number.isFinite(plan[iterationIndex]) ? plan[iterationIndex] : Math.random();
-      return sampleParamFromQuantile(id, dist, u);
+      const u = plan && Number.isFinite(plan[iterationIndex]) ? plan[iterationIndex] : rng();
+      return sampleParamFromQuantile(id, dist, u, boundsDescriptor);
     }
   };
 }
 
-function getParamBoundValue(id, side) {
-  let meanVal = rawNumber(id, NaN);
-  const minEl = byId(id + '_min');
-  const maxEl = byId(id + '_max');
-
-  if (!Number.isFinite(meanVal)) meanVal = 0;
-
-  const isProbability = PROBABILITY_FIELDS.has(id);
-  const isPositive = POSITIVE_FIELDS.has(id);
-
-  if (!minEl || !maxEl) {
-    if (isProbability) return clamp01(meanVal);
-    if (isPositive) return Math.max(0, meanVal);
-    return meanVal;
-  }
-
-  let lo = rawNumber(id + '_min', meanVal);
-  let hi = rawNumber(id + '_max', meanVal);
-  if (lo > hi) [lo, hi] = [hi, lo];
-
-  if (isProbability) {
-    lo = clamp01(lo);
-    hi = clamp01(hi);
-    meanVal = clamp01(meanVal);
-  } else if (isPositive) {
-    lo = Math.max(0, lo);
-    hi = Math.max(0, hi);
-    meanVal = Math.max(0, meanVal);
-  }
-
-  if (meanVal < lo) lo = meanVal;
-  if (meanVal > hi) hi = meanVal;
+function getParamBoundValue(id, side, boundsDescriptor = getMonteCarloBoundsDescriptor()) {
+  const { lo, hi } = getParamSamplingState(id, boundsDescriptor);
   return side === 'low' ? lo : hi;
 }
 
@@ -1348,7 +2471,7 @@ function getGalaxyEarthDistance() {
   return Math.max(0, rawNumber('galaxy-earth-distance', 0));
 }
 
-function applyBaseCorrelationModel(sampledInputs, meanInp, correlationModel = 'heuristic') {
+function applyBaseCorrelationModel(sampledInputs, meanInp, correlationModel = 'independent') {
   const s = { ...sampledInputs };
   s.f_magnetosphere = clamp01(s.f_magnetosphere);
   s.f_tilt = clamp01(s.f_tilt);
@@ -1367,9 +2490,9 @@ function applyBaseCorrelationModel(sampledInputs, meanInp, correlationModel = 'h
   return s;
 }
 
-function sampleBaseInputs(dist, sampler = null, correlationModel = 'heuristic') {
-  const meanInp = getInputs();
-  const draw = id => (sampler ? sampler.sample(id) : sampleParam(id, dist));
+function sampleBaseInputs(dist, sampler = null, correlationModel = 'independent', boundsDescriptor = getMonteCarloBoundsDescriptor()) {
+  const meanInp = getInputsForBoundsDescriptor(boundsDescriptor);
+  const draw = id => (sampler ? sampler.sample(id) : sampleParam(id, dist, Math.random, boundsDescriptor));
 
   const s = {
     N_GHZ: draw('N_GHZ'),
@@ -1384,24 +2507,24 @@ function sampleBaseInputs(dist, sampler = null, correlationModel = 'heuristic') 
     f_lunar_stability: draw('f_lunar_stability'),
     f_rotation: draw('f_rotation'),
     f_tilt: draw('f_tilt'),
-    f_H2O: isH2OEnabled ? draw('f_H2O') : 1,
-    f_CHNOPS: isCHNOPSEnabled ? draw('f_CHNOPS') : 1,
-    f_complex_life: isComplexLifeEnabled
+    f_H2O: parameterEnabledForBoundsDescriptor('f_H2O', boundsDescriptor) ? draw('f_H2O') : 1,
+    f_CHNOPS: parameterEnabledForBoundsDescriptor('f_CHNOPS', boundsDescriptor) ? draw('f_CHNOPS') : 1,
+    f_complex_life: parameterEnabledForBoundsDescriptor('f_complex_life', boundsDescriptor)
       ? draw('f_complex_life')
       : 1,
-    f_x: isXEnabled ? draw('f_x') : 1
+    f_x: parameterEnabledForBoundsDescriptor('f_x', boundsDescriptor) ? draw('f_x') : 1
   };
 
   return applyBaseCorrelationModel(s, meanInp, correlationModel);
 }
 
-function sampleAdvanced(dist, sampler = null) {
+function sampleAdvanced(dist, sampler = null, boundsDescriptor = getMonteCarloBoundsDescriptor()) {
   const s = {};
-  const draw = id => (sampler ? sampler.sample(id) : sampleParam(id, dist));
+  const draw = id => (sampler ? sampler.sample(id) : sampleParam(id, dist, Math.random, boundsDescriptor));
 
   if (ADV.modules.atmRet.enabled) s._f_atm_ret = draw('adv_f_atm_ret');
 
-  if (ADV.modules.volatileSplit.enabled) {
+  if (ADV.modules.volatileSplit.enabled && parameterEnabledForBoundsDescriptor('f_H2O', boundsDescriptor)) {
     s.f_H2O = draw('adv_f_vol_del');
     s.f_H2O_ret = draw('adv_f_wat_ret');
   }
@@ -1421,9 +2544,9 @@ function sampleAdvanced(dist, sampler = null) {
   return s;
 }
 
-function buildEnvelopeBaseInputs(side, correlationModel = 'heuristic') {
-  const meanInp = getInputs();
-  const draw = id => getParamBoundValue(id, side);
+function buildEnvelopeBaseInputs(side, correlationModel = 'independent', boundsDescriptor = getMonteCarloBoundsDescriptor()) {
+  const meanInp = getInputsForBoundsDescriptor(boundsDescriptor);
+  const draw = id => getParamBoundValue(id, side, boundsDescriptor);
 
   const s = {
     N_GHZ: draw('N_GHZ'),
@@ -1438,22 +2561,22 @@ function buildEnvelopeBaseInputs(side, correlationModel = 'heuristic') {
     f_lunar_stability: draw('f_lunar_stability'),
     f_rotation: draw('f_rotation'),
     f_tilt: draw('f_tilt'),
-    f_H2O: isH2OEnabled ? draw('f_H2O') : 1,
-    f_CHNOPS: isCHNOPSEnabled ? draw('f_CHNOPS') : 1,
-    f_complex_life: isComplexLifeEnabled ? draw('f_complex_life') : 1,
-    f_x: isXEnabled ? draw('f_x') : 1
+    f_H2O: parameterEnabledForBoundsDescriptor('f_H2O', boundsDescriptor) ? draw('f_H2O') : 1,
+    f_CHNOPS: parameterEnabledForBoundsDescriptor('f_CHNOPS', boundsDescriptor) ? draw('f_CHNOPS') : 1,
+    f_complex_life: parameterEnabledForBoundsDescriptor('f_complex_life', boundsDescriptor) ? draw('f_complex_life') : 1,
+    f_x: parameterEnabledForBoundsDescriptor('f_x', boundsDescriptor) ? draw('f_x') : 1
   };
 
   return applyBaseCorrelationModel(s, meanInp, correlationModel);
 }
 
-function buildEnvelopeAdvancedInputs(side) {
-  const draw = id => getParamBoundValue(id, side);
+function buildEnvelopeAdvancedInputs(side, boundsDescriptor = getMonteCarloBoundsDescriptor()) {
+  const draw = id => getParamBoundValue(id, side, boundsDescriptor);
   const s = {};
 
   if (ADV.modules.atmRet.enabled) s._f_atm_ret = draw('adv_f_atm_ret');
 
-  if (ADV.modules.volatileSplit.enabled) {
+  if (ADV.modules.volatileSplit.enabled && parameterEnabledForBoundsDescriptor('f_H2O', boundsDescriptor)) {
     s.f_H2O = draw('adv_f_vol_del');
     s.f_H2O_ret = draw('adv_f_wat_ret');
   }
@@ -1474,10 +2597,11 @@ function buildEnvelopeAdvancedInputs(side) {
 }
 
 function computeSimulationEnvelope(options = getSimulationOptions()) {
-  const lowBase = buildEnvelopeBaseInputs('low', options.correlation);
-  const highBase = buildEnvelopeBaseInputs('high', options.correlation);
-  const lowAdv = buildEnvelopeAdvancedInputs('low');
-  const highAdv = buildEnvelopeAdvancedInputs('high');
+  const descriptor = getMonteCarloBoundsDescriptor(options);
+  const lowBase = buildEnvelopeBaseInputs('low', options.correlation, descriptor);
+  const highBase = buildEnvelopeBaseInputs('high', options.correlation, descriptor);
+  const lowAdv = buildEnvelopeAdvancedInputs('low', descriptor);
+  const highAdv = buildEnvelopeAdvancedInputs('high', descriptor);
 
   const low = computePlanetsAdvanced(applyAdvancedModules(lowBase, lowAdv));
   const high = computePlanetsAdvanced(applyAdvancedModules(highBase, highAdv));
@@ -1573,9 +2697,11 @@ function applyAdvancedModules(baseInputs, sampledAdv = {}) {
 
   const inp = { ...baseInputs };
 
-  const getAdv = (key, id) => {
+  const getAdv = (key, id, kind = 'number') => {
     const v = sampledAdv[key];
     if (Number.isFinite(v)) return v;
+    if (kind === 'probability') return sanitizeProbabilityInput(id);
+    if (kind === 'positive') return sanitizePositiveInput(id);
     return pf(id);
   };
 
@@ -1585,19 +2711,23 @@ function applyAdvancedModules(baseInputs, sampledAdv = {}) {
   }
 
   if (ADV.modules.atmRet.enabled) {
-    inp._f_atm_ret = clamp01(getAdv('_f_atm_ret', 'adv_f_atm_ret'));
+    inp._f_atm_ret = clamp01(getAdv('_f_atm_ret', 'adv_f_atm_ret', 'probability'));
   }
 
   if (ADV.modules.volatileSplit.enabled) {
-    const delivery = clamp01(getAdv('f_H2O', 'adv_f_vol_del'));
-    const retention = clamp01(getAdv('f_H2O_ret', 'adv_f_wat_ret'));
-    inp.f_H2O = delivery * retention;
+    if (isH2OEnabled) {
+      const delivery = clamp01(getAdv('f_H2O', 'adv_f_vol_del', 'probability'));
+      const retention = clamp01(getAdv('f_H2O_ret', 'adv_f_wat_ret', 'probability'));
+      inp.f_H2O = delivery * retention;
+    } else {
+      inp.f_H2O = 1;
+    }
   }
 
   if (ADV.modules.longterm.enabled) {
-    const tect = clamp01(getAdv('_f_tect', 'adv_f_tect'));
-    const radio = clamp01(getAdv('_f_radio', 'adv_f_radio'));
-    const clim = clamp01(getAdv('_f_clim', 'adv_f_clim'));
+    const tect = clamp01(getAdv('_f_tect', 'adv_f_tect', 'probability'));
+    const radio = clamp01(getAdv('_f_radio', 'adv_f_radio', 'probability'));
+    const clim = clamp01(getAdv('_f_clim', 'adv_f_clim', 'probability'));
     inp._f_longterm = tect * radio * clim;
   }
 
@@ -1626,7 +2756,7 @@ function applyAdvancedModules(baseInputs, sampledAdv = {}) {
   }
 
   if (ADV.modules.radiusValley.enabled) {
-    inp.f_composition = clamp01(getAdv('f_composition', 'adv_P_rocky'));
+    inp.f_composition = clamp01(getAdv('f_composition', 'adv_P_rocky', 'probability'));
     inp.f_size = 1;
   }
 
@@ -1635,25 +2765,28 @@ function applyAdvancedModules(baseInputs, sampledAdv = {}) {
   }
 
   if (ADV.modules.spaceWeather.enabled) {
-    inp._f_xuv_quiet = clamp01(getAdv('_f_xuv_quiet', 'adv_f_xuv'));
+    inp._f_xuv_quiet = clamp01(getAdv('_f_xuv_quiet', 'adv_f_xuv', 'probability'));
   }
 
   if (ADV.modules.prebioticUV.enabled) {
-    inp._f_uv = clamp01(getAdv('_f_uv', 'adv_f_uv'));
+    inp._f_uv = clamp01(getAdv('_f_uv', 'adv_f_uv', 'probability'));
   }
 
   if (ADV.modules.binary.enabled) {
-    inp._f_binary = clamp01(getAdv('_f_binary', 'adv_f_binary'));
+    inp._f_binary = clamp01(getAdv('_f_binary', 'adv_f_binary', 'probability'));
   }
 
   if (ADV.modules.radiation.enabled) {
-    inp._f_rad = clamp01(getAdv('_f_rad', 'adv_f_rad'));
+    inp._f_rad = clamp01(getAdv('_f_rad', 'adv_f_rad', 'probability'));
   }
 
   return inp;
 }
 
 const KPC_TO_LY = 3261.56;
+
+const GHZ_INNER_FRAC = 0.26;
+const GHZ_OUTER_FRAC = 0.85;
 
 function getGHZGeometryLy() {
   const thickness = isGalaxySettingsEnabled ? Math.max(1, pf('galaxy-thickness')) : 1000;
@@ -1678,9 +2811,9 @@ function getGHZGeometryLy() {
     }
     const radius = diameter / 2;
 
-    
-    innerLy = 0.26 * radius;
-    outerLy = 0.85 * radius;
+
+    innerLy = GHZ_INNER_FRAC * radius;
+    outerLy = GHZ_OUTER_FRAC * radius;
   }
 
   innerLy = Math.max(0, innerLy);
@@ -1729,10 +2862,139 @@ function E_from(lambda, d) {
   return gamma(1 + 1 / d) / Math.pow(lambda * vd, 1 / d);
 }
 
+function radialGHZWeight(R, Rd, metThresh) {
+  const feH = 0.5 - 0.07 * R;
+  if (feH < metThresh) return 0;
+  const snSurvival = 1 / (1 + Math.exp(-0.8 * (R - 4)));
+  return Math.exp(-R / Rd) * snSurvival;
+}
+
+function buildRadialGHZDensityProfile() {
+  const Rd = Math.max(0.1, pf('adv_scale_length', 2.6));
+  let Rinner = Math.max(0, pf('adv_ghz_inner', 4.0));
+  let Router = Math.max(0, pf('adv_ghz_outer', 13.0));
+  const metThresh = pf('adv_met_thresh', -1.0);
+  const R0 = Math.max(0.1, pf('adv_temporal_R', 8.0));
+  const bins = Math.max(120, Math.floor(pf('adv_radial_bins', 100) * 2));
+
+  if (Rinner > Router) [Rinner, Router] = [Router, Rinner];
+
+  const Rmax = Math.max(20, Router + 5 * Rd);
+  const dr = Rmax / bins;
+  const rings = [];
+  let totalWeight = 0;
+
+  for (let i = 0; i < bins; i++) {
+    const R = (i + 0.5) * dr;
+    if (R < Rinner || R > Router) continue;
+
+    const radialWeight = radialGHZWeight(R, Rd, metThresh);
+    if (radialWeight <= 0) continue;
+
+    const annulusWeight = radialWeight * 2 * Math.PI * R * dr;
+    rings.push({ R, weight: annulusWeight });
+    totalWeight += annulusWeight;
+  }
+
+  if (totalWeight <= 0 || !rings.length) return null;
+
+  return {
+    rings,
+    totalWeight,
+    R0,
+    Rinner,
+    Router,
+    Rd,
+    metThresh,
+    Rmax,
+    dr,
+    localWeight: R0 >= Rinner && R0 <= Router ? radialGHZWeight(R0, Rd, metThresh) : 0
+  };
+}
+
+function ringFractionInsideObserverCircle(R, R0, d) {
+  if (d <= 0) return 0;
+  if (R0 <= 1e-9) return R <= d ? 1 : 0;
+  if (R <= 1e-9) return d >= R0 ? 1 : 0;
+  if (d >= R + R0) return 1;
+  if (d <= Math.abs(R - R0)) return 0;
+
+  const cosTheta = clamp((R * R + R0 * R0 - d * d) / (2 * R * R0), -1, 1);
+  return Math.acos(cosTheta) / Math.PI;
+}
+
+function radialMeanWithinDistance(count, profile, dKpc) {
+  if (!profile || count <= 0 || dKpc <= 0) return 0;
+
+  if (profile.localWeight > 0 && dKpc <= profile.dr) {
+    return count * Math.min(profile.totalWeight, profile.localWeight * Math.PI * dKpc * dKpc) / profile.totalWeight;
+  }
+
+  let coveredWeight = 0;
+  for (const ring of profile.rings) {
+    coveredWeight += ring.weight * ringFractionInsideObserverCircle(ring.R, profile.R0, dKpc);
+  }
+
+  return count * coveredWeight / profile.totalWeight;
+}
+
+function expectedRadialNearestDistanceLy(count) {
+  if (!Number.isFinite(count) || count <= 0) return Infinity;
+
+  const profile = buildRadialGHZDensityProfile();
+  if (!profile) return Infinity;
+
+  const maxDistanceKpc = Math.max(0.1, profile.R0 + profile.Router);
+  const steps = 1800;
+  const minDistanceKpc = 1e-9;
+  let integralKpc = 0;
+  let prevSurvival = 1;
+  let prevD = 0;
+
+  for (let i = 1; i <= steps; i++) {
+    const t = i / steps;
+    const d = minDistanceKpc * Math.pow(maxDistanceKpc / minDistanceKpc, t);
+    const lambda = radialMeanWithinDistance(count, profile, d);
+    const survival = Math.exp(-Math.max(0, lambda));
+    const dd = d - prevD;
+    integralKpc += 0.5 * (prevSurvival + survival) * dd;
+    prevSurvival = survival;
+    prevD = d;
+  }
+
+  return integralKpc * KPC_TO_LY;
+}
+
+function buildRadialDistanceModel(count, ciLowCount = null, ciHighCount = null) {
+  const profile = buildRadialGHZDensityProfile();
+  if (!profile || !Number.isFinite(count) || count <= 0) return null;
+
+  const hasCi = Number.isFinite(ciLowCount) && Number.isFinite(ciHighCount);
+
+  return {
+    htmlLabel: 'RADIAL GHZ DENSITY',
+    modelLabel: 'radial GHZ density',
+    isRadial: true,
+    distance: expectedRadialNearestDistanceLy(count),
+    ciLow: hasCi ? expectedRadialNearestDistanceLy(ciHighCount) : null,
+    ciHigh: hasCi ? expectedRadialNearestDistanceLy(ciLowCount) : null,
+    geometryLabel: 'nonuniform GHZ intensity',
+    geometryValue: profile.totalWeight,
+    densityValue: count / profile.totalWeight,
+    densityUnits: 'weighted kpc<sup>-2</sup>',
+    densityFormula: '&Lambda;(r) = integral over the observer-centred circle of lambda(R)dA',
+    distanceFormula: 'E[D] = integral_0^infinity exp[-Lambda(r)] dr',
+    rSunKpc: profile.R0,
+    innerKpc: profile.Rinner,
+    outerKpc: profile.Router,
+    scaleLengthKpc: profile.Rd
+  };
+}
+
 function calculateDeterministic() {
-  renderConfigurationWarnings();
   const inp = getInputs();
   const advInp = applyAdvancedModules(inp);
+  renderConfigurationWarnings();
   const N = computePlanetsAdvanced(advInp);
 
   invalidateResults(false, false);
@@ -1740,160 +3002,360 @@ function calculateDeterministic() {
   hasDeterministicCalculation = true;
 
   byId('deterministicResult').innerHTML =
-    `<span class="result-label">DETERMINISTIC ·</span> ${fmtN(N)} Earth-like planets in ${galaxyName}${lifeLabel()}`;
+    `<span class="result-label">DETERMINISTIC ·</span> ${fmtN(N)} modelled Earth-like candidates in ${galaxyName}${lifeLabel()}`;
+  if (byId('whereAreTheyBtn')) byId('whereAreTheyBtn').disabled = false;
   renderResultRealityCheck();
   renderCalculationConsole();
   updateShareButtons();
 }
 
-function monteCarloCalculate() {
-  const loading = byId('loading');
-  renderConfigurationWarnings();
-  loading.style.display = 'block';
+function resolveMonteCarloIterations(options = {}) {
+  if (Number.isFinite(Number(options.samples))) {
+    return Math.max(1, Math.floor(Number(options.samples)));
+  }
+  return clamp(parseInt((byId('iterations') || {}).value || '2000', 10), 1000, 20000);
+}
 
-  setTimeout(() => {
-    const iterations = clamp(parseInt(byId('iterations').value || '2000', 10), 1000, 20000);
-    const dist = byId('distribution').value || 'lognormal';
-    const simulationOptions = getSimulationOptions();
-    const sampler = createParameterSampler(simulationOptions.engine, dist, iterations);
+function getMonteCarloOptions(options = {}) {
+  const domOptions = getSimulationOptions();
+  return {
+    engine: (options.engine || domOptions.engine || 'standard').toLowerCase(),
+    correlation: (options.correlation || domOptions.correlation || 'independent').toLowerCase(),
+    robustBounds: Object.prototype.hasOwnProperty.call(options, 'robustBounds')
+      ? !!options.robustBounds
+      : !!domOptions.robustBounds,
+    mcMode: Object.prototype.hasOwnProperty.call(options, 'mcMode')
+      ? options.mcMode
+      : domOptions.mcMode
+  };
+}
 
-    const sensKeys = [
-      'N_GHZ',
-      'f_sun_type',
-      'f_sun_age',
-      'N_p_star',
-      'f_composition',
-      'f_orbit',
-      'f_stability',
-      'f_magnetosphere',
-      'f_lunar_stability',
-      'f_size',
-      'f_rotation',
-      'f_tilt',
-      'f_H2O',
-      'f_CHNOPS',
-      'f_complex_life',
-      'f_x',
-      '_f_atm_ret',
-      '_f_longterm',
-      '_f_xuv_quiet',
-      '_f_uv',
-      '_f_binary',
-      '_f_rad'
-    ];
+const MC_MEDIAN_DIVERGENCE_LOG10_THRESHOLD = 1;
 
-    if (ADV.enabled && ADV.modules.sensitivity.enabled) {
-      SENS.init(sensKeys);
-    }
+function buildMonteCarloIntervalComparison(
+  deterministicValue,
+  p025,
+  p975,
+  boundsDescriptor = getMonteCarloBoundsDescriptor(),
+  p500 = null
+) {
+  const finite =
+    Number.isFinite(deterministicValue) &&
+    Number.isFinite(p025) &&
+    Number.isFinite(p975);
 
-    const results = [];
-    const checkpoints = [];
-    let runningSum = 0;
-    const checkpointEvery = Math.max(25, Math.ceil(iterations / 40));
+  const tolerance = finite
+    ? Math.max(1e-12, Math.abs(deterministicValue) * 1e-12, Math.abs(p975 - p025) * 1e-12)
+    : 0;
+  const below = finite && deterministicValue < p025 - tolerance;
+  const above = finite && deterministicValue > p975 + tolerance;
+  const outside = below || above;
+  const finiteMedian = Number.isFinite(p500);
+  const tiny = 1e-300;
+  const medianLog10Delta =
+    finite && finiteMedian
+      ? Math.abs(Math.log10(Math.max(Math.abs(deterministicValue), tiny)) - Math.log10(Math.max(Math.abs(p500), tiny)))
+      : 0;
+  const medianDiverges = finite && finiteMedian && medianLog10Delta > MC_MEDIAN_DIVERGENCE_LOG10_THRESHOLD;
+  const warnings = [];
 
-    for (let i = 0; i < iterations; i++) {
-      sampler.startIteration(i);
-      const baseS = sampleBaseInputs(dist, sampler, simulationOptions.correlation);
-      const advS = sampleAdvanced(dist, sampler);
-      const full = applyAdvancedModules(baseS, advS);
-      const N = computePlanetsAdvanced(full);
+  if (outside) {
+    warnings.push('The deterministic scenario point lies outside the sampled Monte Carlo interval. This indicates that the selected scenario is near the edge of the configured uncertainty bounds, or that Monte Carlo is sampling a broader global envelope rather than a local uncertainty range around this preset.');
+  }
 
-      if (Number.isFinite(N) && N >= 0) {
-        results.push(N);
-        runningSum += N;
+  if (medianDiverges) {
+    const basisNote =
+      boundsDescriptor.mode === MONTE_CARLO_BASIS_MODES.presetLocal
+        ? 'This should be investigated because preset-local uncertainty is expected to remain centered on the selected scenario.'
+        : 'Treat this as broad exploratory/global-envelope sampling unless the scenario and sampling bounds are deliberately aligned.';
+    warnings.push(
+      `The deterministic central result and Monte Carlo q50 median differ by ${medianLog10Delta.toFixed(2)} log10 units. ${basisNote}`
+    );
+  }
 
-        const n = results.length;
-        if (n === 1 || n % checkpointEvery === 0) {
-          checkpoints.push({ n, mean: runningSum / n });
-        }
+  return {
+    deterministic: deterministicValue,
+    p025,
+    p500,
+    p975,
+    below,
+    above,
+    outside,
+    medianLog10Delta,
+    medianDiverges,
+    medianDivergenceLog10Threshold: MC_MEDIAN_DIVERGENCE_LOG10_THRESHOLD,
+    boundsMode: boundsDescriptor.mode,
+    boundsLabel: boundsDescriptor.label,
+    warning: warnings.join(' ')
+  };
+}
 
-        if (ADV.enabled && ADV.modules.sensitivity.enabled) {
-          const sensRecord = {
-            N_GHZ: full.N_GHZ,
-            f_sun_type: full.f_sun_type,
-            f_sun_age: full.f_sun_age,
-            N_p_star: full.N_p_star,
-            f_composition: full.f_composition,
-            f_orbit: full.f_orbit,
-            f_stability: full.f_stability,
-            f_magnetosphere: full.f_magnetosphere,
-            f_lunar_stability: full.f_lunar_stability,
-            f_size: full.f_size,
-            f_rotation: full.f_rotation,
-            f_tilt: full.f_tilt,
-            f_H2O: full.f_H2O,
-            f_CHNOPS: full.f_CHNOPS,
-            f_complex_life: full.f_complex_life,
-            f_x: full.f_x,
-            _f_atm_ret: full._f_atm_ret ?? 1,
-            _f_longterm: full._f_longterm ?? 1,
-            _f_xuv_quiet: full._f_xuv_quiet ?? 1,
-            _f_uv: full._f_uv ?? 1,
-            _f_binary: full._f_binary ?? 1,
-            _f_rad: full._f_rad ?? 1
-          };
-          SENS.record(sensRecord, N);
-        }
+function runMonteCarloSimulation(options = {}) {
+  const iterations = resolveMonteCarloIterations(options);
+  const dist = (options.distribution || (byId('distribution') || {}).value || 'lognormal').toLowerCase();
+  const simulationOptions = options.simulationOptions || getMonteCarloOptions(options);
+  const boundsDescriptor = options.boundsDescriptor || getMonteCarloBoundsDescriptor(simulationOptions);
+  const rng = resolveRng(options);
+  clearBoundIntervalWarnings();
+  const deterministicInputs = getInputsForBoundsDescriptor(boundsDescriptor);
+  const deterministicAtRun = computePlanetsAdvanced(applyAdvancedModules(deterministicInputs));
+  const initialValidationWarnings = getInputValidationWarnings();
+  const sampler = createParameterSampler(simulationOptions.engine, dist, iterations, rng, boundsDescriptor);
+
+  const sensKeys = [
+    'N_GHZ',
+    'f_sun_type',
+    'f_sun_age',
+    'N_p_star',
+    'f_composition',
+    'f_orbit',
+    'f_stability',
+    'f_magnetosphere',
+    'f_lunar_stability',
+    'f_size',
+    'f_rotation',
+    'f_tilt',
+    'f_H2O',
+    'f_CHNOPS',
+    'f_complex_life',
+    'f_x',
+    '_f_atm_ret',
+    '_f_longterm',
+    '_f_xuv_quiet',
+    '_f_uv',
+    '_f_binary',
+    '_f_rad'
+  ];
+
+  if (ADV.enabled && ADV.modules.sensitivity.enabled && typeof SENS !== 'undefined') {
+    SENS.init(sensKeys);
+  }
+
+  const results = [];
+  const sampleYields = [];
+  const sampledStarCounts = [];
+  const checkpoints = [];
+  let runningSum = 0;
+  const checkpointEvery = Math.max(25, Math.ceil(iterations / 40));
+
+  for (let i = 0; i < iterations; i++) {
+    sampler.startIteration(i);
+    const baseS = sampleBaseInputs(dist, sampler, simulationOptions.correlation, boundsDescriptor);
+    const advS = sampleAdvanced(dist, sampler, boundsDescriptor);
+    const full = applyAdvancedModules(baseS, advS);
+    const N = computePlanetsAdvanced(full);
+
+    if (Number.isFinite(N) && N >= 0) {
+      results.push(N);
+      runningSum += N;
+
+      const sampledStars = Number.isFinite(full.N_GHZ) ? Math.max(0, full.N_GHZ) : 0;
+      if (sampledStars > 0) {
+        sampledStarCounts.push(sampledStars);
+        sampleYields.push(N / sampledStars);
+      }
+
+      const n = results.length;
+      if (n === 1 || n % checkpointEvery === 0) {
+        checkpoints.push({ n, mean: runningSum / n });
+      }
+
+      if (ADV.enabled && ADV.modules.sensitivity.enabled && typeof SENS !== 'undefined') {
+        const sensRecord = {
+          N_GHZ: full.N_GHZ,
+          f_sun_type: full.f_sun_type,
+          f_sun_age: full.f_sun_age,
+          N_p_star: full.N_p_star,
+          f_composition: full.f_composition,
+          f_orbit: full.f_orbit,
+          f_stability: full.f_stability,
+          f_magnetosphere: full.f_magnetosphere,
+          f_lunar_stability: full.f_lunar_stability,
+          f_size: full.f_size,
+          f_rotation: full.f_rotation,
+          f_tilt: full.f_tilt,
+          f_H2O: full.f_H2O,
+          f_CHNOPS: full.f_CHNOPS,
+          f_complex_life: full.f_complex_life,
+          f_x: full.f_x,
+          _f_atm_ret: full._f_atm_ret ?? 1,
+          _f_longterm: full._f_longterm ?? 1,
+          _f_xuv_quiet: full._f_xuv_quiet ?? 1,
+          _f_uv: full._f_uv ?? 1,
+          _f_binary: full._f_binary ?? 1,
+          _f_rad: full._f_rad ?? 1
+        };
+        SENS.record(sensRecord, N);
       }
     }
+  }
 
-    if (!results.length) {
-      convergenceSummary = null;
-      simulationEnvelope = null;
-      renderConvergenceSummary();
-      renderSimulationMethodSummary();
-      loading.style.display = 'none';
-      updateShareButtons();
-      return;
-    }
+  if (results.length && (!checkpoints.length || checkpoints[checkpoints.length - 1].n !== results.length)) {
+    checkpoints.push({ n: results.length, mean: runningSum / results.length });
+  }
 
-    if (!checkpoints.length || checkpoints[checkpoints.length - 1].n !== results.length) {
-      checkpoints.push({ n: results.length, mean: runningSum / results.length });
-    }
+  if (initialValidationWarnings.length) {
+    inputValidationWarnings = initialValidationWarnings.slice();
+  }
 
-    results.sort((a, b) => a - b);
-    lastResults = results.slice();
+  results.sort((a, b) => a - b);
 
-    averagePlanets = mean(results);
-    percentile5 = percentile(results, 0.025);
-    percentile95 = percentile(results, 0.975);
-    stdDev = stdev(results, averagePlanets);
+  const mcMean = mean(results);
+  const p025 = percentile(results, 0.025);
+  const p500 = percentile(results, 0.500);
+  const p975 = percentile(results, 0.975);
+  const mcStdDev = stdev(results, mcMean);
+  const canUseLog = currentScale === 'log' && results.every(v => v > 0);
+  const modeEstimate = typeof getModeEstimate === 'function'
+    ? getModeEstimate(results, canUseLog)
+    : 0;
+  const convergence = summarizeConvergence(checkpoints, mcMean);
+  const envelope = simulationOptions.robustBounds
+    ? computeSimulationEnvelope(simulationOptions)
+    : null;
+  const yieldStats = summarizePerStarYields(sampleYields);
+  const intervalComparison = buildMonteCarloIntervalComparison(
+    deterministicAtRun,
+    p025,
+    p975,
+    boundsDescriptor,
+    p500
+  );
 
-    const canUseLog = currentScale === 'log' && results.every(v => v > 0);
-    mostFrequent = getModeEstimate(results, canUseLog);
-    convergenceSummary = summarizeConvergence(checkpoints, averagePlanets);
-    simulationEnvelope = simulationOptions.robustBounds
-      ? computeSimulationEnvelope(simulationOptions)
-      : null;
+  return {
+    n: results.length,
+    requestedSamples: iterations,
+    results,
+    mean: mcMean,
+    median: p500,
+    p025,
+    p500,
+    p975,
+    stdDev: mcStdDev,
+    mode: modeEstimate,
+    checkpoints,
+    convergence,
+    envelope,
+    sampledN_GHZ: sampledStarCounts,
+    yieldSamples: sampleYields,
+    yieldStats,
+    deterministic: deterministicAtRun,
+    intervalComparison,
+    boundsMode: boundsDescriptor.mode,
+    boundsLabel: boundsDescriptor.label,
+    uncertaintyBasisLabel: boundsDescriptor.uncertaintyBasisLabel,
+    distribution: dist,
+    simulationOptions,
+    seed: Object.prototype.hasOwnProperty.call(options, 'seed') ? options.seed : null
+  };
+}
 
+function applyMonteCarloSummary(summary) {
+  if (typeof renderConfigurationWarnings === 'function') renderConfigurationWarnings();
+
+  if (!summary.results.length) {
+    lastSampleYields = [];
+    monteCarloYieldStats = null;
+    convergenceSummary = null;
+    simulationEnvelope = null;
+    monteCarloBoundsMode = '';
+    monteCarloBoundsLabel = '';
+    monteCarloUncertaintyBasisLabel = '';
+    monteCarloIntervalComparison = null;
+    if (typeof renderConvergenceSummary === 'function') renderConvergenceSummary();
+    if (typeof renderSimulationMethodSummary === 'function') renderSimulationMethodSummary();
+    if (typeof updateShareButtons === 'function') updateShareButtons();
+    return;
+  }
+
+  lastResults = summary.results.slice();
+  lastSampleYields = Array.isArray(summary.yieldSamples) ? summary.yieldSamples.slice() : [];
+  monteCarloYieldStats = summary.yieldStats || null;
+  mcMedianQ50 = Number.isFinite(summary.median) ? summary.median : summary.mean;
+  mcArithmeticMean = summary.mean;
+  mcQ025 = summary.p025;
+  mcQ975 = summary.p975;
+  stdDev = summary.stdDev;
+  mostFrequent = summary.mode;
+  convergenceSummary = summary.convergence;
+  simulationEnvelope = summary.envelope;
+  monteCarloBoundsMode = summary.boundsMode || '';
+  monteCarloBoundsLabel = summary.boundsLabel || '';
+  monteCarloUncertaintyBasisLabel = summary.uncertaintyBasisLabel || '';
+  monteCarloIntervalComparison = summary.intervalComparison || null;
+
+  if (byId('monteCarloResult')) {
     byId('monteCarloResult').innerHTML =
-      `<span class="result-label">MONTE CARLO ·</span> ${fmtN(averagePlanets)} Earth-like planets in ${galaxyName}${lifeLabel()}`;
+      `<span class="result-label">MONTE CARLO Q50 MEDIAN ·</span> ${fmtN(mcMedianQ50)} modelled Earth-like candidates in ${galaxyName}${lifeLabel()} <span style="font-size:10px;color:var(--text-dim)">(sample median; methodological primary)</span>`;
+  }
 
+  if (byId('monteCarloMedian')) {
+    byId('monteCarloMedian').innerHTML =
+      `<span class="result-label">MC ARITHMETIC MEAN ·</span> ${fmtN(mcArithmeticMean)} modelled Earth-like candidates in ${galaxyName}${lifeLabel()} <span style="font-size:10px;color:var(--text-dim)">(reference only; drifts above median for multiplicative chains due to Jensen's inequality)</span>`;
+  }
+
+  if (byId('stats')) {
     byId('stats').innerHTML =
-      `<span class="result-label">95% CI ·</span> [${fmtN(percentile5)}, ${fmtN(percentile95)}] <span style="font-size:10px;color:var(--text-dim)">(q2.5–q97.5)</span>`;
-    renderResultRealityCheck();
+      `<span class="result-label">95% SAMPLED MODEL INTERVAL ·</span> [${fmtN(mcQ025)}, ${fmtN(mcQ975)}] <span style="font-size:10px;color:var(--text-dim)">(q2.5–q97.5; not an observational confidence interval)</span>`;
+  }
 
-    byId('distance').textContent = '';
-    byId('whereAreTheyBtn').disabled = false;
+  if (typeof renderResultRealityCheck === 'function') renderResultRealityCheck();
+  if (byId('distance')) byId('distance').textContent = '';
+  if (byId('whereAreTheyBtn')) byId('whereAreTheyBtn').disabled = false;
+  if (typeof rebuildCharts === 'function') rebuildCharts(summary.results);
+  if (typeof renderConvergenceSummary === 'function') renderConvergenceSummary();
+  simulationCompleted = true;
+  monteCarloState = 'current';
+  if (typeof renderSimulationMethodSummary === 'function') renderSimulationMethodSummary();
 
-    rebuildCharts(results);
-    renderConvergenceSummary();
-    simulationCompleted = true;
-    renderSimulationMethodSummary();
+  if (ADV.enabled && ADV.modules.sensitivity.enabled && typeof SENS !== 'undefined') SENS.render('adv-tornado-container');
+  if (ADV.enabled && ADV.modules.ard.enabled && typeof computeARD === 'function') computeARD();
+  if (ADV.enabled && ADV.modules.temporal.enabled && typeof computeTemporal === 'function') computeTemporal();
 
-    if (ADV.enabled && ADV.modules.sensitivity.enabled) SENS.render('adv-tornado-container');
-    if (ADV.enabled && ADV.modules.ard.enabled) computeARD();
-    if (ADV.enabled && ADV.modules.temporal.enabled) computeTemporal();
+  if (typeof renderTemporalNtPanel === 'function') renderTemporalNtPanel();
+  if (typeof renderDetectionPanel === 'function') renderDetectionPanel();
 
-    
-    renderTemporalNtPanel();
-    renderDetectionPanel();
-    if (byId('sobolBtn')) byId('sobolBtn').disabled = false;
+  if (typeof renderCalculationConsole === 'function') renderCalculationConsole();
+  if (typeof updateShareButtons === 'function') updateShareButtons();
+}
 
-    renderCalculationConsole();
-    loading.style.display = 'none';
-    updateShareButtons();
-  }, 30);
+function monteCarloCalculate(options = {}) {
+  const hasProgrammaticOptions = !!options && Object.keys(options).length > 0;
+  const simulationOptions = getMonteCarloOptions(options);
+  const boundsDescriptor = getMonteCarloBoundsDescriptor(simulationOptions);
+  const loading = byId('loading');
+  if (typeof renderConfigurationWarnings === 'function') renderConfigurationWarnings();
+
+  // Gate: never run Monte Carlo when a parameter sampled from its visible bounds
+  // has inconsistent bounds (min > max, or central outside [min, max]). Blocking
+  // here means simulationCompleted/mcState stay not-run/stale and no invalid MC
+  // values are produced or exported. Deterministic output is left untouched.
+  const blockingErrors = getMonteCarloBoundsBlockingErrors(boundsDescriptor);
+  if (blockingErrors.length) {
+    if (loading) loading.style.display = 'none';
+    if (typeof renderConfigurationWarnings === 'function') renderConfigurationWarnings();
+    if (typeof renderSimulationMethodSummary === 'function') renderSimulationMethodSummary();
+    // Deterministic output is still valid — re-enable the distance button so
+    // the user is not left with a permanently disabled "Where is Everyone?" button.
+    if (hasDeterministicCalculation && byId('whereAreTheyBtn')) byId('whereAreTheyBtn').disabled = false;
+    return null;
+  }
+
+  if (loading) loading.style.display = 'block';
+
+  const execute = () => {
+    const summary = runMonteCarloSimulation({ ...options, simulationOptions, boundsDescriptor });
+    if (options.updateUi !== false) applyMonteCarloSummary(summary);
+    if (loading) loading.style.display = 'none';
+    return summary;
+  };
+
+  if (hasProgrammaticOptions) {
+    return execute();
+  }
+
+  setTimeout(execute, 30);
+  return null;
 }
 
 function getCurrentDeterministicPlanets() {
@@ -1904,6 +3366,7 @@ function getCurrentDeterministicPlanets() {
 
 function getDistanceModelSelection() {
   return {
+    modelRadial: !!((byId('model-radial') || {}).checked),
     model2d: !!((byId('model-2d') || {}).checked),
     model3dDisk: !!((byId('model-3d-disk') || {}).checked),
     model3dSphere: !!((byId('model-3d-sphere') || {}).checked)
@@ -1917,10 +3380,15 @@ function buildDistanceMetrics(count, ciLowCount = null, ciHighCount = null) {
 
   const metrics = {
     geom,
+    modelRadial: null,
     model2d: null,
     model3dDisk: null,
     model3dSphere: null
   };
+
+  if (models.modelRadial) {
+    metrics.modelRadial = buildRadialDistanceModel(count, ciLowCount, ciHighCount);
+  }
 
   if (models.model2d) {
     metrics.model2d = {
@@ -1975,7 +3443,91 @@ function buildDistanceMetrics(count, ciLowCount = null, ciHighCount = null) {
 }
 
 function getFermiReferenceModel(metrics) {
-  return metrics.model3dDisk || metrics.model2d || metrics.model3dSphere || null;
+  return metrics.modelRadial || metrics.model3dDisk || metrics.model2d || metrics.model3dSphere || null;
+}
+
+function getDistanceScenarioModelLabel(scenario) {
+  if (!scenario) return 'not calculated';
+  if (scenario.refModel && scenario.refModel.modelLabel) return scenario.refModel.modelLabel;
+  if (scenario.kind === 'external') return 'external reference distance';
+  if (scenario.kind === 'sparse') return 'sparse expected-count existence probability';
+  if (scenario.kind === 'no-model') return 'no active geometric distance model';
+  return 'active geometric distance model';
+}
+
+function getDistanceScenarioValue(scenario) {
+  if (!scenario) return null;
+  if (Number.isFinite(scenario.fermiDistance)) return scenario.fermiDistance;
+  return null;
+}
+
+function getDistanceBasisHtml(scenario, countBasisLabel) {
+  const modelLabel = getDistanceScenarioModelLabel(scenario);
+  const kindLabel =
+    scenario && scenario.kind === 'external'
+      ? 'reference distance, not a detected planet distance'
+      : scenario && scenario.kind === 'sparse'
+        ? 'existence probability; nearest-neighbour distance suppressed'
+        : scenario && scenario.kind === 'no-model'
+          ? 'no nearest-neighbour distance model active'
+          : 'nearest-neighbour distance scale, not a detected planet distance';
+
+  return (
+    `<span class="result-label">DISTANCE BASIS ·</span> ${modelLabel}; ` +
+    `${countBasisLabel}; ${kindLabel}.<br>`
+  );
+}
+
+function resetActiveDistanceSnapshot() {
+  activeDistanceModel = null;
+  activeDistanceBasis = 'not calculated';
+  activeDistanceCountBasis = 'not calculated';
+  displayedDistanceValue = null;
+  displayedDistanceLabel = 'not calculated';
+}
+
+function updateActiveDistanceSnapshot(scenario, countBasisLabel) {
+  activeDistanceModel = getDistanceScenarioModelLabel(scenario);
+  activeDistanceBasis =
+    scenario && scenario.kind === 'external'
+      ? 'external reference distance'
+      : scenario && scenario.kind === 'sparse'
+        ? 'existence probability; distance suppressed'
+        : scenario && scenario.kind === 'no-model'
+          ? 'no active distance model'
+          : 'nearest-neighbour distance scale';
+  activeDistanceCountBasis = countBasisLabel;
+  displayedDistanceValue = getDistanceScenarioValue(scenario);
+  displayedDistanceLabel = Number.isFinite(displayedDistanceValue)
+    ? `${activeDistanceModel} (${countBasisLabel})`
+    : activeDistanceBasis;
+}
+
+function getMonteCarloState() {
+  if (simulationCompleted) return 'current';
+  return monteCarloState === 'stale' ? 'stale' : 'not-run';
+}
+
+function getActiveDistanceSnapshot() {
+  return {
+    activeDistanceModel,
+    activeDistanceBasis,
+    activeDistanceCountBasis,
+    displayedDistanceValue,
+    displayedDistanceLabel,
+    distanceRadial: Number.isFinite(distanceRadial) ? distanceRadial : null,
+    minDistanceRadial: Number.isFinite(minDistanceRadial) ? minDistanceRadial : null,
+    maxDistanceRadial: Number.isFinite(maxDistanceRadial) ? maxDistanceRadial : null,
+    distance2D: Number.isFinite(distance2D) ? distance2D : null,
+    minDistance2D: Number.isFinite(minDistance2D) ? minDistance2D : null,
+    maxDistance2D: Number.isFinite(maxDistance2D) ? maxDistance2D : null,
+    distance3DDisk: Number.isFinite(distance3DDisk) ? distance3DDisk : null,
+    minDistance3DDisk: Number.isFinite(minDistance3DDisk) ? minDistance3DDisk : null,
+    maxDistance3DDisk: Number.isFinite(maxDistance3DDisk) ? maxDistance3DDisk : null,
+    distance3DSphere: Number.isFinite(distance3DSphere) ? distance3DSphere : null,
+    minDistance3DSphere: Number.isFinite(minDistance3DSphere) ? minDistance3DSphere : null,
+    maxDistance3DSphere: Number.isFinite(maxDistance3DSphere) ? maxDistance3DSphere : null
+  };
 }
 
 function buildDistanceScenario(count, ciLowCount = null, ciHighCount = null) {
@@ -1986,7 +3538,7 @@ function buildDistanceScenario(count, ciLowCount = null, ciHighCount = null) {
       kind: 'sparse',
       html:
         `<span class="result-label">DISTANCE ·</span> Expected count < 1. ` +
-        `P(at least one planet) = <span class="bold-number">${(100 * pAtLeastOne).toFixed(1)}%</span>. ` +
+        `P(at least one modelled candidate) = <span class="bold-number">${(100 * pAtLeastOne).toFixed(1)}%</span>. ` +
         `Nearest-distance estimate suppressed in this sparse regime.`,
       refModel: null,
       fermiDistance: null,
@@ -2080,7 +3632,7 @@ function buildSparseFermiContext(count, options = {}) {
 }
 
 function buildFermiContext(distLy, refModel = null, options = {}) {
-  const count = Math.max(0, options.count ?? averagePlanets);
+  const count = Math.max(0, options.count ?? mcMedianQ50);
   const mode = options.mode || 'mc';
   const detection = simulationCompleted ? computeDetectionFilter(count) : null;
 
@@ -2170,13 +3722,14 @@ function buildFermiContext(distLy, refModel = null, options = {}) {
   }
 
   const text = `
-    <strong>${sourceShort} · nearest habitable planet estimate (${refModel ? refModel.modelLabel : 'external distance reference'}): ~${fmtN(distLy)} light years</strong><br><br>
+    <strong>${sourceShort} · modelled candidate distance scale (${refModel ? refModel.modelLabel : 'external distance reference'}): ~${fmtN(distLy)} light years</strong><br><br>
     ➤ A radio signal travelling at light speed would take <strong>${fmtN(signalTime)}</strong> years to reach us ∼ ${starCtx}.<br><br>
     ➤ For us to detect a civilisation there, it would need to have been transmitting for at least <strong>${fmtN(signalTime)}</strong> years. In historical terms, that is roughly the time since ${hist.text}.<br><br>
     ➤ A round-trip exchange would take <strong>${fmtN(roundTrip)}</strong> years.<br><br>
     ${radioBubbleText}
     ${silenceDriverText}
-    ➤ On this model, Fermi-paradox tension is <strong>${tension}</strong> at that distance scale.
+    ➤ On this model, Fermi-paradox tension is <strong>${tension}</strong> at that distance scale.<br>
+    <span style="font-size:9.5px;color:var(--text-dim);">Fermi-tension labels are heuristic UI buckets based on model-derived distance and active-transmitter estimates. They are not literature-defined thresholds.</span>
   `;
 
   return {
@@ -2194,9 +3747,11 @@ function calculateDistanceToNearestPlanet() {
   byId('distance').innerHTML = '';
   fermiContexts = { mc: null, dt: null };
   distanceCalculated = false;
+  resetActiveDistanceSnapshot();
   distance2D = minDistance2D = maxDistance2D = Infinity;
   distance3DDisk = minDistance3DDisk = maxDistance3DDisk = Infinity;
   distance3DSphere = minDistance3DSphere = maxDistance3DSphere = Infinity;
+  distanceRadial = minDistanceRadial = maxDistanceRadial = Infinity;
   areaGHZ = 0;
   volumeGHZDisk = 0;
   volumeGHZSphere = 0;
@@ -2205,34 +3760,42 @@ function calculateDistanceToNearestPlanet() {
   setTimeout(() => {
     deterministicPlanets = getCurrentDeterministicPlanets();
 
-    const mcScenario = buildDistanceScenario(averagePlanets, percentile5, percentile95);
+    const hasCurrentMc = simulationCompleted && Number.isFinite(mcMedianQ50);
+    const mcScenario = hasCurrentMc ? buildDistanceScenario(mcMedianQ50, mcQ025, mcQ975) : null;
     const dtScenario = buildDistanceScenario(deterministicPlanets);
+    const primaryScenario = hasCurrentMc ? mcScenario : dtScenario;
+    const primaryCountBasis = hasCurrentMc ? 'Monte Carlo q50 count basis' : 'deterministic central count basis';
 
-    byId('distance').innerHTML = mcScenario.html;
+    byId('distance').innerHTML = getDistanceBasisHtml(primaryScenario, primaryCountBasis) + primaryScenario.html;
+    updateActiveDistanceSnapshot(primaryScenario, primaryCountBasis);
 
-    if (mcScenario.metrics) {
-      areaGHZ = mcScenario.metrics.geom.area;
-      volumeGHZDisk = mcScenario.metrics.geom.volumeDisk;
-      volumeGHZSphere = mcScenario.metrics.geom.volumeSphere;
+    if (primaryScenario.metrics) {
+      areaGHZ = primaryScenario.metrics.geom.area;
+      volumeGHZDisk = primaryScenario.metrics.geom.volumeDisk;
+      volumeGHZSphere = primaryScenario.metrics.geom.volumeSphere;
 
-      distance2D = mcScenario.metrics.model2d ? mcScenario.metrics.model2d.distance : Infinity;
-      minDistance2D = mcScenario.metrics.model2d ? mcScenario.metrics.model2d.ciLow : Infinity;
-      maxDistance2D = mcScenario.metrics.model2d ? mcScenario.metrics.model2d.ciHigh : Infinity;
+      distance2D = primaryScenario.metrics.model2d ? primaryScenario.metrics.model2d.distance : Infinity;
+      minDistance2D = primaryScenario.metrics.model2d ? primaryScenario.metrics.model2d.ciLow : Infinity;
+      maxDistance2D = primaryScenario.metrics.model2d ? primaryScenario.metrics.model2d.ciHigh : Infinity;
 
-      distance3DDisk = mcScenario.metrics.model3dDisk ? mcScenario.metrics.model3dDisk.distance : Infinity;
-      minDistance3DDisk = mcScenario.metrics.model3dDisk ? mcScenario.metrics.model3dDisk.ciLow : Infinity;
-      maxDistance3DDisk = mcScenario.metrics.model3dDisk ? mcScenario.metrics.model3dDisk.ciHigh : Infinity;
+      distance3DDisk = primaryScenario.metrics.model3dDisk ? primaryScenario.metrics.model3dDisk.distance : Infinity;
+      minDistance3DDisk = primaryScenario.metrics.model3dDisk ? primaryScenario.metrics.model3dDisk.ciLow : Infinity;
+      maxDistance3DDisk = primaryScenario.metrics.model3dDisk ? primaryScenario.metrics.model3dDisk.ciHigh : Infinity;
 
-      distance3DSphere = mcScenario.metrics.model3dSphere ? mcScenario.metrics.model3dSphere.distance : Infinity;
-      minDistance3DSphere = mcScenario.metrics.model3dSphere ? mcScenario.metrics.model3dSphere.ciLow : Infinity;
-      maxDistance3DSphere = mcScenario.metrics.model3dSphere ? mcScenario.metrics.model3dSphere.ciHigh : Infinity;
+      distance3DSphere = primaryScenario.metrics.model3dSphere ? primaryScenario.metrics.model3dSphere.distance : Infinity;
+      minDistance3DSphere = primaryScenario.metrics.model3dSphere ? primaryScenario.metrics.model3dSphere.ciLow : Infinity;
+      maxDistance3DSphere = primaryScenario.metrics.model3dSphere ? primaryScenario.metrics.model3dSphere.ciHigh : Infinity;
+
+      distanceRadial = primaryScenario.metrics.modelRadial ? primaryScenario.metrics.modelRadial.distance : Infinity;
+      minDistanceRadial = primaryScenario.metrics.modelRadial ? primaryScenario.metrics.modelRadial.ciLow : Infinity;
+      maxDistanceRadial = primaryScenario.metrics.modelRadial ? primaryScenario.metrics.modelRadial.ciHigh : Infinity;
     }
 
     fermiContexts = {
-      mc: buildFermiContext(mcScenario.fermiDistance, mcScenario.refModel, {
+      mc: hasCurrentMc ? buildFermiContext(mcScenario.fermiDistance, mcScenario.refModel, {
         mode: 'mc',
-        count: averagePlanets
-      }),
+        count: mcMedianQ50
+      }) : null,
       dt: buildFermiContext(dtScenario.fermiDistance, dtScenario.refModel, {
         mode: 'dt',
         count: deterministicPlanets
@@ -2241,7 +3804,12 @@ function calculateDistanceToNearestPlanet() {
 
     loading.style.display = 'none';
     distanceCalculated = true;
-    renderFermiBox('mc');
+    // Default Interpretation & Fermi Context view = DETERMINISTIC. Wide
+    // literature-informed Monte Carlo distributions can produce unusable
+    // drift for scenarios whose centrals sit at registry edges (Pessimist,
+    // Optimist); deterministic is the methodological primary for scenario-
+    // based presets. The user can still flip to MC RESULT via the toggle.
+    renderFermiBox('dt');
     saveHistoryEntry();
     updateShareButtons();
     setTimeout(() => {
@@ -2251,7 +3819,7 @@ function calculateDistanceToNearestPlanet() {
 }
 
 function computeModelHealthSummary() {
-  const cov = averagePlanets > 0 ? stdDev / averagePlanets : Infinity;
+  const cov = mcArithmeticMean > 0 ? stdDev / mcArithmeticMean : Infinity;
   const checkpoints =
     convergenceSummary && Array.isArray(convergenceSummary.checkpoints)
       ? convergenceSummary.checkpoints
@@ -2279,11 +3847,11 @@ function computeModelHealthSummary() {
     convergenceNote = 'Running mean is still drifting across the sampled checkpoints.';
   }
 
-  let note = `CoV = ${Number.isFinite(cov) ? cov.toFixed(2) : '∞'} (mc_stddev / mc_mean). `;
+  let note = `CoV = ${Number.isFinite(cov) ? cov.toFixed(2) : '∞'} (MC standard deviation / MC arithmetic mean). `;
   if (Number.isFinite(cov) && cov <= 0.35) {
     note += 'The Monte Carlo cloud is fairly tight around the mean. ';
   } else if (Number.isFinite(cov) && cov <= 1) {
-    note += 'The mean is usable, but the posterior is still broad. ';
+    note += 'The mean is usable, but the sampled model distribution is still broad. ';
   } else {
     note += 'Dispersion exceeds the mean, so this scenario sits in a high-uncertainty regime. ';
   }
@@ -2343,7 +3911,7 @@ function computeARD() {
 function computeTemporal() {
   const R = Math.max(1, pf('adv_temporal_R') || 8.0);
 
-  const gAge = 13.2;
+  const gAge = 13.5;
   const sunAge = 4.6;
   const tMet = Math.min(gAge, 2.0 + 0.6 * R);
   const tSN = Math.max(1.0, 4.0 + (8 - R) * 0.5);
@@ -2539,7 +4107,7 @@ function computeTemporalNt() {
   };
 }
 
-function computeDetectionFilter(countOverride = averagePlanets) {
+function computeDetectionFilter(countOverride = mcMedianQ50) {
   if (!simulationCompleted) return null;
 
   const L = Math.max(1, rawNumber('detection-L', 30000));
@@ -2554,8 +4122,8 @@ function computeDetectionFilter(countOverride = averagePlanets) {
     ? (manualEarthDist > 0 ? manualEarthDist : galaxyDistances[galaxyName])
     : null;
   
-  const d_gal_ly = geom.outerLy > 0 ? Math.round(geom.outerLy / 0.85) * 2 : (isGalaxySettingsEnabled ? Math.max(1000, pf('galaxy-diameter')) : 100000);
-  const N_planets = Number.isFinite(countOverride) ? Math.max(0, countOverride) : averagePlanets;
+  const d_gal_ly = geom.outerLy > 0 ? Math.round(geom.outerLy / GHZ_OUTER_FRAC) * 2 : (isGalaxySettingsEnabled ? Math.max(1000, pf('galaxy-diameter')) : 100000);
+  const N_planets = Number.isFinite(countOverride) ? Math.max(0, countOverride) : mcMedianQ50;
   if (N_planets <= 0 || geom.area <= 0) return null;
 
   

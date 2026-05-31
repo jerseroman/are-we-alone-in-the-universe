@@ -1,9 +1,23 @@
 .DS_Store
 Thumbs.db
 *.log
+*.zip
+*.patch
+*.diff
+*.bak
+*.tmp
+AUDIT_FIX_*
+ZENODO_RELEASE_*
+*_WORKTREE_*
 .env
 .env.*
 node_modules/
 dist/
 build/
 .cache/
+
+# Local/private tool settings (not part of the public release)
+.claude/
+
+# Internal audit artifacts (not part of the public release)
+docs/audits/
