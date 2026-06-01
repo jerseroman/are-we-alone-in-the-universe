@@ -112,7 +112,6 @@ External assets used by the page may include:
 - ApexCharts from jsDelivr for chart rendering
 - Google Fonts for Orbitron and Nunito
 - Font Awesome from cdnjs for icons
-- Externally hosted project imagery from `static.wixstatic.com`, as referenced by the original page
 
 These dependencies are loaded in the browser from their respective CDN sources.
 
