@@ -36,7 +36,6 @@ Patch date: 2026-05-27
 
 ## User-Facing Changes
 
-- Version metadata now consistently identifies this release as `v2.13`.
 - Added top navigation buttons for `GitHub` and an `Ask Perplexity` external-review prompt.
 - Default scenario on page load is now `Kepler/Gaia - Bryson`.
 - Default observational prior is now `Updated Kepler/Gaia`.
@@ -182,7 +181,6 @@ The latest verification run passed:
 
 ## Known Limitations
 
-- Browser/a11y verification still requires manual rendered checks or Playwright installation.
 - Some citation metadata still has `needsCitationPrecision` where exact table/page precision is not yet available.
-- Google Fonts/Wix asset vendoring/integrity remains documented as an open dependency-integrity item where applicable.
+- Google Fonts asset vendoring/integrity remains documented as an open dependency-integrity item where applicable.
 - The model remains exploratory. It does not prove extraterrestrial life, does not estimate confirmed civilizations, and does not provide an empirical census of life.
