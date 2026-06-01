@@ -58,6 +58,7 @@ It is a structured modelling tool for exploring assumptions about modelled Earth
 - `src/share.js` — share and export behavior
 - `src/accessibility.js` — accessibility support helpers
 - `src/styles.css` — visual styling
+- `assets/images/` — local project imagery and UI image assets
 - `docs/MODEL_SCOPE.md` — model scope, assumptions, and limitations
 - `docs/MONTE_CARLO_METHOD.md` — Monte Carlo sampling and sampled model interval semantics
 - `docs/DISTANCE_MODEL_METHOD.md` — nearest-neighbour distance model assumptions
