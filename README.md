@@ -7,7 +7,7 @@
 [![CI](https://github.com/jerseroman/are-we-alone-in-the-universe/actions/workflows/ci.yml/badge.svg)](https://github.com/jerseroman/are-we-alone-in-the-universe/actions/workflows/ci.yml)
 
 <p align="center">
-  <img src="assets/images/Banner.png" alt="Are We Alone in the Universe? Earth-like Planet Calculator banner" width="100%">
+  <img src="https://raw.githubusercontent.com/jerseroman/are-we-alone-in-the-universe/refs/heads/main/assets/images/Banner.jpg" alt="Are We Alone in the Universe? Earth-like Planet Calculator banner" width="100%">
 </p>
 
 Browser-based calculator for exploring the possible number of modelled Earth-like candidates across the Milky Way and the observable universe using transparent astrophysical assumptions.
