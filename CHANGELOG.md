@@ -1,6 +1,6 @@
 # Changelog
 
-## v2.13 - 2026-05-27
+## v2.13 - 2026-05-23; semantic-coherence patch 2026-05-27
 
 ### Monte Carlo Semantic Coherence — Fixed
 
@@ -26,7 +26,7 @@
 - Updated the public review build from `v2.12` to `v2.13`.
 - Renamed release notes to `RELEASE_NOTES_v2.13.md`.
 - Updated citation metadata and export metadata to version `2.13`.
-- Added a dedicated version map at `version/VERSION_v2.13.md`.
+- Consolidated v2.13 version-change notes in `CHANGELOG.md` and `RELEASE_NOTES_v2.13.md`.
 
 ### UI And Source Transparency
 

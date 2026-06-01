@@ -5,3 +5,5 @@
 *.md text eol=lf
 *.json text eol=lf
 *.cff text eol=lf
+.gitattributes text eol=lf
+.gitignore text eol=lf

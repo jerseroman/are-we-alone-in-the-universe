@@ -153,7 +153,7 @@ Patch date: 2026-05-27
 - Added browser/a11y verification checklist documentation.
 - Added dependency-integrity follow-up documentation.
 - Updated `README.md`, `CHANGELOG.md`, `CITATION.cff`, and release notes.
-- Created `version/VERSION_v2.13.md` as the complete version-change map.
+- Consolidated the complete v2.13 version-change map in `CHANGELOG.md` and these release notes.
 
 ## Test And Verification Infrastructure
 
@@ -186,4 +186,3 @@ The latest verification run passed:
 - Some citation metadata still has `needsCitationPrecision` where exact table/page precision is not yet available.
 - Google Fonts/Wix asset vendoring/integrity remains documented as an open dependency-integrity item where applicable.
 - The model remains exploratory. It does not prove extraterrestrial life, does not estimate confirmed civilizations, and does not provide an empirical census of life.
-

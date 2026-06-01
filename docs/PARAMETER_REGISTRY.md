@@ -77,12 +77,12 @@ Future recalibration note: the M31 and Centaurus A preset star counts should be 
 
 This calculator is an exploratory modelling tool. It exposes assumptions, ranges, and uncertainty propagation so users can inspect how sensitive the result is to those assumptions.
 
-It should not be interpreted as:
+It should not be interpreted as any of the following:
 
-- not proof of extraterrestrial life
-- not proof of absence of extraterrestrial life
-- not an empirical census of life
-- not a definitive estimate of inhabited worlds
-- not settled scientific consensus
+- It is not proof of extraterrestrial life.
+- It is not proof of absence of extraterrestrial life.
+- It is not an empirical census of life.
+- It is not a definitive estimate of inhabited worlds.
+- It is not settled scientific consensus.
 
 The registry exists to make assumptions easier to audit and correct. Values marked as transformed or interpretive should be reviewed against their cited literature before being described as exact published values.

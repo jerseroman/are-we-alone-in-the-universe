@@ -2,7 +2,7 @@
 
 Are We Alone in the Universe? Earth-like Planet Calculator is a browser-based probabilistic modelling calculator.
 
-It explores how astrophysical, planetary, geophysical, biochemical, and optional speculative assumptions affect estimates of potentially Earth-like candidates across the Milky Way and the observable universe.
+It explores how astrophysical, planetary, geophysical, biochemical, and optional speculative assumptions affect estimates of modelled Earth-like candidates across the Milky Way and the observable universe.
 
 Outputs are conditional on the selected assumptions, parameter ranges, presets, and uncertainty settings. Some factors are better constrained by astronomical literature, while others are weakly constrained or explicitly speculative.
 

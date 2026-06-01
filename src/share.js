@@ -199,7 +199,7 @@ function exportJSON() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'habitability-snapshot-' + new Date().toISOString().slice(0, 10) + '.json';
+  a.download = 'earth-like-candidate-snapshot-' + new Date().toISOString().slice(0, 10) + '.json';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
@@ -255,7 +255,7 @@ function buildLatexExportText() {
     '% Active distance model: ' + distanceModelLabel + ' | Distance count basis: ' + distanceBasisLabel + '\n\n' +
     '\\begin{table}[h!]\n\\centering\n' +
     '\\caption{Parameter values for the ' + galaxyName + ' modelled Earth-like candidate estimate (' + (typeof getScenarioExportLabel === 'function' ? getScenarioExportLabel() : (activePreset || 'custom')) + ', ' + bayesLabel + ' observational prior).}\n' +
-    '\\label{tab:habitability-params}\n' +
+    '\\label{tab:earth-like-candidate-params}\n' +
     '\\begin{tabular}{lccc}\n\\hline\n' +
     'Parameter & Symbol & Central & Range / uncertainty interval \\\\\n\\hline\n' +
     rows + '\n\\hline\n' +
@@ -276,7 +276,7 @@ function exportLatex() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'habitability-table-' + new Date().toISOString().slice(0, 10) + '.tex';
+  a.download = 'earth-like-candidate-table-' + new Date().toISOString().slice(0, 10) + '.tex';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
@@ -307,7 +307,7 @@ function exportBibtex() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'habitability-references-' + new Date().toISOString().slice(0, 10) + '.bib';
+  a.download = 'earth-like-candidate-references-' + new Date().toISOString().slice(0, 10) + '.bib';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
