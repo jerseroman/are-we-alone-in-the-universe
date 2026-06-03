@@ -3964,14 +3964,8 @@ function computeSobolIndices(N_samples) {
   const dist = (byId('distribution') || {}).value || 'lognormal';
 
   
-  const candidateIds = ADV.enabled
-    ? BASE_SAMPLE_IDS.concat(
-        ADV_SAMPLE_IDS.filter(id => {
-          const cfg = ADV_SOBOL_CONFIG[id];
-          return cfg && ADV.modules[cfg.module] && ADV.modules[cfg.module].enabled;
-        })
-      )
-    : BASE_SAMPLE_IDS;
+  const boundsDescriptor = getMonteCarloBoundsDescriptor();
+  const candidateIds = getMonteCarloSampledParameterIds(boundsDescriptor);
 
   const activeIds = candidateIds.filter(id => {
     const minEl = byId(id + '_min');
@@ -3992,7 +3986,7 @@ function computeSobolIndices(N_samples) {
     for (let i = 0; i < N_samples; i++) {
       const row = {};
       for (const id of activeIds) {
-        row[id] = sampleParam(id, dist);
+        row[id] = sampleParam(id, dist, Math.random, boundsDescriptor);
       }
       mat.push(row);
     }
