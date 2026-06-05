@@ -3692,7 +3692,7 @@ function buildFermiContext(distLy, refModel = null, options = {}) {
 
   let setiDetectabilityText = '';
   if (detection) {
-    const setiItemStyle = 'style="padding:7px 8px;border-left:2px solid rgba(78,204,163,0.48);background:rgba(255,255,255,0.018);"';
+    const setiItemStyle = 'style="padding:7px 8px;border-left:2px solid rgba(78,204,163,0.48);background:rgba(255,255,255,0.018);font-size:10px;line-height:1.6;"';
     let waitItem =
       `<div ${setiItemStyle}><strong>Temporal Poisson view · time to first signal</strong><br>` +
       `Unavailable because the expected active detectable count is zero in the current calculator state.<br>` +
@@ -3763,7 +3763,7 @@ function buildFermiContext(distLy, refModel = null, options = {}) {
 
     setiDetectabilityText =
       `➤ <div style="margin-top:2px;padding:10px 0 2px;border-top:1px solid rgba(255,255,255,0.07);border-bottom:1px solid rgba(255,255,255,0.05);">` +
-      `<div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--accent3);margin-bottom:7px;">SETI / technosignature detectability</div>` +
+      `<div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--accent3);margin-bottom:7px;">SETI detection context</div>` +
       `<div class="fermi-subnote" style="margin-bottom:8px;">These panels describe the same SETI detectability result from three complementary angles: temporal Poisson waiting time, spatial Poisson distance scale, and model-level bottleneck interpretation.</div>` +
       `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:8px;">` +
       waitItem +
