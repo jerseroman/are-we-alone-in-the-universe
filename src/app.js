@@ -1029,14 +1029,20 @@ function renderCalculationConsole() {
     if (Number.isFinite(detectionTrace.d_nearest_det)) {
       pushFormula(
         [
-          '\\bar d_{\\mathrm{det}} &= \\frac{\\Gamma(1 + 1/2)}{(\\lambda_{\\mathrm{det}} \\pi)^{1/2}}',
+          '\\bar d_{\\mathrm{det}} &= \\frac{\\Gamma(1 + 1/2)}{(\\rho_{\\mathrm{det}} \\pi)^{1/2}}',
           `&= \\frac{\\Gamma(3/2)}{(${fmtLatexNumber(detectionTrace.lambda_det)} \\cdot \\pi)^{1/2}}`,
           `&= ${fmtLatexNumber(detectionTrace.d_nearest_det)}\\,\\text{ly}`
         ],
         detectionTrace.d_nearest_det > detectionTrace.d_horizon
-          ? 'The nearest-detectable scale exceeds the current detection horizon.'
-          : 'Nearest detectable-transmitter scale inside the current horizon.'
+          ? `The equivalent Poisson nearest-detectable distance scale exceeds the current detection horizon of ${fmtConsoleValue(detectionTrace.d_horizon)} ly; it is not a literal currently reachable source.`
+          : `Nearest-detectable transmitter distance scale within the current detection horizon of ${fmtConsoleValue(detectionTrace.d_horizon)} ly.`
       );
+      if (detectionTrace.N_det < 1) {
+        pushLine(
+          'Sub-Poisson regime: the expected number of active detectable transmitters in range is below one, so silence is the statistically dominant outcome in this scenario.',
+          'calc-console-muted'
+        );
+      }
     }
   } else {
     pushLine('Detection trace is unavailable because the current planet count or GHZ geometry collapses to zero.', 'calc-console-muted');
@@ -2048,11 +2054,30 @@ function buildInterpretationHtml(mode = fermiMode) {
 
     if (detection && Number.isFinite(detection.d_nearest_det)) {
       const ratio = requiredOneWayL > 0 ? detection.d_nearest_det / requiredOneWayL : Infinity;
-      contactText +=
-        `<br><br>The nearest <strong>detectable</strong> transmitter is currently estimated around <span class="bold-number">${fmtN(detection.d_nearest_det)}</span> light years` +
-        (Number.isFinite(ratio)
-          ? `, about <span class="bold-number">${fmtN(ratio)}</span>× farther out than the nearest modelled candidate distance scale.`
-          : '.');
+      const nearestDetectableScaleLy = detection.d_nearest_det;
+      const detectionHorizonLy = detection.d_horizon;
+      const lambdaDet = detection.N_det;
+      contactText += '<br><br>';
+      if (Number.isFinite(detectionHorizonLy) && nearestDetectableScaleLy > detectionHorizonLy) {
+        contactText +=
+          `No active detectable transmitter is expected inside the current detection horizon of <span class="bold-number">${fmtN(detectionHorizonLy)}</span> light years. ` +
+          `The equivalent Poisson nearest-detectable distance scale is about <span class="bold-number">${fmtN(nearestDetectableScaleLy)}</span> light years, ` +
+          `which exceeds that horizon. This value is a statistical density scale, not a literal currently reachable source or a light-travel-time target.`;
+      } else {
+        contactText +=
+          `The nearest-detectable transmitter distance scale is about <span class="bold-number">${fmtN(nearestDetectableScaleLy)}</span> light years within the current detection horizon` +
+          (Number.isFinite(detectionHorizonLy)
+            ? ` of <span class="bold-number">${fmtN(detectionHorizonLy)}</span> light years`
+            : '') +
+          (Number.isFinite(ratio)
+            ? `, about <span class="bold-number">${fmtN(ratio)}</span>× farther out than the nearest modelled candidate distance scale.`
+            : '.');
+      }
+      if (Number.isFinite(lambdaDet) && lambdaDet < 1) {
+        contactText +=
+          `<br><br><strong>Sub-Poisson regime:</strong> the expected number of active detectable transmitters in range is below one, ` +
+          `so silence is the statistically dominant outcome in this scenario.`;
+      }
     }
 
     sections.push({
@@ -2165,33 +2190,6 @@ function buildInterpretationHtml(mode = fermiMode) {
     text: buildTopDriversHtml()
   });
 
-  if (detection && detection.N_det > 0 && detection.L > 0) {
-    const lambdaDet = detection.N_det;
-    const waitMean = detection.L / lambdaDet;
-    const waitMedian = Math.LN2 * waitMean;
-    const ratePer1Myr = 1e6 / waitMean;
-
-    const fmtWait = y => {
-      if (y >= 1e9) return fmtN(y / 1e9) + ' billion years';
-      if (y >= 1e6) return fmtN(y / 1e6) + ' million years';
-      if (y >= 1000) return fmtN(y / 1000) + ' thousand years';
-      return fmtN(y) + ' years';
-    };
-
-    sections.push({
-      label: 'SETI · Time to first signal',
-      text:
-        `Based on the current parameters, we would need to listen for roughly ` +
-        `<span class="bold-number">${fmtWait(waitMean)}</span> on average before statistically expecting our first detected signal ` +
-        `(median: <span class="bold-number">${fmtWait(waitMedian)}</span> ~ 50% chance of detection by then).` +
-        `<div class="fermi-subnote">` +
-        `Formula: E[wait] = L / λ<sub>det</sub> = ${fmtN(detection.L)} / ${fmtN(lambdaDet)} ~ <strong>${fmtWait(waitMean)}</strong>. ` +
-        `λ<sub>det</sub> is the Poisson mean number of active detectable transmitters in range right now. ` +
-        `The rate of new signals appearing in range is μ = λ<sub>det</sub> / L ~ ${ratePer1Myr < 0.001 ? fmtN(ratePer1Myr) : ratePer1Myr.toFixed(4)} per million years of listening.` +
-        `</div>`
-    });
-  }
-
   const sectionGroupMap = {
     'Primary inference': 'core',
     'Model health': 'core',
@@ -2204,8 +2202,7 @@ function buildInterpretationHtml(mode = fermiMode) {
     'Local neighbourhood': 'spatial',
     'Host-star breakdown': 'spatial',
     'Top uncertainty drivers': 'search',
-    'SETI silence update': 'search',
-    'SETI · Time to first signal': 'search'
+    'SETI silence update': 'search'
   };
 
   const grouped = { core: [], contact: [], spatial: [], search: [] };
@@ -2877,6 +2874,16 @@ function renderDetectionPanel() {
     '</div>' +
     (function(){
       var distLabel, distSub;
+      var distTitle = 'Nearest-detectable distance scale';
+      var formatLy = function(value) {
+        if (!Number.isFinite(value)) return '∞ light-years';
+        if (value < 100) return value.toFixed(1) + ' light-years';
+        if (value < 1e6) return Math.round(value).toLocaleString() + ' light-years';
+        return (value / 1e6).toFixed(2) + ' million light-years';
+      };
+      var subPoissonWarning = r.N_det < 1
+        ? '<div style="font-size:9.2px;color:var(--red);margin-top:5px;line-height:1.35;"><strong>Sub-Poisson regime:</strong> the expected number of active detectable transmitters in range is below one, so silence is the statistically dominant outcome in this scenario.</div>'
+        : '';
       if (r.is_external_reference && Number.isFinite(r.earth_distance)) {
         if (r.nearest_beyond_horizon) {
           distLabel = '〰';
@@ -2889,32 +2896,26 @@ function renderDetectionPanel() {
         }
       } else if (!Number.isFinite(r.d_nearest_det) || r.N_det < 1e-9) {
         distLabel = '〰';
-        distSub = 'Too few detectable civilisations to estimate a nearest-neighbour distance. Try increasing L or the number of planets.';
+        distSub = 'Too few detectable civilisations to estimate a nearest-detectable distance scale. Try increasing L or the number of planets.';
       } else {
         var d = r.d_nearest_det;
-        if (d < 100) {
-          distLabel = d.toFixed(1) + ' light-years';
-        } else if (d < 1e6) {
-          distLabel = Math.round(d).toLocaleString() + ' light-years';
-        } else {
-          distLabel = (d / 1e6).toFixed(2) + ' million light-years';
-        }
+        distLabel = formatLy(d);
         if (r.nearest_beyond_horizon) {
-          distLabel += ' <span style="font-size:10px;font-weight:400;color:var(--red);">(exceeds detection horizon)</span>';
-          distSub = 'The typical gap between transmitters (' + (d < 1e6 ? Math.round(d).toLocaleString() : (d/1e6).toFixed(2) + ' million') + ' ly) is larger than the detection horizon (' + r.d_horizon.toLocaleString() + ' ly). The detection sphere is most likely empty ~ consistent with P(≥1) ≈ ' + fmtPct(r.p_detect_pct) + '.';
+          distTitle = 'Equivalent Poisson scale beyond horizon';
+          distLabel = formatLy(d) + ' <span style="font-size:10px;font-weight:400;color:var(--red);">(horizon: ' + formatLy(r.d_horizon) + ')</span>';
+          distSub = 'This is the equivalent Poisson nearest-detectable distance scale, not a literal source. Because it exceeds the current detection horizon, the model does not expect an active detectable transmitter inside the current horizon. It is also not the light-travel time used by the waiting-time estimate.';
         } else {
-          distSub = r.N_det >= 1
-            ? 'With ' + fmtHuman(r.N_det) + ' active transmitters expected within the detection sphere, the nearest one is statistically about this far away.'
-            : 'Even though fewer than one transmitter is expected on average, if one does exist within the sphere, it would most likely be around this far away.';
+          distSub = 'The nearest-detectable transmitter distance scale is about ' + formatLy(d) + ' within the current detection horizon of ' + formatLy(r.d_horizon) + '.';
         }
       }
       return '<div style="background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--accent3);border-radius:6px;padding:10px 12px;margin-bottom:8px;">' +
-        '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:4px;">Expected distance to nearest detectable transmitter</div>' +
+        '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:4px;">' + distTitle + '</div>' +
         '<div style="font-size:15px;font-weight:800;color:' + (r.nearest_beyond_horizon ? 'var(--red)' : 'var(--accent3)') + ';">' + distLabel + '</div>' +
         '<div style="font-size:9.5px;color:var(--text-dim);margin-top:3px;">' + distSub + '</div>' +
+        subPoissonWarning +
         '<div style="font-size:8.5px;color:var(--text-dim);margin-top:4px;opacity:.7;">' + (r.is_external_reference
           ? 'For external galaxies this is treated as an Earth-reference distance gate, not an internal GHZ nearest-neighbour gap.'
-          : 'd̄ = Γ(3/2) / (λ·π)<sup>½</sup>, λ = N̂<sub>det</sub> / A<sub>horizon</sub> (density within detection sphere)') + '</div>' +
+          : 'd̄ = Γ(3/2) / (ρ<sub>det</sub>·π)<sup>½</sup>, ρ<sub>det</sub> = N̂<sub>det</sub> / A<sub>horizon</sub> (spatial density within detection sphere)') + '</div>' +
       '</div>';
     })() +
     '<div style="background:var(--bg);border:1px solid var(--border);border-left:3px solid ' + gaugeColor + ';border-radius:6px;padding:10px 12px;margin-bottom:10px;">' +

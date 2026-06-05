@@ -3680,18 +3680,59 @@ function buildFermiContext(distLy, refModel = null, options = {}) {
   else if (distLy <= 50000) tension = 'moderate';
 
   const earthRadioBubbleLy = 110;
-  let radioBubbleText = '';
-  if (detection && Number.isFinite(detection.d_nearest_det) && detection.d_nearest_det > 0) {
-    radioBubbleText =
-      `➤ Human radio leakage has only filled roughly <strong>${earthRadioBubbleLy}</strong> light years so far. ` +
-      `On the current detection settings, the nearest detectable-transmitter estimate is <strong>${fmtN(detection.d_nearest_det)}</strong> light years 〰 about <strong>${fmtN(detection.d_nearest_det / earthRadioBubbleLy)}</strong>× farther out.<br><br>`;
-  } else {
-    radioBubbleText =
-      `➤ Human radio leakage has only filled roughly <strong>${earthRadioBubbleLy}</strong> light years so far 〰 far smaller than the current nearest-habitable distance scale.<br><br>`;
-  }
+  const radioBubbleText =
+    `➤ Human radio leakage has only filled roughly <strong>${earthRadioBubbleLy}</strong> light years so far 〰 far smaller than many modelled communication distance scales.<br><br>`;
 
-  let silenceDriverText = '';
+  const fmtSetiWait = y => {
+    if (y >= 1e9) return fmtN(y / 1e9) + ' billion years';
+    if (y >= 1e6) return fmtN(y / 1e6) + ' million years';
+    if (y >= 1000) return fmtN(y / 1000) + ' thousand years';
+    return fmtN(y) + ' years';
+  };
+
+  let setiDetectabilityText = '';
   if (detection) {
+    const setiItemStyle = 'style="padding:7px 8px;border-left:2px solid rgba(78,204,163,0.48);background:rgba(255,255,255,0.018);"';
+    let waitItem =
+      `<div ${setiItemStyle}><strong>Temporal Poisson view · time to first signal</strong><br>` +
+      `Unavailable because the expected active detectable count is zero in the current calculator state.<br>` +
+      `<span class="fermi-subnote">This waiting time is a temporal Poisson expectation, not a light-travel distance and not a distance to a source.</span></div>`;
+
+    if (detection.N_det > 0 && detection.L > 0) {
+      const waitMean = detection.L / detection.N_det;
+      const waitMedian = Math.LN2 * waitMean;
+      const ratePerYear = detection.N_det / detection.L;
+      const ratePer1Myr = 1e6 / waitMean;
+      waitItem =
+        `<div ${setiItemStyle}><strong>Temporal Poisson view · time to first signal</strong><br>` +
+        `Mean waiting time: <span class="bold-number">${fmtSetiWait(waitMean)}</span><br>` +
+        `Median waiting time: <span class="bold-number">${fmtSetiWait(waitMedian)}</span><br>` +
+        `<div class="fermi-subnote" style="margin-top:4px;">` +
+        `Formula: E[wait] = L / λ<sub>det</sub> = ${fmtN(detection.L)} / ${fmtN(detection.N_det)} ~ <strong>${fmtSetiWait(waitMean)}</strong>.<br>` +
+        `λ<sub>det</sub> = expected active detectable transmitters within the current horizon right now.<br>` +
+        `μ = λ<sub>det</sub> / L = expected detectable-signal arrival rate per year ~ ${fmtN(ratePerYear)} yr<sup>-1</sup> ` +
+        `(${ratePer1Myr < 0.001 ? fmtN(ratePer1Myr) : ratePer1Myr.toFixed(4)} per million years of listening).` +
+        `</div>` +
+        `<div class="fermi-subnote" style="margin-top:4px;">This waiting time is a temporal Poisson expectation, not a light-travel distance and not a distance to a source.</div></div>`;
+    }
+
+    let distanceItem =
+      `<div ${setiItemStyle}><strong>Spatial Poisson view · detectable-transmitter scale</strong><br>` +
+      `No finite Poisson detectable-transmitter distance scale is available in the current calculator state.</div>`;
+
+    if (Number.isFinite(detection.d_nearest_det) && detection.d_nearest_det > 0) {
+      const horizonText = Number.isFinite(detection.d_horizon)
+        ? ` The current detection horizon is <strong>${fmtN(detection.d_horizon)}</strong> light years.`
+        : '';
+      const horizonNote = detection.d_nearest_det > detection.d_horizon
+        ? ` This scale lies beyond the current detection horizon, so the model does not expect an active detectable transmitter inside the present horizon under these assumptions. This should be read as no expected active detectable transmitter inside the current horizon, not as a location estimate.`
+        : ` This scale lies within the current detection horizon under these assumptions.`;
+
+      distanceItem =
+        `<div ${setiItemStyle}><strong>Spatial Poisson view · detectable-transmitter scale</strong><br>` +
+        `<span class="bold-number">${fmtN(detection.d_nearest_det)}</span> light years. This is a statistical distance scale implied by the low active-detectable density, not a located transmitter.${horizonText}${horizonNote}</div>`;
+    }
+
     const geom = getGHZGeometryLy();
     const priorTerm = Math.max(1e-30, detection.f_tx);
     const distanceTerm =
@@ -3707,17 +3748,28 @@ function buildFermiContext(distLy, refModel = null, options = {}) {
       { key: 'temporal', value: temporalTerm }
     ].sort((a, b) => a.value - b.value)[0];
 
-    let diagnosis = 'distance and timing constraints jointly dominate the silence.';
+    let diagnosis = 'distance and timing constraints acting together.';
     if (bottleneck.key === 'prior') {
-      diagnosis = 'the strongest filter is the low assumed transmitter fraction f_tx.';
+      diagnosis = 'the low assumed transmitter fraction. Only a small fraction of modelled candidate worlds are assumed to produce detectable technosignatures.';
     } else if (bottleneck.key === 'distance') {
-      diagnosis = 'the strongest filter is sheer geometric distance inside the GHZ.';
+      diagnosis = 'detection-horizon geometry. The current detection horizon covers only a limited part of the modelled Galactic Habitable Zone.';
     } else if (bottleneck.key === 'temporal') {
-      diagnosis = 'the strongest filter is short temporal overlap relative to galactic age.';
+      diagnosis = 'temporal mismatch. Detectable transmissions are short compared with galactic timescales, so active transmitters are unlikely to overlap with the current detection window.';
     }
 
-    silenceDriverText =
-      `➤ Automatic silence interpretation: <strong>${diagnosis}</strong><br><br>`;
+    const interpretationItem =
+      `<div ${setiItemStyle}><strong>Model interpretation · expected non-detection</strong><br>` +
+      `Expected non-detection is mainly driven by ${diagnosis} This is a detectability diagnostic, not a claim about a specific nearest transmitter.</div>`;
+
+    setiDetectabilityText =
+      `➤ <div style="margin-top:2px;padding:10px 0 2px;border-top:1px solid rgba(255,255,255,0.07);border-bottom:1px solid rgba(255,255,255,0.05);">` +
+      `<div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--accent3);margin-bottom:7px;">SETI / technosignature detectability</div>` +
+      `<div class="fermi-subnote" style="margin-bottom:8px;">These panels describe the same SETI detectability result from three complementary angles: temporal Poisson waiting time, spatial Poisson distance scale, and model-level bottleneck interpretation.</div>` +
+      `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:8px;">` +
+      waitItem +
+      distanceItem +
+      interpretationItem +
+      `</div></div><br><br>`;
   }
 
   const text = `
@@ -3726,8 +3778,8 @@ function buildFermiContext(distLy, refModel = null, options = {}) {
     ➤ For us to detect a civilisation there, it would need to have been transmitting for at least <strong>${fmtN(signalTime)}</strong> years. In historical terms, that is roughly the time since ${hist.text}.<br><br>
     ➤ A round-trip exchange would take <strong>${fmtN(roundTrip)}</strong> years.<br><br>
     ${radioBubbleText}
-    ${silenceDriverText}
-    ➤ On this model, Fermi-paradox tension is <strong>${tension}</strong> at that distance scale.<br>
+    ${setiDetectabilityText}
+    ➤ On this model, Fermi-paradox tension is <strong>${tension}</strong> under this scenario’s candidate-distance and SETI-detectability assumptions.<br>
     <span style="font-size:9.5px;color:var(--text-dim);">Fermi-tension labels are heuristic UI buckets based on model-derived distance and active-transmitter estimates. They are not literature-defined thresholds.</span>
   `;
 

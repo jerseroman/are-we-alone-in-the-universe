@@ -180,10 +180,18 @@ function buildJSONExportSnapshot() {
             within_horizon: detectionSnapshot.N_within,
             temporal_overlap_pct: detectionSnapshot.p_temporal_pct,
             expected_detectable: detectionSnapshot.N_det,
+            expected_detectable_now: detectionSnapshot.N_det,
             probability_at_least_one_pct: detectionSnapshot.p_detect_pct,
+            detection_horizon_ly: Number.isFinite(detectionSnapshot.d_horizon)
+              ? Math.round(detectionSnapshot.d_horizon)
+              : null,
             nearest_detectable_ly: Number.isFinite(detectionSnapshot.d_nearest_det)
               ? Math.round(detectionSnapshot.d_nearest_det)
-              : null
+              : null,
+            nearest_detectable_distance_scale_ly: Number.isFinite(detectionSnapshot.d_nearest_det)
+              ? Math.round(detectionSnapshot.d_nearest_det)
+              : null,
+            nearest_detectable_beyond_horizon: !!detectionSnapshot.nearest_beyond_horizon
           }
         : null
     }
