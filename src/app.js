@@ -1039,7 +1039,7 @@ function renderCalculationConsole() {
       );
       if (detectionTrace.N_det < 1) {
         pushLine(
-          'Sub-Poisson regime: the expected number of active detectable transmitters in range is below one, so silence is the statistically dominant outcome in this scenario.',
+          'Sub-Poisson regime: fewer than one active detectable transmitter is expected on average inside the current detection horizon. Non-detection is therefore the statistically dominant outcome, although the Poisson probability is not zero.',
           'calc-console-muted'
         );
       }
@@ -1528,6 +1528,109 @@ function syncFermiModeUi() {
   }
 }
 
+function buildFermiCommunicationSupplementHtml(mode = fermiMode) {
+  if (!simulationCompleted || !distanceCalculated) return '';
+
+  const basis = getInterpretationBasis(mode);
+  const currentMode = basis.mode;
+  const basisCount = basis.count;
+  const detection = computeDetectionFilter(basisCount);
+  const distanceScenario = buildDistanceScenario(
+    basisCount,
+    currentMode === 'mc' ? mcQ025 : null,
+    currentMode === 'mc' ? mcQ975 : null
+  );
+  const referenceDistance = Number.isFinite(distanceScenario.fermiDistance)
+    ? distanceScenario.fermiDistance
+    : null;
+  const requiredOneWayL = Number.isFinite(referenceDistance) ? referenceDistance : null;
+  const requiredTwoWayL = Number.isFinite(referenceDistance) ? referenceDistance * 2 : null;
+  const sections = [];
+
+  if (detection) {
+    const temporalWindows = detection.L > 0 ? 13.5e9 / detection.L : null;
+    const requiredFTx =
+      detection.N_det > 0 && detection.f_tx > 0
+        ? detection.f_tx / detection.N_det
+        : Infinity;
+    let detectText =
+      `Probability of at least one active detectable transmitter in range right now: ` +
+      `<span class="bold-number">${fmtPct(detection.p_detect_pct)}</span>. ` +
+      `Temporal overlap term alone is <span class="bold-number">${fmtPct(detection.p_temporal_pct)}</span>`;
+
+    if (Number.isFinite(temporalWindows)) {
+      detectText +=
+        `, so the calculator's 13.5 Gyr age scale fits roughly <span class="bold-number">${fmtN(temporalWindows)}</span> non-overlapping windows of length L.`;
+    } else {
+      detectText += '.';
+    }
+
+    detectText += '<br><br>';
+    if (Number.isFinite(requiredFTx) && requiredFTx <= 1) {
+      detectText +=
+        `To reach about <span class="bold-number">one expected detectable civilisation in range now</span> ` +
+        `(Poisson mean = 1, so P≥1 ≈ 63.2%), the current geometry would need <span class="bold-number">f_tx ≈ ${fmtN(requiredFTx)}</span>.`;
+    } else {
+      detectText +=
+        `Even an extreme <span class="bold-number">f_tx = 1</span> would still not yield one expected detectable civilisation in range now at the current <span class="bold-number">L</span>.`;
+    }
+
+    sections.push({
+      label: 'Detectability now',
+      text: detectText
+    });
+  }
+
+  if (Number.isFinite(requiredOneWayL) || Number.isFinite(requiredTwoWayL)) {
+    let contactText = '';
+
+    if (Number.isFinite(requiredOneWayL)) {
+      contactText +=
+        `One-way contact needs a civilisation lifetime of at least <span class="bold-number">${fmtN(requiredOneWayL)}</span> years under the current nearest-distance reference. `;
+    }
+
+    if (Number.isFinite(requiredTwoWayL)) {
+      contactText +=
+        `A true two-way exchange needs roughly <span class="bold-number">${fmtN(requiredTwoWayL)}</span> years.`;
+    }
+
+    if (detection && Number.isFinite(detection.d_nearest_det)) {
+      const ratio = requiredOneWayL > 0 ? detection.d_nearest_det / requiredOneWayL : Infinity;
+      const nearestDetectableScaleLy = detection.d_nearest_det;
+      const detectionHorizonLy = detection.d_horizon;
+      const lambdaDet = detection.N_det;
+      contactText += '<br><br>';
+      if (Number.isFinite(detectionHorizonLy) && nearestDetectableScaleLy > detectionHorizonLy) {
+        contactText +=
+          `Fewer than one active detectable transmitter is expected on average inside the current detection horizon of <span class="bold-number">${fmtN(detectionHorizonLy)}</span> light years. ` +
+          `The equivalent Poisson nearest-detectable distance scale is about <span class="bold-number">${fmtN(nearestDetectableScaleLy)}</span> light years, ` +
+          `which exceeds that horizon. This value is a statistical density scale, not a literal currently reachable source or a light-travel-time target.`;
+      } else {
+        contactText +=
+          `The nearest-detectable transmitter distance scale is about <span class="bold-number">${fmtN(nearestDetectableScaleLy)}</span> light years within the current detection horizon` +
+          (Number.isFinite(detectionHorizonLy)
+            ? ` of <span class="bold-number">${fmtN(detectionHorizonLy)}</span> light years`
+            : '') +
+          (Number.isFinite(ratio)
+            ? `, about <span class="bold-number">${fmtN(ratio)}</span>× farther out than the nearest modelled candidate distance scale.`
+            : '.');
+      }
+      if (Number.isFinite(lambdaDet) && lambdaDet < 1) {
+        contactText +=
+          `<br><br><strong>Sub-Poisson regime:</strong> fewer than one active detectable transmitter is expected on average inside the current detection horizon. ` +
+          `Non-detection is therefore the statistically dominant outcome, although the Poisson probability is not zero.`;
+      }
+    }
+
+    sections.push({
+      label: 'Contact threshold',
+      text: contactText
+    });
+  }
+
+  return sections.map(renderFermiSection).join('');
+}
+
 function renderFermiBox(preferredMode = null) {
   const box = byId('fermi-box');
   const summary = byId('fermi-summary');
@@ -1556,9 +1659,11 @@ function renderFermiBox(preferredMode = null) {
   }
 
   summary.innerHTML = buildInterpretationHtml(fermiMode);
+  const communicationSupplementHtml = buildFermiCommunicationSupplementHtml(fermiMode);
   content.innerHTML = buildFermiGroupHtml(
     `<div class="fermi-context-label fermi-reveal-item">Fermi communication context</div>` +
-    `<div class="fermi-content-copy">${buildFermiNarrativeHtml(fermiContexts[fermiMode].html)}</div>`,
+    `<div class="fermi-content-copy">${buildFermiNarrativeHtml(fermiContexts[fermiMode].html)}</div>` +
+    communicationSupplementHtml,
     'narrative'
   );
   const universeHtml = buildUniverseScaleHtml(fermiMode);
@@ -1573,6 +1678,7 @@ function setFermiMode(mode) {
   if (!fermiContexts[mode]) return;
   fermiMode = mode;
   renderFermiBox();
+  if (typeof renderDetectionPanel === 'function') renderDetectionPanel();
 }
 
 const HISTORY_STORAGE_KEY = 'simHistory';
@@ -1880,6 +1986,44 @@ function getInterpretationBasis(mode = fermiMode) {
   };
 }
 
+function getDetectionPanelBasis() {
+  if (distanceCalculated && fermiContexts[fermiMode]) {
+    const basis = getInterpretationBasis(fermiMode);
+    return {
+      ...basis,
+      note:
+        basis.mode === 'dt'
+          ? 'same count basis as the current Fermi DT view'
+          : 'same count basis as the current Fermi MC view'
+    };
+  }
+
+  if (simulationCompleted && Number.isFinite(mcMedianQ50)) {
+    return {
+      mode: 'mc',
+      count: Math.max(0, mcMedianQ50),
+      label: 'Monte Carlo median (q50)',
+      note: 'Monte Carlo basis; run the distance context to compare with DT/MC Fermi views'
+    };
+  }
+
+  if (hasDeterministicCalculation && Number.isFinite(deterministicPlanets)) {
+    return {
+      mode: 'dt',
+      count: Math.max(0, deterministicPlanets),
+      label: 'deterministic result',
+      note: 'deterministic basis'
+    };
+  }
+
+  return {
+    mode: 'none',
+    count: 0,
+    label: 'not calculated',
+    note: 'not calculated'
+  };
+}
+
 function getCurrentEffectiveModelStars() {
   if (ADV.enabled && ADV.modules.radialGHZ.enabled && typeof computeRadialGHZDetails === 'function') {
     const details = computeRadialGHZDetails();
@@ -1972,11 +2116,6 @@ function buildInterpretationHtml(mode = fermiMode) {
     : null;
   const requiredOneWayL = Number.isFinite(referenceDistance) ? referenceDistance : null;
   const requiredTwoWayL = Number.isFinite(referenceDistance) ? referenceDistance * 2 : null;
-  const temporalWindows = detection && detection.L > 0 ? 13.5e9 / detection.L : null;
-  const requiredFTx =
-    detection && detection.N_det > 0 && detection.f_tx > 0
-      ? detection.f_tx / detection.N_det
-      : Infinity;
   const isExternalGalaxy = galaxyName !== 'Milky Way (MW)' && galaxyName !== 'Custom Galaxy X';
   const expectedWithinPills =
     isExternalGalaxy || distanceScenario.kind === 'external'
@@ -2009,82 +2148,6 @@ function buildInterpretationHtml(mode = fermiMode) {
       `<span class="fermi-health-badge ${health.level}">${health.label}</span>` +
       `${health.note}`
   });
-
-  if (detection) {
-    let detectText =
-      `Probability of at least one active detectable transmitter in range right now: ` +
-      `<span class="bold-number">${fmtPct(detection.p_detect_pct)}</span>. ` +
-      `Temporal overlap term alone is <span class="bold-number">${fmtPct(detection.p_temporal_pct)}</span>`;
-
-    if (Number.isFinite(temporalWindows)) {
-      detectText +=
-        `, so the calculator's 13.5 Gyr age scale fits roughly <span class="bold-number">${fmtN(temporalWindows)}</span> non-overlapping windows of length L.`;
-    } else {
-      detectText += '.';
-    }
-
-    detectText += '<br><br>';
-    if (Number.isFinite(requiredFTx) && requiredFTx <= 1) {
-      detectText +=
-        `To reach about <span class="bold-number">one expected detectable civilisation in range now</span> ` +
-        `(Poisson mean = 1, so P≥1 ≈ 63.2%), the current geometry would need <span class="bold-number">f_tx ≈ ${fmtN(requiredFTx)}</span>.`;
-    } else {
-      detectText +=
-        `Even an extreme <span class="bold-number">f_tx = 1</span> would still not yield one expected detectable civilisation in range now at the current <span class="bold-number">L</span>.`;
-    }
-
-    sections.push({
-      label: 'Detectability now',
-      text: detectText
-    });
-  }
-
-  if (Number.isFinite(requiredOneWayL) || Number.isFinite(requiredTwoWayL)) {
-    let contactText = '';
-
-    if (Number.isFinite(requiredOneWayL)) {
-      contactText +=
-        `One-way contact needs a civilisation lifetime of at least <span class="bold-number">${fmtN(requiredOneWayL)}</span> years under the current nearest-distance reference. `;
-    }
-
-    if (Number.isFinite(requiredTwoWayL)) {
-      contactText +=
-        `A true two-way exchange needs roughly <span class="bold-number">${fmtN(requiredTwoWayL)}</span> years.`;
-    }
-
-    if (detection && Number.isFinite(detection.d_nearest_det)) {
-      const ratio = requiredOneWayL > 0 ? detection.d_nearest_det / requiredOneWayL : Infinity;
-      const nearestDetectableScaleLy = detection.d_nearest_det;
-      const detectionHorizonLy = detection.d_horizon;
-      const lambdaDet = detection.N_det;
-      contactText += '<br><br>';
-      if (Number.isFinite(detectionHorizonLy) && nearestDetectableScaleLy > detectionHorizonLy) {
-        contactText +=
-          `No active detectable transmitter is expected inside the current detection horizon of <span class="bold-number">${fmtN(detectionHorizonLy)}</span> light years. ` +
-          `The equivalent Poisson nearest-detectable distance scale is about <span class="bold-number">${fmtN(nearestDetectableScaleLy)}</span> light years, ` +
-          `which exceeds that horizon. This value is a statistical density scale, not a literal currently reachable source or a light-travel-time target.`;
-      } else {
-        contactText +=
-          `The nearest-detectable transmitter distance scale is about <span class="bold-number">${fmtN(nearestDetectableScaleLy)}</span> light years within the current detection horizon` +
-          (Number.isFinite(detectionHorizonLy)
-            ? ` of <span class="bold-number">${fmtN(detectionHorizonLy)}</span> light years`
-            : '') +
-          (Number.isFinite(ratio)
-            ? `, about <span class="bold-number">${fmtN(ratio)}</span>× farther out than the nearest modelled candidate distance scale.`
-            : '.');
-      }
-      if (Number.isFinite(lambdaDet) && lambdaDet < 1) {
-        contactText +=
-          `<br><br><strong>Sub-Poisson regime:</strong> the expected number of active detectable transmitters in range is below one, ` +
-          `so silence is the statistically dominant outcome in this scenario.`;
-      }
-    }
-
-    sections.push({
-      label: 'Contact threshold',
-      text: contactText
-    });
-  }
 
   sections.push({
     label: 'Result summary',
@@ -2196,9 +2259,7 @@ function buildInterpretationHtml(mode = fermiMode) {
     'Result summary': 'core',
     'Existence odds': 'core',
     'Bounds check': 'search',
-    'Detectability now': 'contact',
-    'Contact threshold': 'contact',
-    'Distance frame': 'contact',
+    'Distance frame': 'spatial',
     'Local neighbourhood': 'spatial',
     'Host-star breakdown': 'spatial',
     'Top uncertainty drivers': 'search',
@@ -2802,7 +2863,8 @@ function renderDetectionPanel() {
   if (!simulationCompleted) { panel.style.display = 'none'; return; }
   panel.style.display = 'block';
 
-  const r = computeDetectionFilter();
+  const basis = getDetectionPanelBasis();
+  const r = computeDetectionFilter(basis.count);
   if (!r) {
     resultsEl.innerHTML = '<div style="font-size:11px;color:var(--text-dim);">Run Monte Carlo first to enable detection estimates.</div>';
     return;
@@ -2850,8 +2912,15 @@ function renderDetectionPanel() {
     ? (geometryFactor > 0 ? '1 · within light-travel reach' : '0 · outside light-travel reach')
     : (geometryFactor > 0 ? fmtPct(geometryFactor * 100) : '0%');
   const rawExpectedText = fmtN(r.N_det);
+  const basisCopy =
+    '<div style="font-size:9.5px;color:var(--text-dim);margin-bottom:8px;line-height:1.45;">' +
+      'Count basis: <strong style="color:var(--text-bright);">' + basis.label + '</strong> ' +
+      '<span style="opacity:.78;">(' + basis.note + ')</span> · ' +
+      '<span class="bold-number">' + fmtHuman(basis.count) + '</span> modelled Earth-like candidates.' +
+    '</div>';
 
   resultsEl.innerHTML =
+    basisCopy +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-bottom:12px;">' +
       '<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 12px;">' +
         '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:4px;">Step 0 · Civilisation prior</div>' +
@@ -2882,7 +2951,7 @@ function renderDetectionPanel() {
         return (value / 1e6).toFixed(2) + ' million light-years';
       };
       var subPoissonWarning = r.N_det < 1
-        ? '<div style="font-size:9.2px;color:var(--red);margin-top:5px;line-height:1.35;"><strong>Sub-Poisson regime:</strong> the expected number of active detectable transmitters in range is below one, so silence is the statistically dominant outcome in this scenario.</div>'
+        ? '<div style="font-size:9.2px;color:var(--red);margin-top:5px;line-height:1.35;"><strong>Sub-Poisson regime:</strong> fewer than one active detectable transmitter is expected on average inside the current detection horizon. Non-detection is therefore the statistically dominant outcome, although the Poisson probability is not zero.</div>'
         : '';
       if (r.is_external_reference && Number.isFinite(r.earth_distance)) {
         if (r.nearest_beyond_horizon) {
@@ -2903,7 +2972,7 @@ function renderDetectionPanel() {
         if (r.nearest_beyond_horizon) {
           distTitle = 'Equivalent Poisson scale beyond horizon';
           distLabel = formatLy(d) + ' <span style="font-size:10px;font-weight:400;color:var(--red);">(horizon: ' + formatLy(r.d_horizon) + ')</span>';
-          distSub = 'This is the equivalent Poisson nearest-detectable distance scale, not a literal source. Because it exceeds the current detection horizon, the model does not expect an active detectable transmitter inside the current horizon. It is also not the light-travel time used by the waiting-time estimate.';
+          distSub = 'This is the equivalent Poisson nearest-detectable distance scale, not a literal source. Because it exceeds the current detection horizon, fewer than one active detectable transmitter is expected on average inside the current horizon. It is also not the light-travel time used by the waiting-time estimate.';
         } else {
           distSub = 'The nearest-detectable transmitter distance scale is about ' + formatLy(d) + ' within the current detection horizon of ' + formatLy(r.d_horizon) + '.';
         }

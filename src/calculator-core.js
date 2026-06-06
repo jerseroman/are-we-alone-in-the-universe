@@ -1404,6 +1404,186 @@ const HISTORY_DB = [
     {y:1100e6, text:"roughly 1.1 billion years ago, in the Proterozoic, when stromatolites   layered microbial mats   dominated Earth's shallow seas and the continents were bare and lifeless"}
 ];
 
+const HISTORICAL_SIGNAL_CONTEXT_V2 = [
+  [2020, 'the early 2020s', 'roughly the pandemic, mRNA-vaccine, remote-work and early generative-AI era, when cloud infrastructure and mobile platforms were already central to daily life'],
+  [2010, 'the early 2010s', 'roughly the smartphone, cloud-computing and social-platform era, when high-energy LHC physics had begun and digital life was becoming mobile-first'],
+  [2000, 'around 2000', 'roughly the human-genome draft, continuous International Space Station habitation and mass-internet era, when the global population was near six billion'],
+  [1990, 'the 1990s', 'roughly the World Wide Web, GPS civilian-use and post-Cold-War globalization era, when digital networks were moving from laboratories into ordinary life'],
+  [1980, 'the 1980s', 'roughly the personal-computer, early mobile-phone and space-shuttle era, when microelectronics were reshaping work and communications'],
+  [1970, 'the 1970s', 'roughly the Apollo-afterglow, Voyager-launch and first-microprocessor era, when modern planetary exploration and computing were accelerating'],
+  [1960, 'the 1960s', 'roughly the space-race and civil-rights era, when humans first reached the Moon and radio astronomy was rapidly expanding'],
+  [1950, 'the 1950s', 'roughly the early space-age and transistor era, when nuclear physics, radio astronomy and electronic computing were entering modern form'],
+  [1940, 'the 1940s', 'roughly the Second World War and early nuclear age, when radar, rocketry and electronic computation advanced with extraordinary speed'],
+  [1930, 'the 1930s', 'roughly the Great Depression era, when quantum mechanics was maturing and radio broadcasting had become a mass medium'],
+  [1920, 'the 1920s', 'roughly the early radio, relativity-confirmation and expanding-universe era, when modern cosmology was taking shape'],
+  [1910, 'the 1910s', 'roughly the First World War and early aviation era, when radio, automobiles and industrialized conflict transformed society'],
+  [1900, 'around 1900', 'roughly the first powered-flight, early radio and relativity-prelude era, when global industrial civilization was becoming electrically connected'],
+  [1890, 'the 1890s', 'roughly the X-ray, wireless-telegraphy and early-motion-picture era, when laboratory physics and mass communication were changing quickly'],
+  [1880, 'the 1880s', 'roughly the electric-light, telephone-expansion and germ-theory era, when cities were being rewired by modern infrastructure'],
+  [1870, 'the 1870s', 'roughly the second industrial revolution, periodic-table and telephone-prototype era, when chemistry, steel and communications were accelerating'],
+  [1860, 'the 1860s', 'roughly the American Civil War and Maxwell-electromagnetism era, when industrial warfare and field theory reshaped the modern world'],
+  [1850, 'the 1850s', 'roughly the telegraph, rail and early-photography era, when information and people began moving across continents much faster'],
+  [1840, 'the 1840s', 'roughly the railway boom and early telegraph era, when industrial networks began compressing practical distance'],
+  [1830, 'the 1830s', 'roughly the steam-railway and early-electromagnetism era, when mechanized transport and electrical science were becoming public realities'],
+  [1820, 'the 1820s', 'roughly the post-Napoleonic industrial era, when steam power, geology and electromagnetism were expanding scientific horizons'],
+  [1810, 'the 1810s', 'roughly the Napoleonic-war era, when industrial Britain was growing and modern chemistry was being formalized'],
+  [1800, 'around 1800', 'roughly the age of Napoleon, Voltaic electricity and early steam industry, when global population approached one billion'],
+  [1790, 'the 1790s', 'roughly the French Revolutionary era, when political modernity and industrial production were both accelerating'],
+  [1780, 'the 1780s', 'roughly the American Revolution aftermath and early Industrial Revolution, when steam engines and Enlightenment politics were changing the Atlantic world'],
+  [1770, 'the 1770s', 'roughly the American Revolutionary era, when Enlightenment political ideas and industrial technology were spreading'],
+  [1760, 'the 1760s', 'roughly the early Industrial Revolution, when improved steam engines and mechanized textile production began changing Britain'],
+  [1750, 'around 1750', 'roughly the Enlightenment and early industrialization era, when global trade, coal power and scientific societies were expanding'],
+
+  [1700, 'around 1700 CE', 'roughly the Newtonian-science and early-Enlightenment era, when calculus, celestial mechanics and global trade networks were reshaping knowledge'],
+  [1650, 'around 1650 CE', 'roughly the scientific-revolution era, when telescopes, microscopes and mathematical physics were transforming European science'],
+  [1600, 'around 1600 CE', 'roughly the Galileo, Kepler and early-telescope era, when the heliocentric view was becoming experimentally grounded'],
+  [1550, 'around 1550 CE', 'roughly the late Renaissance and Reformation era, when print culture, oceanic empires and religious conflict reshaped Eurasia'],
+  [1500, 'around 1500 CE', 'roughly the Columbus, da Vinci and Copernican-threshold era, when world maps and cosmology were about to change profoundly'],
+  [1450, 'around 1450 CE', 'roughly the Gutenberg printing and late-medieval transition era, when movable type began changing the spread of knowledge'],
+  [1400, 'around 1400 CE', 'roughly the early Renaissance and Ming-voyage era, when art, navigation and urban commerce were expanding'],
+  [1350, 'around 1350 CE', 'roughly the Black Death era, when plague transformed European demography and social structure'],
+  [1300, 'around 1300 CE', 'roughly the late medieval era, when universities, cathedrals and long-distance trade networks linked much of Eurasia'],
+  [1250, 'around 1250 CE', 'roughly the Mongol Empire and scholastic-university era, when Eurasian exchange reached an extraordinary scale'],
+  [1200, 'around 1200 CE', 'roughly the Genghis Khan and high-medieval era, when trade routes, castles and manuscript culture shaped much of Eurasia'],
+  [1150, 'around 1150 CE', 'roughly the cathedral-building and crusading era, when European urban life and long-distance religious conflict intensified'],
+  [1100, 'around 1100 CE', 'roughly the First Crusade and Song-dynasty innovation era, when compasses, printing and urban markets were spreading'],
+  [1050, 'around 1050 CE', 'roughly the high-medieval transition, when agricultural expansion, castles and manuscript scholarship were growing'],
+  [1000, 'around 1000 CE', 'roughly the Leif Eriksson, Song China and late-Viking era, when the global population was still a few hundred million'],
+  [950, 'around 950 CE', 'roughly the late Viking and early medieval state-formation era, when trade and kingdoms were consolidating across Eurasia'],
+  [900, 'around 900 CE', 'roughly the Viking expansion and Classic Maya decline era, when regional powers were shifting across the Atlantic and Mesoamerica'],
+  [850, 'around 850 CE', 'roughly the Carolingian successor and Abbasid scientific era, when manuscript learning and translation flourished'],
+  [800, 'around 800 CE', 'roughly the Charlemagne and early Viking era, when the Islamic Golden Age and medieval Europe were both developing'],
+  [750, 'around 750 CE', 'roughly the Abbasid revolution and Tang-dynasty era, when Baghdad was becoming a major intellectual centre'],
+  [700, 'around 700 CE', 'roughly the early Islamic expansion and Tang China era, when new trade and scholarly networks connected vast regions'],
+  [650, 'around 650 CE', 'roughly the first Islamic caliphates, when Arabic political and religious power spread rapidly beyond Arabia'],
+  [600, 'around 600 CE', 'roughly the Muhammad and early Tang era, when two of historys major cultural transformations were beginning'],
+  [550, 'around 550 CE', 'roughly the Justinian and post-Roman era, when plague, empire and migration reshaped the Mediterranean world'],
+  [500, 'around 500 CE', 'roughly the post-Western-Roman and Classic Maya era, when Byzantium endured and new kingdoms formed in Europe'],
+  [450, 'around 450 CE', 'roughly the late Roman collapse era, when Huns, Goths and imperial fragmentation reshaped Europe'],
+  [400, 'around 400 CE', 'roughly the Augustine and late Roman era, when Christianity, migration and imperial crisis transformed the Mediterranean'],
+  [350, 'around 350 CE', 'roughly the post-Constantine era, when Christianity was moving toward imperial dominance in the Roman world'],
+  [300, 'around 300 CE', 'roughly the Constantine-threshold era, when the Roman Empire was reorganizing and late antiquity was beginning'],
+  [250, 'around 250 CE', 'roughly the Roman third-century crisis, when empire, disease and frontier pressure destabilized the Mediterranean'],
+  [200, 'around 200 CE', 'roughly the late Han and Roman imperial era, when large agrarian empires dominated opposite ends of Eurasia'],
+  [150, 'around 150 CE', 'roughly the high Roman Empire and Han China era, when trans-Eurasian trade and classical urban life were flourishing'],
+  [100, 'around 100 CE', 'roughly the Trajanic Roman and Eastern Han era, when the Colosseum stood complete and Silk Road exchange expanded'],
+  [50, 'around 50 CE', 'roughly the early Roman Empire, Han China and early Christian movement era, when Mediterranean and East Asian empires were stable'],
+  [1, 'around the 1 BCE / 1 CE boundary', 'roughly the Augustan Roman and Han-dynasty era, when major Eurasian civilizations were linked by trade and empire'],
+
+  [-100, 'around 100 BCE', 'roughly the late Roman Republic and Han-dynasty era, when Julius Caesar was born and Silk Road exchange was expanding'],
+  [-200, 'around 200 BCE', 'roughly the Roman Republics expansion and early Han era, when Mediterranean and Chinese state systems were growing'],
+  [-300, 'around 300 BCE', 'roughly the Hellenistic era after Alexander, when Euclid, Alexandria and Mauryan India shaped ancient knowledge'],
+  [-400, 'around 400 BCE', 'roughly the Plato, Persian and late-classical Greek era, when philosophy and imperial politics were deeply intertwined'],
+  [-500, 'around 500 BCE', 'roughly the Athenian democracy, Persian Empire, Buddha and Confucius era, when several major intellectual traditions formed'],
+  [-600, 'around 600 BCE', 'roughly the Neo-Babylonian, early Greek and axial-age era, when new religious and philosophical movements were emerging'],
+  [-700, 'around 700 BCE', 'roughly the Assyrian Empire and early coinage era, when iron-age states and trade networks expanded'],
+  [-800, 'around 800 BCE', 'roughly the Homeric and early Olympic era, when Phoenician writing and Greek city-states were developing'],
+  [-900, 'around 900 BCE', 'roughly the early Iron Age, Assyrian expansion and Phoenician maritime era, when alphabetic writing spread'],
+  [-1000, 'around 1000 BCE', 'roughly the early Israelite monarchy, Zhou China and late Bronze-to-Iron transition era'],
+  [-1100, 'around 1100 BCE', 'roughly the post-Bronze-Age-collapse era, when iron use and Phoenician alphabetic writing spread'],
+  [-1200, 'around 1200 BCE', 'roughly the Late Bronze Age collapse, when major palace economies around the eastern Mediterranean failed'],
+  [-1300, 'around 1300 BCE', 'roughly the Kadesh and New Kingdom Egypt era, when chariot empires dominated the eastern Mediterranean'],
+  [-1400, 'around 1400 BCE', 'roughly the Amarna, Mycenaean and Hittite era, when Bronze Age diplomacy connected powerful courts'],
+  [-1500, 'around 1500 BCE', 'roughly the New Kingdom Egypt and early Vedic era, when chariot warfare and bronze technology were widespread'],
+  [-1600, 'around 1600 BCE', 'roughly the Thera eruption and early Mycenaean era, when Aegean and Near Eastern Bronze Age systems were changing'],
+  [-1700, 'around 1700 BCE', 'roughly the Hyksos and Old Babylonian era, when chariots and law codes were reshaping Bronze Age kingdoms'],
+  [-1800, 'around 1800 BCE', 'roughly the Hammurabi and Middle Bronze Age era, when Babylon became a major Mesopotamian power'],
+  [-1900, 'around 1900 BCE', 'roughly the Middle Bronze Age, when Stonehenge was nearing completion and Babylonian city-states were rising'],
+  [-2000, 'around 2000 BCE', 'roughly the Ur III, Minoan and early Babylonian era, when palace economies and long-distance trade were growing'],
+  [-2100, 'around 2100 BCE', 'roughly the Third Dynasty of Ur era, when formal law codes and state bureaucracy were expanding'],
+  [-2200, 'around 2200 BCE', 'roughly the 4.2-kiloyear disruption, when drought and political collapse affected several Bronze Age societies'],
+  [-2300, 'around 2300 BCE', 'roughly the Akkadian Empire era, when Sargon and his successors ruled one of historys earliest empires'],
+  [-2400, 'around 2400 BCE', 'roughly the Early Dynastic Mesopotamian and Old Kingdom Egyptian era, when cities and pyramids defined state power'],
+  [-2500, 'around 2500 BCE', 'roughly the Great Pyramid, Sphinx and Indus urban era, when monumental architecture and planned cities flourished'],
+  [-2600, 'around 2600 BCE', 'roughly the pyramid-building and mature Indus Valley era, when large urban societies expanded'],
+  [-2700, 'around 2700 BCE', 'roughly the early Old Kingdom Egypt and Sumerian city-state era, when kingship and writing were institutionalized'],
+  [-2800, 'around 2800 BCE', 'roughly the early Stonehenge and Sumerian urban era, when ceremonial monuments and city-states developed'],
+  [-2900, 'around 2900 BCE', 'roughly the Early Dynastic Egypt and Mesopotamian city-state era, when proto-hieroglyphic and cuneiform systems spread'],
+  [-3000, 'around 3000 BCE', 'roughly the dawn of recorded history, when Sumerian city-states, cuneiform writing and the early Bronze Age were emerging']
+].map(([year, periodLabel, summary]) => ({ year, periodLabel, summary }));
+
+function formatHistoricalYear(year) {
+  if (!Number.isFinite(year)) return 'unknown period';
+  if (year >= 1) return `${Math.round(year)} CE`;
+  if (year > -1) return 'around the 1 BCE / 1 CE boundary';
+  return `${Math.max(1, Math.round(Math.abs(year)))} BCE`;
+}
+
+function getCurrentDecimalYear(date = new Date()) {
+  const year = date.getFullYear();
+  const start = new Date(year, 0, 1);
+  const end = new Date(year + 1, 0, 1);
+  return year + (date - start) / (end - start);
+}
+
+function getHistoricalAnchorYear(anchor, currentDecimalYear = getCurrentDecimalYear()) {
+  if (!anchor) return NaN;
+  if (Number.isFinite(anchor.year)) return anchor.year;
+  if (Number.isFinite(anchor.lookbackYears)) return currentDecimalYear - anchor.lookbackYears;
+  if (Number.isFinite(anchor.y) && anchor.y < -3000) return anchor.y;
+  if (Number.isFinite(anchor.y) && anchor.y > 2020) return currentDecimalYear - anchor.y;
+  return NaN;
+}
+
+const HISTORICAL_SIGNAL_CONTEXT = [
+  ...HISTORICAL_SIGNAL_CONTEXT_V2,
+  ...HISTORY_DB
+    .filter(anchor => Number.isFinite(anchor.y) && (anchor.y < -3000 || anchor.y > 2020))
+    .map(anchor =>
+      anchor.y < -3000
+        ? {
+            year: anchor.y,
+            periodLabel: formatHistoricalYear(anchor.y),
+            summary: anchor.text
+          }
+        : {
+            lookbackYears: anchor.y,
+            periodLabel: anchor.text.split(',')[0],
+            summary: anchor.text
+          }
+    )
+];
+
+function findNearestHistoricalAnchor(targetYear, anchors = HISTORICAL_SIGNAL_CONTEXT, currentDecimalYear = getCurrentDecimalYear()) {
+  if (!Number.isFinite(targetYear) || !Array.isArray(anchors) || !anchors.length) return null;
+
+  return anchors.reduce((best, item) => {
+    const anchorYear = getHistoricalAnchorYear(item, currentDecimalYear);
+    if (!Number.isFinite(anchorYear)) return best;
+    const distance = Math.abs(targetYear - anchorYear);
+    if (!best || distance < best.distance) {
+      return { ...item, anchorYear, distance };
+    }
+    return best;
+  }, null);
+}
+
+function getHistoricalContextForLookback(yearsAgo, currentDecimalYear = getCurrentDecimalYear()) {
+  const lookback = Number(yearsAgo);
+  if (!Number.isFinite(lookback) || lookback < 0) return null;
+
+  const targetYear = currentDecimalYear - lookback;
+  const anchor = findNearestHistoricalAnchor(targetYear, HISTORICAL_SIGNAL_CONTEXT, currentDecimalYear);
+  if (!anchor) return null;
+
+  const periodLabel = anchor.periodLabel || formatHistoricalYear(anchor.anchorYear);
+  const summary = anchor.summary || anchor.text || '';
+
+  return {
+    yearsAgo: lookback,
+    targetYear,
+    formattedTargetYear: formatHistoricalYear(targetYear),
+    nearestAnchor: anchor,
+    text: `In historical terms, that points roughly to ${periodLabel}: ${summary}`
+  };
+}
+
+globalThis.HISTORICAL_SIGNAL_CONTEXT = HISTORICAL_SIGNAL_CONTEXT;
+globalThis.findNearestHistoricalAnchor = findNearestHistoricalAnchor;
+globalThis.formatHistoricalYear = formatHistoricalYear;
+globalThis.getCurrentDecimalYear = getCurrentDecimalYear;
+globalThis.getHistoricalContextForLookback = getHistoricalContextForLookback;
+
 function getNearestStar(dist) {
   let best = STAR_DB[0];
   let bestDiff = Math.abs(dist - best.d);
@@ -1420,24 +1600,15 @@ function getNearestStar(dist) {
 }
 
 function getHistoricalContext(years) {
-  const currentYear = new Date().getFullYear();
-  let best = HISTORY_DB[0];
-  let bestDiff = Infinity;
-
-  for (const h of HISTORY_DB) {
-    let yearsAgo;
-    if (h.y < 0) yearsAgo = currentYear + Math.abs(h.y);
-    else if (h.y <= currentYear) yearsAgo = currentYear - h.y;
-    else yearsAgo = h.y;
-
-    const diff = Math.abs(years - yearsAgo);
-    if (diff < bestDiff) {
-      best = h;
-      bestDiff = diff;
-    }
-  }
-
-  return best;
+  const context = getHistoricalContextForLookback(years);
+  if (!context) return null;
+  return {
+    ...context.nearestAnchor,
+    y: Number.isFinite(context.nearestAnchor.year)
+      ? context.nearestAnchor.year
+      : context.nearestAnchor.lookbackYears,
+    text: context.text
+  };
 }
 
 function getConfigurationWarnings() {
@@ -3646,6 +3817,7 @@ function buildFermiContext(distLy, refModel = null, options = {}) {
   const signalTime = distLy;
   const roundTrip = distLy * 2;
   const sourceShort = mode === 'dt' ? 'DT Result' : 'MC Result';
+  const distanceMetrics = options.metrics || options.distanceMetrics || null;
 
   const star = getNearestStar(distLy);
   const starDiff = Math.abs(distLy - star.d);
@@ -3674,6 +3846,10 @@ function buildFermiContext(distLy, refModel = null, options = {}) {
   }
 
   const hist = getHistoricalContext(signalTime);
+  const historicalContextText = (hist
+    ? hist.text
+    : 'In historical terms, no contextual anchor is available for this lookback'
+  ).replace(/[.!?]\s*$/, '');
   let tension = 'low';
   if (distLy <= 1000) tension = 'very high';
   else if (distLy <= 10000) tension = 'high';
@@ -3725,7 +3901,7 @@ function buildFermiContext(distLy, refModel = null, options = {}) {
         ? ` The current detection horizon is <strong>${fmtN(detection.d_horizon)}</strong> light years.`
         : '';
       const horizonNote = detection.d_nearest_det > detection.d_horizon
-        ? ` This scale lies beyond the current detection horizon, so the model does not expect an active detectable transmitter inside the present horizon under these assumptions. This should be read as no expected active detectable transmitter inside the current horizon, not as a location estimate.`
+        ? ` This scale lies beyond the current detection horizon. Under these assumptions, fewer than one active detectable transmitter is expected on average inside the present horizon. This should be read as fewer than one expected active detectable transmitter inside the current horizon on average, not as a location estimate.`
         : ` This scale lies within the current detection horizon under these assumptions.`;
 
       distanceItem =
@@ -3750,7 +3926,7 @@ function buildFermiContext(distLy, refModel = null, options = {}) {
 
     let diagnosis = 'distance and timing constraints acting together.';
     if (bottleneck.key === 'prior') {
-      diagnosis = 'the low assumed transmitter fraction. Only a small fraction of modelled candidate worlds are assumed to produce detectable technosignatures.';
+      diagnosis = 'the low assumed transmitter fraction. Only a small fraction of modelled candidate worlds are assumed to produce detectable SETI signals.';
     } else if (bottleneck.key === 'distance') {
       diagnosis = 'detection-horizon geometry. The current detection horizon covers only a limited part of the modelled Galactic Habitable Zone.';
     } else if (bottleneck.key === 'temporal') {
@@ -3759,27 +3935,76 @@ function buildFermiContext(distLy, refModel = null, options = {}) {
 
     const interpretationItem =
       `<div ${setiItemStyle}><strong>Model interpretation · expected non-detection</strong><br>` +
-      `Expected non-detection is mainly driven by ${diagnosis} This is a detectability diagnostic, not a claim about a specific nearest transmitter.</div>`;
+      `Expected non-detection is mainly driven by ${diagnosis} This is a signal-detection diagnostic, not a claim about a specific nearest transmitter.</div>`;
+
+    const pTemporal = Math.max(0, detection.p_temporal_pct / 100);
+    const horizonFraction = detection.is_external_reference
+      ? (detection.nearest_beyond_horizon ? 0 : 1)
+      : (geom.area > 0
+        ? Math.min(Math.PI * detection.d_horizon * detection.d_horizon, geom.area) / geom.area
+        : 0);
+    const expectedAtFullFTx = detection.N_planets * horizonFraction * pTemporal;
+    const requiredFTx = expectedAtFullFTx > 0 ? 1 / expectedAtFullFTx : Infinity;
+
+    const thresholdText = Number.isFinite(requiredFTx) && requiredFTx <= 1
+      ? `To reach λ<sub>det</sub> ≈ 1 under the current geometry, the model would require <span class="bold-number">f<sub>tx</sub> ≈ ${fmtN(requiredFTx)}</span>.`
+      : `Even <span class="bold-number">f<sub>tx</sub> = 1</span> would not yield one expected active detectable transmitter in range under the current assumptions.`;
+
+    const subPoissonText = detection.N_det < 1
+      ? `<div style="margin-top:5px;color:var(--red);"><strong>Sub-Poisson regime:</strong> fewer than one active detectable transmitter is expected on average inside the current detection horizon. Non-detection is therefore the statistically dominant outcome, although the Poisson probability is not zero.</div>`
+      : '';
+
+    const distanceFrameParts = [];
+    const addDistanceFrame = (label, model) => {
+      if (!model) return;
+      distanceFrameParts.push(
+        `${label} <span class="bold-number">${Number.isFinite(model.distance) ? fmtN(model.distance) : '∞'}</span> light years`
+      );
+    };
+    if (distanceMetrics) {
+      addDistanceFrame('radial GHZ density', distanceMetrics.modelRadial);
+      addDistanceFrame('uniform 3D GHZ disk', distanceMetrics.model3dDisk);
+      addDistanceFrame('2D annulus', distanceMetrics.model2d);
+      addDistanceFrame('shell-style reference', distanceMetrics.model3dSphere);
+    }
+
+    const distanceFrameText = distanceFrameParts.length
+      ? `<div style="margin-top:5px;">Distance-frame comparison: ${distanceFrameParts.join('; ')}.</div>` +
+        `<div class="fermi-subnote" style="margin-top:4px;">The radial model uses an exponential-disk GHZ intensity and a non-homogeneous Poisson void-probability integral. The uniform 2D/3D models remain comparison geometries, not catalogue predictions.</div>`
+      : '';
+
+    const diagnosticsItem =
+      `<div style="margin-top:8px;padding:8px;border-left:2px solid rgba(91,156,246,0.45);background:rgba(255,255,255,0.012);font-size:10px;line-height:1.6;">` +
+      `<div style="font-weight:800;color:var(--text-bright);margin-bottom:4px;">Technical SETI diagnostics</div>` +
+      `<div>Probability of at least one active detectable transmitter in range now: <span class="bold-number">${fmtPct(detection.p_detect_pct)}</span>.</div>` +
+      `<div>λ<sub>det</sub> = <span class="bold-number">${fmtN(detection.N_det)}</span>, the expected number of active detectable transmitters within the current horizon right now.</div>` +
+      `<div>Temporal overlap term: <span class="bold-number">${fmtPct(detection.p_temporal_pct)}</span>. This reflects the ratio between the assumed detectable-transmitter lifetime and the galactic timescale used by the model.</div>` +
+      `<div style="margin-top:5px;">${thresholdText}</div>` +
+      subPoissonText +
+      distanceFrameText +
+      `</div>`;
 
     setiDetectabilityText =
       `➤ <div style="margin-top:2px;padding:10px 0 2px;border-top:1px solid rgba(255,255,255,0.07);border-bottom:1px solid rgba(255,255,255,0.05);">` +
-      `<div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--accent3);margin-bottom:7px;">SETI detection context</div>` +
-      `<div class="fermi-subnote" style="margin-bottom:8px;">These panels describe the same SETI detectability result from three complementary angles: temporal Poisson waiting time, spatial Poisson distance scale, and model-level bottleneck interpretation.</div>` +
+      `<div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--accent3);margin-bottom:7px;">SETI signal context</div>` +
+      `<div class="fermi-subnote" style="margin-bottom:8px;">These panels describe the same SETI signal result from three complementary angles: temporal Poisson waiting time, spatial Poisson distance scale, and model-level bottleneck interpretation.</div>` +
       `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:8px;">` +
       waitItem +
       distanceItem +
       interpretationItem +
-      `</div></div><br><br>`;
+      `</div>` +
+      diagnosticsItem +
+      `</div><br><br>`;
   }
 
   const text = `
     <strong>${sourceShort} · modelled candidate distance scale (${refModel ? refModel.modelLabel : 'external distance reference'}): ~${fmtN(distLy)} light years</strong><br><br>
     ➤ A radio signal travelling at light speed would take <strong>${fmtN(signalTime)}</strong> years to reach us ∼ ${starCtx}.<br><br>
-    ➤ For us to detect a civilisation there, it would need to have been transmitting for at least <strong>${fmtN(signalTime)}</strong> years. In historical terms, that is roughly the time since ${hist.text}.<br><br>
+    ➤ For us to detect a civilisation there, it would need to have been transmitting for at least <strong>${fmtN(signalTime)}</strong> years. ${historicalContextText}.<br><br>
     ➤ A round-trip exchange would take <strong>${fmtN(roundTrip)}</strong> years.<br><br>
     ${radioBubbleText}
     ${setiDetectabilityText}
-    ➤ On this model, Fermi-paradox tension is <strong>${tension}</strong> under this scenario’s candidate-distance and SETI-detectability assumptions.<br>
+    ➤ On this model, Fermi-paradox tension is <strong>${tension}</strong> under this scenario’s candidate-distance and signal-detection assumptions.<br>
     <span style="font-size:9.5px;color:var(--text-dim);">Fermi-tension labels are heuristic UI buckets based on model-derived distance and active-transmitter estimates. They are not literature-defined thresholds.</span>
   `;
 
@@ -3845,11 +4070,13 @@ function calculateDistanceToNearestPlanet() {
     fermiContexts = {
       mc: hasCurrentMc ? buildFermiContext(mcScenario.fermiDistance, mcScenario.refModel, {
         mode: 'mc',
-        count: mcMedianQ50
+        count: mcMedianQ50,
+        metrics: mcScenario.metrics
       }) : null,
       dt: buildFermiContext(dtScenario.fermiDistance, dtScenario.refModel, {
         mode: 'dt',
-        count: deterministicPlanets
+        count: deterministicPlanets,
+        metrics: dtScenario.metrics
       })
     };
 
@@ -3861,6 +4088,7 @@ function calculateDistanceToNearestPlanet() {
     // Optimist); deterministic is the methodological primary for scenario-
     // based presets. The user can still flip to MC RESULT via the toggle.
     renderFermiBox('dt');
+    if (typeof renderDetectionPanel === 'function') renderDetectionPanel();
     saveHistoryEntry();
     updateShareButtons();
     setTimeout(() => {

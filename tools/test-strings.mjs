@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
+import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -164,6 +165,97 @@ function getDivById(text, id) {
   return '';
 }
 
+function makeFixedDate(isoTimestamp) {
+  const RealDate = Date;
+  function FixedDate(...args) {
+    if (new.target) {
+      return args.length ? new RealDate(...args) : new RealDate(isoTimestamp);
+    }
+    return args.length ? RealDate(...args) : new RealDate(isoTimestamp).toString();
+  }
+  FixedDate.UTC = RealDate.UTC;
+  FixedDate.parse = RealDate.parse;
+  FixedDate.now = () => new RealDate(isoTimestamp).getTime();
+  FixedDate.prototype = RealDate.prototype;
+  return FixedDate;
+}
+
+function runHistoricalSignalContextRegression() {
+  const historyStart = coreJs.indexOf('const HISTORY_DB = [');
+  const historyEnd = coreJs.indexOf('function getNearestStar', historyStart);
+  const wrapperStart = coreJs.indexOf('function getHistoricalContext', historyEnd);
+  const wrapperEnd = coreJs.indexOf('function getConfigurationWarnings', wrapperStart);
+
+  if (historyStart === -1 || historyEnd === -1 || wrapperStart === -1 || wrapperEnd === -1) {
+    fail('Historical signal-context code blocks could not be located in calculator-core.js.');
+    return;
+  }
+
+  const sandbox = {
+    globalThis: {},
+    Date: makeFixedDate('2026-06-06T12:00:00Z'),
+    Math,
+    Number,
+    Array,
+    Object,
+    String,
+    parseFloat,
+    parseInt,
+    isNaN,
+    Infinity,
+    NaN
+  };
+  vm.createContext(sandbox);
+
+  try {
+    vm.runInContext(
+      `${coreJs.slice(historyStart, historyEnd)}
+${coreJs.slice(wrapperStart, wrapperEnd)}
+globalThis.__historicalRegression = {
+  HISTORICAL_SIGNAL_CONTEXT,
+  findNearestHistoricalAnchor,
+  formatHistoricalYear,
+  getHistoricalContextForLookback,
+  getHistoricalContext
+};`,
+      sandbox,
+      { filename: 'calculator-core-historical-context.js' }
+    );
+  } catch (error) {
+    fail(`Historical signal-context runtime regression could not execute: ${error.message}`);
+    return;
+  }
+
+  const api = sandbox.globalThis.__historicalRegression;
+  if (!api) {
+    fail('Historical signal-context runtime regression did not expose helper functions.');
+    return;
+  }
+
+  const nearPresent = api.getHistoricalContextForLookback(11.77, 2026.43);
+  const wrappedNearPresent = api.getHistoricalContext(11.77);
+  const around2000 = api.getHistoricalContextForLookback(26, 2026.43);
+
+  if (nearPresent?.nearestAnchor?.periodLabel !== 'the early 2010s') {
+    fail('Historical context regression: 11.77-year lookback no longer maps to the early 2010s.');
+  }
+  if (!wrappedNearPresent?.text?.includes('the early 2010s')) {
+    fail('Historical context regression: legacy getHistoricalContext wrapper does not use the corrected v2 lookup.');
+  }
+  if (/around 2000|human[- ]genome draft/i.test(wrappedNearPresent?.text || '')) {
+    fail('Historical context regression: near-present lookback still falls through to the old around-2000 anchor.');
+  }
+  if (!around2000?.text?.includes('around 2000')) {
+    fail('Historical context regression: genuine around-2000 lookbacks no longer map to the around-2000 anchor.');
+  }
+  if (api.formatHistoricalYear(0) !== 'around the 1 BCE / 1 CE boundary') {
+    fail('Historical context regression: BCE/CE boundary formatting reintroduced year-zero wording.');
+  }
+  if (api.HISTORICAL_SIGNAL_CONTEXT.some(anchor => Object.prototype.hasOwnProperty.call(anchor, 'y') && anchor.y === 2000)) {
+    fail('Historical context regression: legacy modern HISTORY_DB anchors were not filtered out of the active lookup.');
+  }
+}
+
 const files = scanFiles();
 const combinedText = files.map(file => fs.readFileSync(file, 'utf8')).join('\n');
 const indexHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
@@ -174,6 +266,8 @@ const publicFacingFiles = [
   path.join(root, 'index.html'),
   ...walk(path.join(root, 'src'), file => file.endsWith('.js'))
 ].filter(file => fs.existsSync(file));
+
+runHistoricalSignalContextRegression();
 
 for (const file of files) {
   const text = fs.readFileSync(file, 'utf8');
@@ -254,6 +348,22 @@ const forbiddenSourceFragments = [
   {
     label: 'old universe-scale galaxy multiplier wording',
     value: 'Naive scaling from the current'
+  },
+  {
+    label: 'old historical signal-time wording',
+    value: 'that is roughly the time since'
+  },
+  {
+    label: 'user-facing historical year zero',
+    value: 'year 0'
+  },
+  {
+    label: 'misleading no-expected active detectable transmitter wording',
+    value: 'no expected active detectable transmitter inside the current horizon'
+  },
+  {
+    label: 'double-period historical fallback risk',
+    value: "no contextual anchor is available for this lookback.'}."
   }
 ];
 
@@ -270,7 +380,35 @@ const requiredSourceFragments = [
   { label: 'Kopparapu 2013 DOI for f_orbit', value: ['10.1088', '0004-637X/765/2/131'].join('/') },
   {
     label: 'correct detection timing wording',
-    value: 'Temporal-overlap probability for a transmitter-bearing world'
+    value: 'Temporal overlap term'
+  },
+  {
+    label: 'corrected historical signal context helper',
+    value: 'getHistoricalContextForLookback'
+  },
+  {
+    label: 'corrected historical signal context wording',
+    value: 'In historical terms, that points roughly to'
+  },
+  {
+    label: 'single-period historical context sentence helper',
+    value: 'historicalContextText'
+  },
+  {
+    label: 'sub-Poisson detectable-transmitter wording',
+    value: 'fewer than one expected active detectable transmitter inside the current horizon'
+  },
+  {
+    label: 'detection panel Fermi-basis alignment helper',
+    value: 'getDetectionPanelBasis'
+  },
+  {
+    label: 'detection panel basis disclosure',
+    value: 'same count basis as the current Fermi DT view'
+  },
+  {
+    label: 'historical BCE/CE boundary label',
+    value: 'around the 1 BCE / 1 CE boundary'
   },
   {
     label: 'LaTeX neutral range heading',
