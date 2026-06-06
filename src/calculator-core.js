@@ -1436,7 +1436,7 @@ const HISTORICAL_SIGNAL_CONTEXT_V2 = [
   [1760, 'the 1760s', 'roughly the early Industrial Revolution, when improved steam engines and mechanized textile production began changing Britain'],
   [1750, 'around 1750', 'roughly the Enlightenment and early industrialization era, when global trade, coal power and scientific societies were expanding'],
 
-  [1700, 'around 1700 CE', 'roughly the Newtonian-science and early-Enlightenment era, when calculus, celestial mechanics and global trade networks were reshaping knowledge'],
+  [1700, 'around 1700 CE', 'roughly the era of Newtonian science and the early Enlightenment, when Newton’s laws of motion, universal gravitation, calculus, celestial mechanics, and expanding global trade networks were reshaping humanity’s understanding of nature, the sky, and the universe.'],
   [1650, 'around 1650 CE', 'roughly the scientific-revolution era, when telescopes, microscopes and mathematical physics were transforming European science'],
   [1600, 'around 1600 CE', 'roughly the Galileo, Kepler and early-telescope era, when the heliocentric view was becoming experimentally grounded'],
   [1550, 'around 1550 CE', 'roughly the late Renaissance and Reformation era, when print culture, oceanic empires and religious conflict reshaped Eurasia'],
