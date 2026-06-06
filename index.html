@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>
-   Are We Alone in the Universe? Earth-like Planet Calculator · Version 2.13
+   Are We Alone in the Universe? Earth-like Planet Calculator   / Version 2.13
   </title>
   <script async crossorigin="anonymous" id="MathJax-script" integrity="sha384-Wuix6BuhrWbjDBs24bXrjf4ZQ5aFeFWBuKkFekO2t8xFU0iNaLQfp2K6/1Nxveei" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"></script>
   <script crossorigin="anonymous" integrity="sha384-VzkrKzZ91/plZ4HYGoiYkmzTHxxDK2ezfxfzA5Sg/EhhKf9MY0SkYZ0pBd4yG1CF" src="https://cdn.jsdelivr.net/npm/apexcharts@5.12.0/dist/apexcharts.min.js"></script>
@@ -15,7 +15,7 @@
  <body>
 <noscript>
   <div role="alert" style="background:#1c1e23;border:1px solid #d4a843;color:#f5f5f5;padding:12px 16px;margin:12px;border-radius:6px;font-family:Nunito,sans-serif;font-size:14px;line-height:1.5;">
-    <strong>JavaScript is required.</strong> This calculator needs JavaScript for preset loading, Monte Carlo, exports, and interpretation outputs. Static fallback values shown below may not reflect the active default preset (Kepler/Gaia · Bryson with Updated Kepler/Gaia observational prior).
+    <strong>JavaScript is required.</strong> This calculator needs JavaScript for preset loading, Monte Carlo, exports, and interpretation outputs. Static fallback values shown below may not reflect the active default preset (Kepler/Gaia   / Bryson with Updated Kepler/Gaia observational prior).
   </div>
 </noscript>
 <canvas id="starfield">
@@ -124,7 +124,7 @@
             class="link-icon"
           >
         </a>
-        ·
+          /
         <a href="https://science.nasa.gov/universe/stars/" rel="noopener noreferrer" target="_blank">
           NASA Star Basics
           <img
@@ -133,7 +133,7 @@
             class="link-icon"
           >
         </a>
-        ·
+          /
         <a href="https://doi.org/10.1046/j.1365-8711.2003.06826.x" rel="noopener noreferrer" target="_blank">
           Liske et al. 2003 / Driver IAU 2003 extrapolation
           <img
@@ -142,7 +142,7 @@
             class="link-icon"
           >
         </a>
-        ·
+          /
         <a href="https://arxiv.org/abs/1009.5992" rel="noopener noreferrer" target="_blank">
           van Dokkum & Conroy 2010
           <img
@@ -151,7 +151,7 @@
             class="link-icon"
           >
         </a>
-        ·
+          /
         <a href="https://doi.org/10.1007/978-3-642-22491-1" rel="noopener noreferrer" target="_blank">
           Matteucci 2012
           <img
@@ -160,7 +160,7 @@
             class="link-icon"
           >
         </a>
-        ·
+          /
         <a href="https://doi.org/10.3847/0004-637X/830/2/83" rel="noopener noreferrer" target="_blank">
           Conselice et al. 2016
           <img
@@ -169,7 +169,7 @@
             class="link-icon"
           >
         </a>
-        ·
+          /
         <a href="https://books.google.com/books?id=G4FZDwAAQBAJ" rel="noopener noreferrer" target="_blank">
           Ćirković 2018
           <img
@@ -178,7 +178,7 @@
             class="link-icon"
           >
         </a>
-        ·
+          /
         <a href="https://arxiv.org/abs/1806.02404" rel="noopener noreferrer" target="_blank">
           Sandberg et al. 2018
           <img
@@ -187,7 +187,7 @@
             class="link-icon"
           >
         </a>
-        ·
+          /
         <a href="https://www.seti.org/drake-equation" rel="noopener noreferrer" target="_blank">
           Drake 1965
           <img
@@ -307,29 +307,29 @@
       </div>
       <div class="preset-grid">
         <button class="preset-btn kepler" data-preset="kepler" onclick="loadPreset('kepler')" type="button">
-          <strong>Kepler/Gaia · Bryson</strong>
+          <strong>Kepler/Gaia   / Bryson</strong>
           <span>Bryson et al. 2021</span>
           <small>Updated occurrence-rate priors.</small>
         </button>
         <button class="preset-btn consensus" data-preset="consensus" onclick="loadPreset('consensus')" type="button">
-          <strong>Consensus · Lineweaver</strong>
+          <strong>Consensus   / Lineweaver</strong>
           <span>Lineweaver 2004</span>
           <small>Lineweaver-anchored GHZ and age baseline.</small>
         </button>
         <button class="preset-btn optimist" data-preset="optimist" onclick="loadPreset('optimist')" type="button">
-          <strong>High-End · Literature Bounds</strong>
+          <strong>High-End   / Literature Bounds</strong>
           <span>Illustrative upper-range</span>
           <small>High-side values within displayed ranges.</small>
         </button>
         <button class="preset-btn pessimist" data-preset="pessimist" onclick="loadPreset('pessimist')" type="button">
-          <strong>Pessimist · Rare Earth</strong>
+          <strong>Pessimist   / Rare Earth</strong>
           <span>Hart / Hanson / Rare Earth</span>
           <small>Restrictive biological stress-test.</small>
         </button>
       </div>
 
       <div class="preset-description" id="preset-description">
-        <strong>Kepler/Gaia · Bryson.</strong> <em>Kepler/Gaia · Bryson is the recommended empirical baseline for the astronomical part of the chain. It is anchored in Kepler/Gaia occurrence-rate literature and should not be read as a complete prediction of life.</em>
+        <strong>Kepler/Gaia   / Bryson.</strong> <em>Kepler/Gaia   / Bryson is the recommended empirical baseline for the astronomical part of the chain. It is anchored in Kepler/Gaia occurrence-rate literature and should not be read as a complete prediction of life.</em>
       </div>
     </div>
 
@@ -409,7 +409,7 @@
       </div>
       <div class="input-note">Literature-informed GHZ star-count prior, not directly quoted by Lineweaver.</div>
       <div class="lit-range source-links">
-        <span>GHZ concept and age framing; 5×10⁹ ~ 4×10¹⁰ is a model prior, not directly quoted ·</span>
+        <span>GHZ concept and age framing; 5×10⁹ ~ 4×10¹⁰ is a model prior, not directly quoted   /</span>
         <a class="source-link" href="https://doi.org/10.1126/science.1092322" target="_blank" rel="noopener noreferrer" aria-label="Open source: Lineweaver et al. 2004">Lineweaver et al. 2004 <span class="source-link-icon" aria-hidden="true">↗</span></a>
       </div>
     </div>
@@ -450,9 +450,9 @@
       </div>
       <div class="input-note">Fraction of G-type stars in the base model.</div>
       <div class="lit-range source-links">
-        <span>Literature-informed range: 0.07 ~ 0.20 ·</span>
+        <span>Literature-informed range: 0.07 ~ 0.20   /</span>
         <a class="source-link" href="https://doi.org/10.1086/508233" target="_blank" rel="noopener noreferrer" aria-label="Open source: Henry 2006">Henry 2006 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1051/0004-6361/202243940" target="_blank" rel="noopener noreferrer" aria-label="Open source: Gaia DR3 2022/2023">Gaia DR3 2022/2023 <span class="source-link-icon" aria-hidden="true">↗</span></a>
       </div>
     </div>
@@ -492,7 +492,7 @@
       </div>
       <div class="input-note">Fraction old enough for long biological evolution.</div>
       <div class="lit-range source-links">
-        <span>Literature-informed range: 0.60 ~ 0.80 ·</span>
+        <span>Literature-informed range: 0.60 ~ 0.80   /</span>
         <a class="source-link" href="https://doi.org/10.1126/science.1092322" target="_blank" rel="noopener noreferrer" aria-label="Open source: Lineweaver et al. 2004">Lineweaver et al. 2004 <span class="source-link-icon" aria-hidden="true">↗</span></a>
       </div>
     </div>
@@ -533,9 +533,9 @@
       </div>
       <div class="input-note">Average planets per star.</div>
       <div class="lit-range source-links">
-        <span>Literature-informed range: 1.0 ~ 2.5 ·</span>
+        <span>Literature-informed range: 1.0 ~ 2.5   /</span>
         <a class="source-link" href="https://doi.org/10.1038/nature10684" target="_blank" rel="noopener noreferrer" aria-label="Open source: Cassan et al. 2012">Cassan et al. 2012 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.3847/1538-3881/ab31ab" target="_blank" rel="noopener noreferrer" aria-label="Open source: Hsu et al. 2019">Hsu et al. 2019 <span class="source-link-icon" aria-hidden="true">↗</span></a>
       </div>
     </div>
@@ -576,9 +576,9 @@
       </div>
       <div class="input-note">Fraction of rocky planets in the base model.</div>
       <div class="lit-range source-links">
-        <span>Literature-informed model range: 0.15 ~ 0.35 ·</span>
+        <span>Literature-informed model range: 0.15 ~ 0.35   /</span>
         <a class="source-link" href="https://doi.org/10.1088/0004-637X/807/1/45" target="_blank" rel="noopener noreferrer" aria-label="Open source: Dressing &amp; Charbonneau 2015">Dressing &amp; Charbonneau 2015 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1088/0004-637X/801/1/41" target="_blank" rel="noopener noreferrer" aria-label="Open source: Rogers 2015">Rogers 2015 <span class="source-link-icon" aria-hidden="true">↗</span></a>
       </div>
     </div>
@@ -617,9 +617,9 @@
       </div>
       <div class="input-note">Fraction of rocky planets inside the habitable zone.</div>
       <div class="lit-range source-links">
-        <span>Literature-informed model range: 0.10 ~ 0.21 ·</span>
+        <span>Literature-informed model range: 0.10 ~ 0.21   /</span>
         <a class="source-link" href="https://doi.org/10.3847/1538-3881/abc418" target="_blank" rel="noopener noreferrer" aria-label="Open source: Bryson et al. 2021">Bryson et al. 2021 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1088/0004-637X/765/2/131" target="_blank" rel="noopener noreferrer" aria-label="Open source: Kopparapu et al. 2013">Kopparapu et al. 2013 <span class="source-link-icon" aria-hidden="true">↗</span></a>
       </div>
     </div>
@@ -659,11 +659,11 @@
       </div>
       <div class="input-note">Fraction of systems with stable orbits.</div>
       <div class="lit-range source-links">
-        <span>Mechanism-supported model range: 0.30 ~ 0.70; not a measured universal occurrence fraction ·</span>
+        <span>Mechanism-supported model range: 0.30 ~ 0.70; not a measured universal occurrence fraction   /</span>
         <a class="source-link" href="https://ui.adsabs.harvard.edu/abs/2011ApJS..197....8L/abstract" target="_blank" rel="noopener noreferrer" aria-label="Open source: Lissauer et al. 2011">Lissauer et al. 2011 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1093/mnras/sts090" target="_blank" rel="noopener noreferrer" aria-label="Open source: Steffen et al. 2012">Steffen et al. 2012 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7414196/" target="_blank" rel="noopener noreferrer" aria-label="Open source: Tamayo et al. 2020">Tamayo et al. 2020 <span class="source-link-icon" aria-hidden="true">↗</span></a>
       </div>
     </div>
@@ -677,7 +677,7 @@
             <strong>Magnetic field (f_B)</strong><br>
             Planetary magnetic fields can contribute to atmospheric shielding and long-term habitability. The cited literature supports the mechanism, but the displayed 0.20–0.70 range is a model prior rather than a directly measured occurrence fraction.<br>
             <span class="lit">
-              Zuluaga et al. 2013 · Driscoll &amp; Bercovici 2014
+              Zuluaga et al. 2013   / Driscoll &amp; Bercovici 2014
             </span>
           </span>
         </div>
@@ -704,9 +704,9 @@
         Related radiation and space-weather modules may stack with this factor; the multiplication is a modelling choice rather than proof of independent probabilities.
       </div>
       <div class="lit-range source-links">
-        <span>Mechanism-supported model range: 0.20 ~ 0.70 ·</span>
+        <span>Mechanism-supported model range: 0.20 ~ 0.70   /</span>
         <a class="source-link" href="https://doi.org/10.1088/0004-637X/770/1/23" target="_blank" rel="noopener noreferrer" aria-label="Open source: Zuluaga et al. 2013">Zuluaga et al. 2013 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1016/j.pepi.2014.08.004" target="_blank" rel="noopener noreferrer" aria-label="Open source: Driscoll &amp; Bercovici 2014">Driscoll &amp; Bercovici 2014 <span class="source-link-icon" aria-hidden="true">↗</span></a>
       </div>
     </div>
@@ -721,7 +721,7 @@
             <strong>Lunar stabilizer (f_moon)</strong><br>
             Large moons can affect obliquity stability, and the cited literature supports the stabilizing mechanism. The displayed 0.20–0.80 range is an exploratory model prior, not a measured occurrence rate for lunar stabilizers.<br>
             <span class="lit">
-              Laskar et al. 1993 · Lissauer et al. 2012 · Ćuk &amp; Stewart 2012 (Moon-formation context)
+              Laskar et al. 1993   / Lissauer et al. 2012   / Ćuk &amp; Stewart 2012 (Moon-formation context)
             </span>
           </span>
         </div>
@@ -745,9 +745,9 @@
       </div>
       <div class="input-note">Large moon or equivalent stabilizer.</div>
       <div class="lit-range source-links">
-        <span>Mechanism-supported model range: 0.20 ~ 0.80 ·</span>
+        <span>Mechanism-supported model range: 0.20 ~ 0.80   /</span>
         <a class="source-link" href="https://doi.org/10.1038/361615a0" target="_blank" rel="noopener noreferrer" aria-label="Open source: Laskar et al. 1993">Laskar et al. 1993 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1016/j.icarus.2011.10.013" target="_blank" rel="noopener noreferrer" aria-label="Open source: Lissauer et al. 2012">Lissauer et al. 2012 <span class="source-link-icon" aria-hidden="true">↗</span></a>
       </div>
     </div>
@@ -762,7 +762,7 @@
             <strong>Suitable size (f_size)</strong><br>
             Rogers 2015 and Fulton 2017 support the rocky/non-rocky transition and radius-valley context. The displayed 0.30–0.65 range is a literature-informed model range for this calculator, not a directly quoted occurrence value.<br>
             <span class="lit">
-              Rogers 2015 · Fulton et al. 2017
+              Rogers 2015   / Fulton et al. 2017
             </span>
           </span>
         </div>
@@ -786,9 +786,9 @@
       </div>
       <div class="input-note">Earth-like size window in the base model.</div>
       <div class="lit-range source-links">
-        <span>Literature-informed range: 0.30 ~ 0.65 ·</span>
+        <span>Literature-informed range: 0.30 ~ 0.65   /</span>
         <a class="source-link" href="https://doi.org/10.1088/0004-637X/801/1/41" target="_blank" rel="noopener noreferrer" aria-label="Open source: Rogers 2015">Rogers 2015 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.3847/1538-3881/aa80eb" target="_blank" rel="noopener noreferrer" aria-label="Open source: Fulton et al. 2017">Fulton et al. 2017 <span class="source-link-icon" aria-hidden="true">↗</span></a>
       </div>
     </div>
@@ -803,7 +803,7 @@
             <strong>Suitable rotation (f_ω)</strong><br>
             Rotation affects atmospheric circulation, climate regime and possibly dynamo behavior. The cited literature supports rotation as a relevant habitability mechanism, but the displayed 0.15–0.35 range is an exploratory model prior, not a directly measured occurrence fraction.<br>
             <span class="lit">
-              Edson et al. 2011 · Way &amp; Del Genio 2020
+              Edson et al. 2011   / Way &amp; Del Genio 2020
             </span>
           </span>
         </div>
@@ -827,9 +827,9 @@
       </div>
       <div class="input-note">Rotation-related climate and dynamo suitability.</div>
       <div class="lit-range source-links">
-        <span>Mechanism-supported model range: 0.15 ~ 0.35 ·</span>
+        <span>Mechanism-supported model range: 0.15 ~ 0.35   /</span>
         <a class="source-link" href="https://doi.org/10.1016/j.icarus.2010.11.023" target="_blank" rel="noopener noreferrer" aria-label="Open source: Edson et al. 2011">Edson et al. 2011 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1029/2019JE006276" target="_blank" rel="noopener noreferrer" aria-label="Open source: Way &amp; Del Genio 2020">Way &amp; Del Genio 2020 <span class="source-link-icon" aria-hidden="true">↗</span></a>
       </div>
     </div>
@@ -844,7 +844,7 @@
             <strong>Favorable axial tilt (f_ε)</strong><br>
             Obliquity affects seasonality, climate stability and habitability conditions. The cited literature supports the mechanism, but the displayed 0.30–0.65 range is an interpretive model prior, not a directly measured universal frequency.<br>
             <span class="lit">
-              Williams &amp; Pollard 2002 · Linsenmeier et al. 2015
+              Williams &amp; Pollard 2002   / Linsenmeier et al. 2015
             </span>
           </span>
         </div>
@@ -868,9 +868,9 @@
       </div>
       <div class="input-note">Obliquity-related climate suitability.</div>
       <div class="lit-range source-links">
-        <span>Mechanism-supported model range: 0.30 ~ 0.65 ·</span>
+        <span>Mechanism-supported model range: 0.30 ~ 0.65   /</span>
         <a class="source-link" href="https://doi.org/10.1017/S1473550402001064" target="_blank" rel="noopener noreferrer" aria-label="Open source: Williams &amp; Pollard 2002">Williams &amp; Pollard 2002 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1016/j.pss.2014.11.003" target="_blank" rel="noopener noreferrer" aria-label="Open source: Linsenmeier et al. 2015">Linsenmeier et al. 2015 <span class="source-link-icon" aria-hidden="true">↗</span></a>
       </div>
     </div>
@@ -917,7 +917,7 @@
         Surface-water availability depends partly on atmospheric retention and volatile delivery. If those advanced modules are enabled separately, the model may apply multiple related constraints.
       </div>
       <div class="lit-range source-links">
-        <span>Mechanism-supported model range: 0.05 ~ 0.30 ·</span>
+        <span>Mechanism-supported model range: 0.05 ~ 0.30   /</span>
         <a class="source-link" href="https://doi.org/10.1146/annurev-earth-042711-105319" target="_blank" rel="noopener noreferrer" aria-label="Open source: Morbidelli et al. 2012">Morbidelli et al. 2012 <span class="source-link-icon" aria-hidden="true">↗</span></a>
       </div>
     </div>
@@ -937,7 +937,7 @@
             <strong>CHNOPS elements (f_CHNOPS)</strong><br>
             Asplund 2009 supports the baseline stellar/solar abundance context for biogenic elements. The displayed 0.05–0.50 range represents uncertain planetary accessibility and is an exploratory model prior, not a directly measured CHNOPS availability fraction.<br>
             <span class="lit">
-              Asplund et al. 2009 (solar abundances) · planetary accessibility remains uncertain
+              Asplund et al. 2009 (solar abundances)   / planetary accessibility remains uncertain
             </span>
           </span>
         </div>
@@ -961,9 +961,9 @@
       </div>
       <div class="input-note">Essential biochemistry availability.</div>
       <div class="lit-range source-links">
-        <span>Model range: 0.05 ~ 0.50 ·</span>
+        <span>Model range: 0.05 ~ 0.50   /</span>
         <a class="source-link" href="https://doi.org/10.1146/annurev.astro.46.060407.145222" target="_blank" rel="noopener noreferrer" aria-label="Open source: Asplund et al. 2009">Asplund et al. 2009 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">· planetary accessibility uncertain</span>
+        <span class="source-separator">  / planetary accessibility uncertain</span>
       </div>
     </div>
   </div>
@@ -1017,9 +1017,9 @@
       </div>
       <div class="input-note">P(complex life | habitable planet).</div>
       <div class="lit-range source-links">
-        <span>Speculative model-prior range: 10⁻⁹ ~ 1.0; not empirically calibrated ·</span>
+        <span>Speculative model-prior range: 10⁻⁹ ~ 1.0; not empirically calibrated   /</span>
         <a class="source-link" href="https://arxiv.org/abs/1806.02404" target="_blank" rel="noopener noreferrer" aria-label="Open source: Sandberg et al. 2018">Sandberg et al. 2018 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1073/pnas.1921655117" target="_blank" rel="noopener noreferrer" aria-label="Open source: Kipping 2020">Kipping 2020 <span class="source-link-icon" aria-hidden="true">↗</span></a>
       </div>
     </div>
@@ -1160,7 +1160,7 @@
     <div class="panel-title">
      Additional Scientific Modules
      <span style="font-size:9px;font-weight:500;color:var(--text-dim);">
-      optional · advanced
+      optional   / advanced
      </span>
     </div>
     <div class="toggle-row">
@@ -1279,11 +1279,11 @@
        </div>
        <div class="lit-range source-links">
         <a class="source-link" href="https://doi.org/10.1086/508233" target="_blank" rel="noopener noreferrer" aria-label="Open source: Henry 2006">Henry 2006 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1051/0004-6361/202243940" target="_blank" rel="noopener noreferrer" aria-label="Open source: Gaia DR3 2022">Gaia DR3 2022 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1088/0004-637X/807/1/45" target="_blank" rel="noopener noreferrer" aria-label="Open source: Dressing &amp; Charbonneau 2015">Dressing &amp; Charbonneau 2015 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1016/j.physrep.2016.10.003" target="_blank" rel="noopener noreferrer" aria-label="Open source: Shields et al. 2016">Shields et al. 2016 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
@@ -1391,9 +1391,9 @@
        </div>
        <div class="lit-range source-links">
         <a class="source-link" href="https://doi.org/10.1146/annurev-earth-042711-105319" target="_blank" rel="noopener noreferrer" aria-label="Open source: Morbidelli et al. 2012">Morbidelli et al. 2012 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1016/j.icarus.2003.11.019" target="_blank" rel="noopener noreferrer" aria-label="Open source: Raymond et al. 2004">Raymond et al. 2004 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1146/annurev-earth-060313-054834" target="_blank" rel="noopener noreferrer" aria-label="Open source: Tian 2015">Tian 2015 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
@@ -1476,9 +1476,9 @@
        </div>
        <div class="lit-range source-links">
         <a class="source-link" href="https://doi.org/10.1089/ast.2017.1695" target="_blank" rel="noopener noreferrer" aria-label="Open source: Foley &amp; Smye 2018">Foley &amp; Smye 2018 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1088/2041-8205/725/1/L43" target="_blank" rel="noopener noreferrer" aria-label="Open source: Korenaga 2010">Korenaga 2010 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1016/j.pss.2013.06.020" target="_blank" rel="noopener noreferrer" aria-label="Open source: Noack &amp; Breuer 2014">Noack &amp; Breuer 2014 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
@@ -1530,9 +1530,9 @@
        </div>
        <div class="lit-range source-links">
         <a class="source-link" href="https://doi.org/10.1007/s10569-017-9783-7" target="_blank" rel="noopener noreferrer" aria-label="Open source: Barnes 2017">Barnes 2017 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1016/j.icarus.2011.10.013" target="_blank" rel="noopener noreferrer" aria-label="Open source: Lissauer et al. 2012">Lissauer et al. 2012 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1126/science.1258686" target="_blank" rel="noopener noreferrer" aria-label="Open source: Leconte et al. 2015">Leconte et al. 2015 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
@@ -1578,9 +1578,9 @@
        </div>
        <div class="lit-range source-links">
         <a class="source-link" href="https://doi.org/10.3847/1538-3881/aa80eb" target="_blank" rel="noopener noreferrer" aria-label="Open source: Fulton et al. 2017">Fulton et al. 2017 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1088/0004-637X/801/1/41" target="_blank" rel="noopener noreferrer" aria-label="Open source: Rogers 2015">Rogers 2015 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.3847/1538-3881/aba18a" target="_blank" rel="noopener noreferrer" aria-label="Open source: Berger et al. 2020">Berger et al. 2020 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
@@ -1647,9 +1647,9 @@
        </div>
        <div class="lit-range source-links">
         <a class="source-link" href="https://doi.org/10.1126/science.1092322" target="_blank" rel="noopener noreferrer" aria-label="Open source: Lineweaver et al. 2004">Lineweaver et al. 2004 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1007/s11214-007-9236-9" target="_blank" rel="noopener noreferrer" aria-label="Open source: Prantzos 2008">Prantzos 2008 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1089/ast.2010.0555" target="_blank" rel="noopener noreferrer" aria-label="Open source: Gowanlock et al. 2011">Gowanlock et al. 2011 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
@@ -1695,7 +1695,7 @@
        </div>
        <div class="lit-range source-links">
         <a class="source-link" href="https://doi.org/10.1089/ast.2017.1794" target="_blank" rel="noopener noreferrer" aria-label="Open source: Tilley et al. 2019">Tilley et al. 2019 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1089/ast.2009.0376" target="_blank" rel="noopener noreferrer" aria-label="Open source: Segura et al. 2010">Segura et al. 2010 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
@@ -1738,9 +1738,9 @@
        </div>
        <div class="lit-range source-links">
         <a class="source-link" href="https://doi.org/10.1126/sciadv.aar3302" target="_blank" rel="noopener noreferrer" aria-label="Open source: Rimmer et al. 2018">Rimmer et al. 2018 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.3847/1538-4357/aa773e" target="_blank" rel="noopener noreferrer" aria-label="Open source: Ranjan et al. 2017">Ranjan et al. 2017 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1089/ast.2020.2422" target="_blank" rel="noopener noreferrer" aria-label="Open source: Ranjan et al. 2022">Ranjan et al. 2022 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
@@ -1786,7 +1786,7 @@
        </div>
        <div class="lit-range source-links">
         <a class="source-link" href="https://doi.org/10.1088/0067-0049/190/1/1" target="_blank" rel="noopener noreferrer" aria-label="Open source: Raghavan et al. 2010">Raghavan et al. 2010 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://ui.adsabs.harvard.edu/abs/2012ApJ...752...74E/abstract" target="_blank" rel="noopener noreferrer" aria-label="Open source: Eggl et al. 2012">Eggl et al. 2012 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
@@ -1832,7 +1832,7 @@
        </div>
        <div class="lit-range source-links">
         <a class="source-link" href="https://doi.org/10.1103/PhysRevLett.113.231102" target="_blank" rel="noopener noreferrer" aria-label="Open source: Piran &amp; Jiménez 2014">Piran &amp; Jiménez 2014 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1103/RevModPhys.91.021002" target="_blank" rel="noopener noreferrer" aria-label="Open source: Lingam &amp; Loeb 2019">Lingam &amp; Loeb 2019 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
@@ -1885,7 +1885,7 @@
        </div>
        <div class="lit-range source-links">
         <a class="source-link" href="https://doi.org/10.1086/427977" target="_blank" rel="noopener noreferrer" aria-label="Open source: Ribas et al. 2005">Ribas et al. 2005 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1051/0004-6361/202452998" target="_blank" rel="noopener noreferrer" aria-label="Open source: Van Looveren et al. 2025">Van Looveren et al. 2025 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
@@ -1939,7 +1939,7 @@
        </div>
        <div class="lit-range source-links">
         <a class="source-link" href="https://doi.org/10.1126/science.1092322" target="_blank" rel="noopener noreferrer" aria-label="Open source: Lineweaver et al. 2004">Lineweaver et al. 2004 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">·</span>
+        <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1089/ast.2010.0555" target="_blank" rel="noopener noreferrer" aria-label="Open source: Gowanlock et al. 2011">Gowanlock et al. 2011 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
@@ -2252,7 +2252,7 @@
    <div class="panel" id="calc-console-panel">
     <div class="panel-title">
      Calculation Console
-     <span>· Live model trace</span>
+     <span>  / Live model trace</span>
     </div>
   <div class="calc-console-intro">
     This console updates from the current form values and shows the active symbolic equation, derived module definitions, numerical substitution, and live previews of the detection and distance math. It is meant to expose how the model is operating right now, not just the final number.
@@ -2265,7 +2265,7 @@
    <div class="panel" id="sobol-panel" style="display:none;">
     <div class="panel-title">
      Which Parameters Matter Most?
-     <span>· Sensitivity Analysis (Sobol / Saltelli 2010)</span>
+     <span>  / Sensitivity Analysis (Sobol / Saltelli 2010)</span>
      <span style="margin-left:auto;font-size:9px;color:var(--text-dim);" id="sobol-N-label"></span>
     </div>
     <div class="sobol-intro">
@@ -2288,7 +2288,7 @@
    <div class="panel" id="temporal-nt-panel" style="display:none;">
     <div class="panel-title">
      When Could These Planets Have Formed?
-     <span>· Galaxy History Model (Lineweaver 2004 · Madau &amp; Dickinson 2014)</span>
+     <span>  / Galaxy History Model (Lineweaver 2004   / Madau &amp; Dickinson 2014)</span>
     </div>
     <div class="nt-intro">
      <strong>What this shows 〰 in plain terms:</strong> The galaxy is about 13.5 billion years old 〰 almost three times the age of our Sun. This chart shows how the population of potentially habitable planets grew over that vast stretch of time. The answer is far from uniform.<br><br>
@@ -2307,13 +2307,13 @@
    <div class="panel" id="detection-panel" style="display:none;">
     <div class="panel-title">
      Could We Actually Detect Them?
-     <span>· Detection Horizon &amp; Timing Filter</span>
+     <span>  / Detection Horizon &amp; Timing Filter</span>
     </div>
    <div class="nt-intro">
      <strong>The problem in plain terms:</strong> The calculator estimates how many modelled Earth-like candidates a scenario implies <em>may exist</em>. But existence is not the same as detectability. Even if a million civilisations are out there, most of them are invisible to us 〰 either too far away, or transmitting at the wrong time in history.<br><br>
      There are two separate barriers working against detection:<br><br>
-     <strong>1 · The distance barrier.</strong> Signals travel at the speed of light 〰 1 light-year per year. If a civilisation is 10,000 light-years away, their signal needs 10,000 years to reach us. So we can only hear from civilisations within a certain range, determined by how long they have been transmitting. That range is called the <em>detection horizon</em>.<br><br>
-     <strong>2 · The timing barrier.</strong> Even a civilisation within range is only detectable if it happens to be transmitting <em>right now</em>. The galaxy is 13.5 billion years old. If a civilisation transmits for only 1,000 years and then goes quiet, the odds that their broadcast window overlaps with ours today is roughly 1,000 ÷ 13,500,000,000 〰 about one in thirteen million.<br><br>
+     <strong>1   / The distance barrier.</strong> Signals travel at the speed of light 〰 1 light-year per year. If a civilisation is 10,000 light-years away, their signal needs 10,000 years to reach us. So we can only hear from civilisations within a certain range, determined by how long they have been transmitting. That range is called the <em>detection horizon</em>.<br><br>
+     <strong>2   / The timing barrier.</strong> Even a civilisation within range is only detectable if it happens to be transmitting <em>right now</em>. The galaxy is 13.5 billion years old. If a civilisation transmits for only 1,000 years and then goes quiet, the odds that their broadcast window overlaps with ours today is roughly 1,000 ÷ 13,500,000,000 〰 about one in thirteen million.<br><br>
      <strong>Both barriers multiply together.</strong> A civilisation must be close enough <em>and</em> transmitting at the same time as us. This is why the detectable number is often drastically smaller than the raw modelled candidate count.<br><br>
      <strong>One more assumption is needed:</strong> the calculator itself estimates modelled Earth-like candidates, not confirmed transmitting societies. The <strong>f_tx</strong> control below is an explicit conversion factor: the share of modelled Earth-like candidates you assume eventually produce a detectable transmitter. Setting <strong>f_tx = 1</strong> is an intentionally optimistic upper bound.<br><br>
      <strong>How to use the controls below:</strong> Set <strong>L</strong> to your assumed detectable-lifetime in years and <strong>f_tx</strong> to your civilisation/transmitter prior. Try different values 〰 both assumptions have a very large effect on the answer.
@@ -2335,7 +2335,7 @@
      <span class="det-preset-label">Quick presets</span>
      <button class="det-mini-btn" data-detection-preset="pessimistic" data-tone="pessimistic" id="det-preset-pessimistic" type="button">Pessimistic</button>
      <button class="det-mini-btn" data-detection-preset="optimistic" data-tone="optimistic" id="det-preset-optimistic" type="button">Optimistic</button>
-     <span style="font-size:9.5px;color:var(--text-dim);">Pessimistic = L 3,000 and f_tx 0.0001 · Optimistic = L 30,000 and f_tx 0.01</span>
+     <span style="font-size:9.5px;color:var(--text-dim);">Pessimistic = L 3,000 and f_tx 0.0001   / Optimistic = L 30,000 and f_tx 0.01</span>
     </div>
     <div class="input-note detection-prior-note">Detection L and f_tx are user-supplied model priors. The timing term L / galaxy age is a temporal-overlap factor and does not include f_tx.</div>
     <div class="input-note detection-prior-note">The combined result is an expected-value model result: modelled Earth-like candidates are filtered by f_tx, geometric reach, and temporal overlap. When this expected value is below 1, the display may show it as "1 in X" so the tiny Poisson mean is readable; it is not a confirmed detection count.</div>
@@ -2346,7 +2346,7 @@
    <div class="panel" id="export-panel">
     <div class="panel-title">
      Save &amp; Share Your Results
-     <span>· JSON · LaTeX · BibTeX</span>
+     <span>  / JSON   / LaTeX   / BibTeX</span>
     </div>
     <div class="nt-intro">
      These buttons let you save everything about your current calculation so you can reuse it, share it, or cite it properly. Run the full simulation (steps 1~3) before exporting to include all computed results.
@@ -2405,7 +2405,7 @@
     </div>
    </div>
    <div class="footer">
-    <span>© Are We Alone in the Universe? Research modelling tool v2.13 · Also by the author of: <a href="https://www.apocalypseclock.com/" rel="noopener noreferrer" target="_blank" style="text-decoration:none;color:inherit;">Apocalypse Clock</a></span>
+    <span>© Are We Alone in the Universe? Research modelling tool v2.13   / Also by the author of: <a href="https://www.apocalypseclock.com/" rel="noopener noreferrer" target="_blank" style="text-decoration:none;color:inherit;">Apocalypse Clock</a></span>
    </div>
   </div>
   <div id="copy-tooltip">
