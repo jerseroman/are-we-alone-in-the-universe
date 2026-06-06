@@ -45,6 +45,56 @@ function buildShareSummary() {
 }
 window.buildShareSummary = buildShareSummary;
 
+function getJSONDetectionBasis() {
+  if (typeof getDetectionPanelBasis === 'function') {
+    return getDetectionPanelBasis();
+  }
+  if (typeof getInterpretationBasis === 'function') {
+    return getInterpretationBasis(fermiMode);
+  }
+  if (simulationCompleted && Number.isFinite(mcMedianQ50)) {
+    return {
+      mode: 'mc',
+      count: Math.max(0, mcMedianQ50),
+      label: 'Monte Carlo median (q50)'
+    };
+  }
+  return {
+    mode: 'dt',
+    count: Number.isFinite(deterministicPlanets) ? Math.max(0, deterministicPlanets) : 0,
+    label: 'deterministic result'
+  };
+}
+
+function buildJSONFermiContextSnapshot(detectionBasis) {
+  const mode = detectionBasis?.mode || fermiMode;
+  const current = fermiContexts && fermiContexts[mode] ? fermiContexts[mode] : null;
+  const signalTravelYears = current && Number.isFinite(current.distLy) ? current.distLy : null;
+  const roundTripYears = Number.isFinite(signalTravelYears) ? signalTravelYears * 2 : null;
+  const hist = Number.isFinite(signalTravelYears) && typeof getHistoricalContext === 'function'
+    ? getHistoricalContext(signalTravelYears)
+    : null;
+  let tension = null;
+  if (Number.isFinite(signalTravelYears)) {
+    tension = 'low';
+    if (signalTravelYears <= 1000) tension = 'very high';
+    else if (signalTravelYears <= 10000) tension = 'high';
+    else if (signalTravelYears <= 50000) tension = 'moderate';
+  }
+
+  return {
+    basis: detectionBasis?.label || null,
+    fermi_mode: mode,
+    tension,
+    signal_travel_years: signalTravelYears,
+    round_trip_years: roundTripYears,
+    historical_context: hist ? hist.text : null,
+    historical_context_period: hist ? (hist.periodLabel || hist.period || null) : null,
+    historical_context_omitted: hist ? false : true,
+    historical_context_omitted_reason: hist ? null : 'No finite displayed Fermi signal-travel distance is available for the current mode.'
+  };
+}
+
 function updateShareButtons() {
   const base = 'https://www.arewealoneintheuniverse.com';
   const summary = buildShareSummary();
@@ -84,7 +134,9 @@ function buildJSONExportSnapshot() {
     };
   });
 
-  const detectionSnapshot = simulationCompleted ? computeDetectionFilter() : null;
+  const detectionBasis = getJSONDetectionBasis();
+  const detectionSnapshot = simulationCompleted ? computeDetectionFilter(detectionBasis.count) : null;
+  const fermiContextSnapshot = buildJSONFermiContextSnapshot(detectionBasis);
   const distanceSnapshot =
     typeof getActiveDistanceSnapshot === 'function'
       ? getActiveDistanceSnapshot()
@@ -146,6 +198,7 @@ function buildJSONExportSnapshot() {
       mc_median_q50: 'Monte Carlo q50/median',
       mc_mean: 'Monte Carlo arithmetic mean',
       sampled_interval: 'q2.5/q97.5 sampled interval',
+      detection_count_basis: detectionBasis.label,
       mcMode: monteCarloBoundsMode || null,
       uncertaintyBasisLabel: monteCarloUncertaintyBasisLabel || null,
       distance_model: activeDistanceModelLabel || 'active geometric distance model',
@@ -164,6 +217,9 @@ function buildJSONExportSnapshot() {
       active_distance_model: activeDistanceModelLabel,
       active_distance_basis: distanceSnapshot.activeDistanceBasis || null,
       active_distance_count_basis: distanceSnapshot.activeDistanceCountBasis || null,
+      detection_count_basis: detectionBasis.label,
+      detection_count: detectionBasis.count,
+      fermi_mode: detectionBasis.mode || fermiMode,
       displayed_distance_value_ly: Number.isFinite(distanceSnapshot.displayedDistanceValue) ? Math.round(distanceSnapshot.displayedDistanceValue) : null,
       displayed_distance_label: distanceSnapshot.displayedDistanceLabel || null,
       simulationCompleted,
@@ -175,6 +231,9 @@ function buildJSONExportSnapshot() {
       distance_3d_sphere_ly: Number.isFinite(distanceSnapshot.distance3DSphere) ? Math.round(distanceSnapshot.distance3DSphere) : null,
       detection: detectionSnapshot
         ? {
+            detection_count_basis: detectionBasis.label,
+            detection_count: detectionBasis.count,
+            fermi_mode: detectionBasis.mode || fermiMode,
             transmitter_fraction: detectionSnapshot.f_tx,
             transmitter_hosts_total: detectionSnapshot.N_tx_total,
             within_horizon: detectionSnapshot.N_within,
@@ -193,7 +252,8 @@ function buildJSONExportSnapshot() {
               : null,
             nearest_detectable_beyond_horizon: !!detectionSnapshot.nearest_beyond_horizon
           }
-        : null
+        : null,
+      fermi_context: fermiContextSnapshot
     }
   };
 
@@ -261,6 +321,7 @@ function buildLatexExportText() {
     '% Scenario: ' + (typeof getScenarioExportLabel === 'function' ? getScenarioExportLabel() : (activePreset || 'custom')) + ' | Galaxy: ' + galaxyName + ' | Observational prior: ' + bayesLabel + '\n\n' +
     '% MC mode: ' + exportedMcMode + ' | Uncertainty basis: ' + exportedBasis + ' | simulationCompleted: ' + String(!!simulationCompleted) + ' | MC state: ' + mcState + '\n' +
     '% Active distance model: ' + distanceModelLabel + ' | Distance count basis: ' + distanceBasisLabel + '\n\n' +
+    '% Scope note: LaTeX export is a compact parameter/result table. Full SETI signal context, Fermi tension, and historical context are available in the JSON export.\n\n' +
     '\\begin{table}[h!]\n\\centering\n' +
     '\\caption{Parameter values for the ' + galaxyName + ' modelled Earth-like candidate estimate (' + (typeof getScenarioExportLabel === 'function' ? getScenarioExportLabel() : (activePreset || 'custom')) + ', ' + bayesLabel + ' observational prior).}\n' +
     '\\label{tab:earth-like-candidate-params}\n' +

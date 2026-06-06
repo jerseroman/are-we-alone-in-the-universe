@@ -675,22 +675,62 @@ function buildConsoleDetectionTrace(planetCount) {
   const f_tx = clamp01(rawNumber('detection-f_tx', 0.01));
   const T_gal_yr = 13.5e9;
   const geom = getGHZGeometryLy();
+  const manualEarthDist = getGalaxyEarthDistance();
+  const isExternalReference =
+    (galaxyName !== 'Milky Way (MW)' && galaxyName !== 'Custom Galaxy X') ||
+    (galaxyName === 'Custom Galaxy X' && manualEarthDist > 0);
+  const earthDist = isExternalReference
+    ? (manualEarthDist > 0 ? manualEarthDist : galaxyDistances[galaxyName])
+    : null;
   const d_gal_ly = geom.outerLy > 0 ? Math.round(geom.outerLy / GHZ_OUTER_FRAC) * 2 : (isGalaxySettingsEnabled ? Math.max(1000, pf('galaxy-diameter')) : 100000);
 
   if (N_planets <= 0 || geom.area <= 0) return null;
 
+  const N_tx_total = N_planets * f_tx;
+  const p_temporal = Math.min(1, L / T_gal_yr);
+
+  if (isExternalReference && Number.isFinite(earthDist) && earthDist > 0) {
+    const range_gate = L >= earthDist ? 1 : 0;
+    const N_within = N_tx_total * range_gate;
+    const N_det = N_within * p_temporal;
+    const p_detect = 1 - Math.exp(-Math.max(0, N_det));
+
+    return {
+      branch: 'external-range-gate',
+      N_planets,
+      L,
+      f_tx,
+      T_gal_yr,
+      d_horizon: Math.round(Math.min(L, earthDist)),
+      geom_area: geom.area,
+      area_det: null,
+      area_fraction: null,
+      N_tx_total,
+      rho_2d: null,
+      N_within,
+      p_temporal,
+      N_det,
+      p_detect_pct: p_detect * 100,
+      lambda_det: null,
+      d_nearest_det: range_gate ? earthDist : Infinity,
+      is_external_reference: true,
+      earth_distance: earthDist,
+      range_gate
+    };
+  }
+
   const d_horizon = Math.min(L, d_gal_ly);
   const area_det = Math.min(Math.PI * d_horizon * d_horizon, geom.area);
-  const N_tx_total = N_planets * f_tx;
+  const area_fraction = geom.area > 0 ? area_det / geom.area : 0;
   const rho_2d = N_tx_total / geom.area;
   const N_within = rho_2d * area_det;
-  const p_temporal = Math.min(1, L / T_gal_yr);
   const N_det = N_within * p_temporal;
   const p_detect = 1 - Math.exp(-Math.max(0, N_det));
   const lambda_det = area_det > 0 ? N_det / area_det : 0;
   const d_nearest_det = lambda_det > 0 ? E_from(lambda_det, 2) : Infinity;
 
   return {
+    branch: 'internal-area-fraction',
     N_planets,
     L,
     f_tx,
@@ -698,6 +738,7 @@ function buildConsoleDetectionTrace(planetCount) {
     d_horizon,
     geom_area: geom.area,
     area_det,
+    area_fraction,
     N_tx_total,
     rho_2d,
     N_within,
@@ -705,7 +746,10 @@ function buildConsoleDetectionTrace(planetCount) {
     N_det,
     p_detect_pct: p_detect * 100,
     lambda_det,
-    d_nearest_det
+    d_nearest_det,
+    is_external_reference: false,
+    earth_distance: null,
+    range_gate: null
   };
 }
 
@@ -1018,15 +1062,30 @@ function renderCalculationConsole() {
       `&= ${fmtLatexNumber(detectionTrace.N_planets)} \\cdot ${fmtLatexNumber(detectionTrace.f_tx)}`,
       `&= ${fmtLatexNumber(detectionTrace.N_tx_total)}`
     ]);
-    pushFormula(
-      [
-        '\\hat N_{\\mathrm{det}} &= \\left(N_{\\mathrm{tx}} \\cdot \\frac{A_{\\mathrm{horizon}}}{A_{\\mathrm{GHZ}}}\\right) \\cdot \\frac{L}{T_{\\mathrm{gal}}}',
-        `&= \\left(${fmtLatexNumber(detectionTrace.N_tx_total)} \\cdot \\frac{${fmtLatexNumber(detectionTrace.area_det)}}{${fmtLatexNumber(detectionTrace.geom_area)}}\\right) \\cdot \\frac{${fmtLatexNumber(detectionTrace.L)}}{${fmtLatexNumber(detectionTrace.T_gal_yr)}}`,
-        `&= ${fmtLatexNumber(detectionTrace.N_det)}`
-      ],
-      `d_horizon = ${fmtConsoleValue(detectionTrace.d_horizon)} ly ; rho_2d = ${fmtConsoleValue(detectionTrace.rho_2d)} ly^-2 ; P(>=1) = ${fmtPct(detectionTrace.p_detect_pct)}`
-    );
-    if (Number.isFinite(detectionTrace.d_nearest_det)) {
+    if (detectionTrace.is_external_reference) {
+      pushFormula(
+        [
+          'g_{\\mathrm{range}} &= \\begin{cases}1, & L \\geq d_{\\oplus} \\\\ 0, & L < d_{\\oplus}\\end{cases}',
+          `&= ${fmtLatexNumber(detectionTrace.range_gate)}`,
+          'N_{\\mathrm{within}} &= N_{\\mathrm{tx}} \\cdot g_{\\mathrm{range}}',
+          `&= ${fmtLatexNumber(detectionTrace.N_tx_total)} \\cdot ${fmtLatexNumber(detectionTrace.range_gate)} = ${fmtLatexNumber(detectionTrace.N_within)}`,
+          '\\hat N_{\\mathrm{det}} &= N_{\\mathrm{within}} \\cdot \\frac{L}{T_{\\mathrm{gal}}}',
+          `&= ${fmtLatexNumber(detectionTrace.N_within)} \\cdot \\frac{${fmtLatexNumber(detectionTrace.L)}}{${fmtLatexNumber(detectionTrace.T_gal_yr)}}`,
+          `&= ${fmtLatexNumber(detectionTrace.N_det)}`
+        ],
+        `external range-gate branch; d_Earth = ${fmtConsoleValue(detectionTrace.earth_distance)} ly ; d_horizon = ${fmtConsoleValue(detectionTrace.d_horizon)} ly ; P(>=1) = ${fmtPct(detectionTrace.p_detect_pct)}`
+      );
+    } else {
+      pushFormula(
+        [
+          '\\hat N_{\\mathrm{det}} &= \\left(N_{\\mathrm{tx}} \\cdot \\frac{A_{\\mathrm{horizon}}}{A_{\\mathrm{GHZ}}}\\right) \\cdot \\frac{L}{T_{\\mathrm{gal}}}',
+          `&= \\left(${fmtLatexNumber(detectionTrace.N_tx_total)} \\cdot \\frac{${fmtLatexNumber(detectionTrace.area_det)}}{${fmtLatexNumber(detectionTrace.geom_area)}}\\right) \\cdot \\frac{${fmtLatexNumber(detectionTrace.L)}}{${fmtLatexNumber(detectionTrace.T_gal_yr)}}`,
+          `&= ${fmtLatexNumber(detectionTrace.N_det)}`
+        ],
+        `d_horizon = ${fmtConsoleValue(detectionTrace.d_horizon)} ly ; rho_2d = ${fmtConsoleValue(detectionTrace.rho_2d)} ly^-2 ; P(>=1) = ${fmtPct(detectionTrace.p_detect_pct)}`
+      );
+    }
+    if (!detectionTrace.is_external_reference && Number.isFinite(detectionTrace.d_nearest_det)) {
       pushFormula(
         [
           '\\bar d_{\\mathrm{det}} &= \\frac{\\Gamma(1 + 1/2)}{(\\rho_{\\mathrm{det}} \\pi)^{1/2}}',
@@ -1043,6 +1102,11 @@ function renderCalculationConsole() {
           'calc-console-muted'
         );
       }
+    } else if (detectionTrace.is_external_reference) {
+      pushLine(
+        'External-galaxy SETI trace uses an Earth-reference range gate, not an internal GHZ nearest-neighbour density.',
+        'calc-console-muted'
+      );
     }
   } else {
     pushLine('Detection trace is unavailable because the current planet count or GHZ geometry collapses to zero.', 'calc-console-muted');
@@ -1529,106 +1593,10 @@ function syncFermiModeUi() {
 }
 
 function buildFermiCommunicationSupplementHtml(mode = fermiMode) {
-  if (!simulationCompleted || !distanceCalculated) return '';
-
-  const basis = getInterpretationBasis(mode);
-  const currentMode = basis.mode;
-  const basisCount = basis.count;
-  const detection = computeDetectionFilter(basisCount);
-  const distanceScenario = buildDistanceScenario(
-    basisCount,
-    currentMode === 'mc' ? mcQ025 : null,
-    currentMode === 'mc' ? mcQ975 : null
-  );
-  const referenceDistance = Number.isFinite(distanceScenario.fermiDistance)
-    ? distanceScenario.fermiDistance
-    : null;
-  const requiredOneWayL = Number.isFinite(referenceDistance) ? referenceDistance : null;
-  const requiredTwoWayL = Number.isFinite(referenceDistance) ? referenceDistance * 2 : null;
-  const sections = [];
-
-  if (detection) {
-    const temporalWindows = detection.L > 0 ? 13.5e9 / detection.L : null;
-    const requiredFTx =
-      detection.N_det > 0 && detection.f_tx > 0
-        ? detection.f_tx / detection.N_det
-        : Infinity;
-    let detectText =
-      `Probability of at least one active detectable transmitter in range right now: ` +
-      `<span class="bold-number">${fmtPct(detection.p_detect_pct)}</span>. ` +
-      `Temporal overlap term alone is <span class="bold-number">${fmtPct(detection.p_temporal_pct)}</span>`;
-
-    if (Number.isFinite(temporalWindows)) {
-      detectText +=
-        `, so the calculator's 13.5 Gyr age scale fits roughly <span class="bold-number">${fmtN(temporalWindows)}</span> non-overlapping windows of length L.`;
-    } else {
-      detectText += '.';
-    }
-
-    detectText += '<br><br>';
-    if (Number.isFinite(requiredFTx) && requiredFTx <= 1) {
-      detectText +=
-        `To reach about <span class="bold-number">one expected detectable civilisation in range now</span> ` +
-        `(Poisson mean = 1, so P≥1 ≈ 63.2%), the current geometry would need <span class="bold-number">f_tx ≈ ${fmtN(requiredFTx)}</span>.`;
-    } else {
-      detectText +=
-        `Even an extreme <span class="bold-number">f_tx = 1</span> would still not yield one expected detectable civilisation in range now at the current <span class="bold-number">L</span>.`;
-    }
-
-    sections.push({
-      label: 'Detectability now',
-      text: detectText
-    });
-  }
-
-  if (Number.isFinite(requiredOneWayL) || Number.isFinite(requiredTwoWayL)) {
-    let contactText = '';
-
-    if (Number.isFinite(requiredOneWayL)) {
-      contactText +=
-        `One-way contact needs a civilisation lifetime of at least <span class="bold-number">${fmtN(requiredOneWayL)}</span> years under the current nearest-distance reference. `;
-    }
-
-    if (Number.isFinite(requiredTwoWayL)) {
-      contactText +=
-        `A true two-way exchange needs roughly <span class="bold-number">${fmtN(requiredTwoWayL)}</span> years.`;
-    }
-
-    if (detection && Number.isFinite(detection.d_nearest_det)) {
-      const ratio = requiredOneWayL > 0 ? detection.d_nearest_det / requiredOneWayL : Infinity;
-      const nearestDetectableScaleLy = detection.d_nearest_det;
-      const detectionHorizonLy = detection.d_horizon;
-      const lambdaDet = detection.N_det;
-      contactText += '<br><br>';
-      if (Number.isFinite(detectionHorizonLy) && nearestDetectableScaleLy > detectionHorizonLy) {
-        contactText +=
-          `Fewer than one active detectable transmitter is expected on average inside the current detection horizon of <span class="bold-number">${fmtN(detectionHorizonLy)}</span> light years. ` +
-          `The equivalent Poisson nearest-detectable distance scale is about <span class="bold-number">${fmtN(nearestDetectableScaleLy)}</span> light years, ` +
-          `which exceeds that horizon. This value is a statistical density scale, not a literal currently reachable source or a light-travel-time target.`;
-      } else {
-        contactText +=
-          `The nearest-detectable transmitter distance scale is about <span class="bold-number">${fmtN(nearestDetectableScaleLy)}</span> light years within the current detection horizon` +
-          (Number.isFinite(detectionHorizonLy)
-            ? ` of <span class="bold-number">${fmtN(detectionHorizonLy)}</span> light years`
-            : '') +
-          (Number.isFinite(ratio)
-            ? `, about <span class="bold-number">${fmtN(ratio)}</span>× farther out than the nearest modelled candidate distance scale.`
-            : '.');
-      }
-      if (Number.isFinite(lambdaDet) && lambdaDet < 1) {
-        contactText +=
-          `<br><br><strong>Sub-Poisson regime:</strong> fewer than one active detectable transmitter is expected on average inside the current detection horizon. ` +
-          `Non-detection is therefore the statistically dominant outcome, although the Poisson probability is not zero.`;
-      }
-    }
-
-    sections.push({
-      label: 'Contact threshold',
-      text: contactText
-    });
-  }
-
-  return sections.map(renderFermiSection).join('');
+  // Legacy Fermi supplement intentionally removed from the visible panel.
+  // The underlying SETI calculations remain in computeDetectionFilter() and
+  // are rendered once inside the SETI signal context diagnostics.
+  return '';
 }
 
 function renderFermiBox(preferredMode = null) {
@@ -1659,7 +1627,9 @@ function renderFermiBox(preferredMode = null) {
   }
 
   summary.innerHTML = buildInterpretationHtml(fermiMode);
-  const communicationSupplementHtml = buildFermiCommunicationSupplementHtml(fermiMode);
+  // The old Fermi supplement duplicated
+  // the SETI signal context and diagnostics already rendered in the narrative.
+  const communicationSupplementHtml = '';
   content.innerHTML = buildFermiGroupHtml(
     `<div class="fermi-context-label fermi-reveal-item">Fermi communication context</div>` +
     `<div class="fermi-content-copy">${buildFermiNarrativeHtml(fermiContexts[fermiMode].html)}</div>` +
@@ -2878,11 +2848,11 @@ function renderDetectionPanel() {
   var verdictText = '';
   var verdictColor = gaugeColor;
   if (r.p_detect_pct >= 50) {
-    verdictText = 'Under these assumptions, it is more likely than not that at least one detectable civilisation exists within range right now.';
+    verdictText = 'Under these assumptions, at least one active detectable transmitter is more likely than not within the current detection range right now.';
   } else if (r.p_detect_pct >= 5) {
-    verdictText = 'There is a meaningful but not dominant chance that a detectable civilisation exists within range today. Increasing L (civilisation longevity) would raise this significantly.';
+    verdictText = 'There is a meaningful but not dominant model probability for at least one active detectable transmitter within range today. Increasing L (civilisation longevity) would raise this significantly.';
   } else if (r.p_detect_pct >= 0.1) {
-    verdictText = 'The probability is low. Even if many modelled Earth-like candidates exist, the timing and distance constraints make an overlapping detectable civilisation rare under these settings.';
+    verdictText = 'The probability is low. Even if many modelled Earth-like candidates exist, the timing and distance constraints make an overlapping active detectable transmitter rare under these settings.';
   } else {
     verdictText = 'The probability is extremely low 〰 consistent with the silence we observe. Most potentially inhabited planets are either too far away, or their transmission window does not overlap with ours.';
   }
@@ -2960,12 +2930,12 @@ function renderDetectionPanel() {
         } else {
           distLabel = r.earth_distance < 1e6 ? Math.round(r.earth_distance).toLocaleString() + ' light-years' : (r.earth_distance / 1e6).toFixed(2) + ' million light-years';
           distSub = r.N_det >= 1
-            ? 'Once the Earth-distance barrier is crossed, any active detectable civilisation in this target galaxy would still be seen from roughly this intergalactic distance.'
+            ? 'Once the Earth-distance barrier is crossed, any active detectable transmitter in this target galaxy would still be seen from roughly this intergalactic distance.'
             : 'The target galaxy is finally within light-travel range, but the overlap probability is still low because the temporal window remains restrictive.';
         }
       } else if (!Number.isFinite(r.d_nearest_det) || r.N_det < 1e-9) {
         distLabel = '〰';
-        distSub = 'Too few detectable civilisations to estimate a nearest-detectable distance scale. Try increasing L or the number of planets.';
+        distSub = 'Too few expected active detectable transmitters to estimate a nearest-detectable distance scale. Try increasing L or the number of planets.';
       } else {
         var d = r.d_nearest_det;
         distLabel = formatLy(d);
@@ -2984,7 +2954,7 @@ function renderDetectionPanel() {
         subPoissonWarning +
         '<div style="font-size:8.5px;color:var(--text-dim);margin-top:4px;opacity:.7;">' + (r.is_external_reference
           ? 'For external galaxies this is treated as an Earth-reference distance gate, not an internal GHZ nearest-neighbour gap.'
-          : 'd̄ = Γ(3/2) / (ρ<sub>det</sub>·π)<sup>½</sup>, ρ<sub>det</sub> = N̂<sub>det</sub> / A<sub>horizon</sub> (spatial density within detection sphere)') + '</div>' +
+          : 'd̄ = Γ(3/2) / (ρ<sub>det</sub>·π)<sup>½</sup>, ρ<sub>det</sub> = N̂<sub>det</sub> / A<sub>horizon</sub> (spatial density within the observer-centred detection area)') + '</div>' +
       '</div>';
     })() +
     '<div style="background:var(--bg);border:1px solid var(--border);border-left:3px solid ' + gaugeColor + ';border-radius:6px;padding:10px 12px;margin-bottom:10px;">' +

@@ -1168,8 +1168,9 @@ const STAR_DB = [
   { d: 11.46, name: "Procyon", note: "a bright nearby binary consisting of a subgiant primary and a white dwarf companion", ...cat("Procyon") },
   { d: 11.5, name: "Struve 2398", note: "a nearby binary red-dwarf system, intrinsically faint but close to the Sun", ...cat("Struve 2398") },
   { d: 11.6, name: "Groombridge 34", note: "a nearby binary of red dwarfs notable for high proper motion", ...cat("Groombridge 34") },
+  { d: 11.8, name: "DX Cancri", note: "a very faint nearby red dwarf emitting most of its energy outside the visible range", ...cat("DX Cnc") },
   { d: 11.87, name: "Epsilon Indi", note: "a nearby K-dwarf system with brown-dwarf companions and 1 confirmed exoplanet", ...cat("eps Ind") },
-  { d: 11.75, name: "Tau Ceti", note: "one of the nearest Sun-like stars, with 3 current archive-listed radial-velocity exoplanets inferred from tiny stellar wobbles rather than direct imaging", ...cat("tau Cet") },
+  { d: 11.91, name: "Tau Ceti", note: "one of the nearest Sun-like stars, with 4 confirmed exoplanets in the current archive and a long history in nearby planetary-system studies", ...cat("tau Cet") },
   { d: 12.0, name: "GJ 1061", note: "a nearby red dwarf with 3 confirmed exoplanets in a compact system including temperate-orbit candidates", ...cat("GJ 1061") },
   { d: 12.1, name: "YZ Ceti", note: "a red dwarf with 3 confirmed exoplanets in a tightly packed ultra-compact system", ...cat("YZ Cet") },
   { d: 12.35, name: "Luyten's Star", note: "a nearby red dwarf with 2 confirmed exoplanets, including GJ 273 b in the broader temperate-zone discussion", ...cat("GJ 273") },
@@ -1217,6 +1218,7 @@ const STAR_DB = [
   { d: 250.0, name: "Spica", note: "a luminous close binary of hot stars and the brightest star in Virgo", ...cat("Spica") },
   { d: 310.0, name: "Canopus", note: "the second-brightest star in Earth's night sky and a long-used reference in spacecraft navigation", ...cat("Canopus") },
   { d: 315.97, name: "HD 73526", note: "a G-type planet-host star with 2 confirmed giant exoplanets whose roughly 188-day and 379-day orbits make a classic near-2:1 resonant pair", ...cat("HD 73526") },
+  { d: 321.0, name: "Acrux", note: "the brightest star in the Southern Cross, actually a multiple stellar system", ...cat("Acrux") },
   { d: 350.0, name: "Mimosa (Beta Crucis)", note: "a bright blue star in the Southern Cross, hot and intrinsically very luminous", ...cat("bet Cru") },
   { d: 430.0, name: "Polaris (North Star)", note: "the current pole star, a Cepheid variable in a multiple-star system", ...cat("Polaris") },
   { d: 550.0, name: "Betelgeuse", note: "a nearby red supergiant nearing the end of its life, though not expected to explode on human timescales", ...cat("Betelgeuse") },
@@ -3708,7 +3710,7 @@ function buildDistanceScenario(count, ciLowCount = null, ciHighCount = null) {
       kind: 'sparse',
       html:
         `<span class="result-label">DISTANCE ·</span> Expected count < 1. ` +
-        `P(at least one modelled candidate) = <span class="bold-number">${(100 * pAtLeastOne).toFixed(1)}%</span>. ` +
+        `P(at least one modelled candidate) = <span class="bold-number">${fmtExistencePct(pAtLeastOne)}</span>. ` +
         `Nearest-distance estimate suppressed in this sparse regime.`,
       refModel: null,
       fermiDistance: null,
@@ -3795,8 +3797,8 @@ function buildSparseFermiContext(count, options = {}) {
     html:
       `<strong>${sourceShort} · no stable nearest-neighbour estimate in this sparse regime</strong><br><br>` +
       `➤ The expected count under the current filters is below <strong>1</strong>, so the script does not show a nearest-distance estimate here.<br><br>` +
-      `➤ Instead, the most meaningful summary is the existence probability: <strong>${(100 * pAtLeastOne).toFixed(1)}%</strong> for at least one such world in ${galaxyName}.<br><br>` +
-      `➤ In plain terms: this scenario is so restrictive that the calculator often ends up with <strong>no such planet at all</strong> in the modelled galaxy.<br><br>` +
+      `➤ Instead, the most meaningful summary is the existence probability: <strong>${fmtExistencePct(pAtLeastOne)}</strong> for at least one such world in ${galaxyName}.<br><br>` +
+      `➤ In plain terms: this scenario implies fewer than one expected on average; the probability is not zero unless the expected count is zero.<br><br>` +
       `➤ Try different settings: ${hintText}.`
   };
 }

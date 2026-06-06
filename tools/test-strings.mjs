@@ -535,6 +535,12 @@ if (!detectionTraceBlock) {
   fail('buildConsoleDetectionTrace hardcodes the GHZ outer fraction instead of GHZ_OUTER_FRAC.');
 } else if (!detectionTraceBlock.includes('outerLy / GHZ_OUTER_FRAC')) {
   fail('buildConsoleDetectionTrace does not reference GHZ_OUTER_FRAC when recovering galaxy diameter.');
+} else if (
+  !detectionTraceBlock.includes("'external-range-gate'") ||
+  !detectionTraceBlock.includes('range_gate') ||
+  !detectionTraceBlock.includes('earth_distance')
+) {
+  fail('buildConsoleDetectionTrace does not expose the external-galaxy range-gate branch.');
 }
 
 if (/<a\b[^>]*href=["']#["']/i.test(indexHtml)) {
@@ -545,12 +551,26 @@ if (/\b(?:Monte Carlo mean|MC mean)\b/i.test(combinedText)) {
   fail('Monte Carlo q50/median is still ambiguously labelled as mean somewhere in public text or docs.');
 }
 
-if (!shareJs.includes('mc_median_q50') || !shareJs.includes('mcArithmeticMean') || !shareJs.includes('distance_radial_ly') || !shareJs.includes('mcMode') || !shareJs.includes('uncertaintyBasisLabel')) {
-  fail('JSON export is missing explicit MC median/mean, mcMode, uncertainty basis, or radial-distance fields.');
+if (
+  !shareJs.includes('mc_median_q50') ||
+  !shareJs.includes('mcArithmeticMean') ||
+  !shareJs.includes('distance_radial_ly') ||
+  !shareJs.includes('mcMode') ||
+  !shareJs.includes('uncertaintyBasisLabel') ||
+  !shareJs.includes('detection_count_basis') ||
+  !shareJs.includes('detection_count') ||
+  !shareJs.includes('fermi_context') ||
+  !shareJs.includes('historical_context')
+) {
+  fail('JSON export is missing explicit MC, detection-basis, Fermi, historical-context, uncertainty-basis, or radial-distance fields.');
 }
 
 if (!shareJs.includes('MC q50 median') || !shareJs.includes('MC arithmetic mean')) {
   fail('LaTeX/share export does not expose separate MC q50 median and arithmetic mean labels.');
+}
+
+if (!shareJs.includes('LaTeX export is a compact parameter/result table')) {
+  fail('LaTeX export does not document its compact table-only scope.');
 }
 
 if (/nearest habitable planet estimate/i.test(appJs + '\n' + coreJs + '\n' + indexHtml + '\n' + shareJs)) {
@@ -563,6 +583,30 @@ if (!coreJs.includes('modelled Earth-like candidates in') || !shareJs.includes('
 
 if (!coreJs.includes('nearest-neighbour distance scale, not a detected planet distance')) {
   fail('Distance panel basis label does not identify nearest-neighbour scale as not a detected planet distance.');
+}
+
+if (appJs.includes('buildFermiCommunicationSupplementHtml(fermiMode)')) {
+  fail('Fermi panel still renders the legacy Detectability now / Contact threshold supplement.');
+}
+
+if (coreJs.includes('(100 * pAtLeastOne).toFixed(1)') || !coreJs.includes('fmtExistencePct(pAtLeastOne)')) {
+  fail('Sparse Poisson probability display does not use fmtExistencePct(pAtLeastOne).');
+}
+
+if (/no such planet at all/i.test(coreJs)) {
+  fail('Sparse Fermi wording still says "no such planet at all".');
+}
+
+if (/detection sphere/i.test(appJs + '\n' + coreJs + '\n' + indexHtml + '\n' + shareJs)) {
+  fail('2D SETI density wording still refers to a detection sphere.');
+}
+
+if (/Detectability now|Contact threshold/i.test(appJs + '\n' + coreJs + '\n' + indexHtml + '\n' + shareJs)) {
+  fail('Legacy visible SETI supplement labels remain in public source.');
+}
+
+if (/detectable civilisations?|detectable civilizations?|active detectable civilisation|active detectable civilization|civilisation exists|civilization exists|civilisation in range|civilization in range/i.test(appJs + '\n' + coreJs + '\n' + indexHtml + '\n' + shareJs)) {
+  fail('Public UI/export SETI text still uses civilisation-existence wording instead of active-detectable-transmitter wording.');
 }
 
 if (

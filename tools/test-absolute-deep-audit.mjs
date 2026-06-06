@@ -839,6 +839,7 @@ function buildHarnessHelpers(document, context, errors, warnings, unhandled) {
       },
       loadPreset(name) { return typeof loadPreset === 'function' ? loadPreset(name) : null; },
       setBayesian(mode) { return typeof setBayesian === 'function' ? setBayesian(mode) : null; },
+      setFermiMode(mode) { return typeof setFermiMode === 'function' ? setFermiMode(mode) : null; },
       calculateDistanceToNearestPlanet() { return typeof calculateDistanceToNearestPlanet === 'function' ? calculateDistanceToNearestPlanet() : null; },
       applyGalaxyPresetSelection(key) { return typeof applyGalaxyPresetSelection === 'function' ? applyGalaxyPresetSelection(key) : null; },
       getMonteCarloOptions(options = {}) { return typeof getMonteCarloOptions === 'function' ? getMonteCarloOptions(options) : null; },
@@ -1710,6 +1711,24 @@ await section('Export Share History', () => {
   assert(json.parameters.N_GHZ.mean === h.getNumber('N_GHZ'), 'JSON parameters match visible UI values', json.parameters.N_GHZ);
   assert(json.timestamp && !Number.isNaN(Date.parse(json.timestamp)), 'JSON export timestamp parses', { timestamp: json.timestamp });
   assert(json.basis_labels.mc_median_q50 && json.basis_labels.mc_mean, 'JSON basis labels distinguish median and arithmetic mean', json.basis_labels);
+  assert(json.basis_labels.detection_count_basis === json.results.detection_count_basis, 'JSON detection basis label is exported consistently', {
+    basis: json.basis_labels,
+    results: json.results
+  });
+  assert(json.results.detection && json.results.detection.detection_count_basis === json.results.detection_count_basis, 'JSON nested detection basis matches top-level result basis', json.results.detection);
+  assert(json.results.fermi_context && json.results.fermi_context.fermi_mode === json.results.fermi_mode, 'JSON Fermi context mode matches exported detection mode', json.results.fermi_context);
+
+  h.setFermiMode('dt');
+  const dtJson = h.buildJSONExportSnapshot();
+  assert(dtJson.results.fermi_mode === 'dt', 'JSON detection basis follows visible DT Fermi mode', dtJson.results);
+  assertRelApproxEqual(dtJson.results.detection_count, h.getRuntimeSnapshot().deterministicPlanets, 1e-15, 'JSON DT detection count equals deterministic count');
+  assertRelApproxEqual(dtJson.results.detection.detection_count, dtJson.results.detection_count, 1e-15, 'JSON DT nested detection count matches top-level detection count');
+
+  h.setFermiMode('mc');
+  const mcJson = h.buildJSONExportSnapshot();
+  assert(mcJson.results.fermi_mode === 'mc', 'JSON detection basis follows visible MC Fermi mode', mcJson.results);
+  assertRelApproxEqual(mcJson.results.detection_count, mc.p500, 1e-15, 'JSON MC detection count equals MC q50 count');
+  assertRelApproxEqual(mcJson.results.detection.detection_count, mcJson.results.detection_count, 1e-15, 'JSON MC nested detection count matches top-level detection count');
 
   const share = h.buildShareSummary();
   assert(/Monte Carlo|MONTE CARLO|modelled Earth-like/.test(share), 'Share summary uses current result text', { share });
