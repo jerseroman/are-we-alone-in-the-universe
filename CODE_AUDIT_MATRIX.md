@@ -8,7 +8,7 @@ Scope boundary: this audit of the code refers specifically to the calculator cod
 
 Transparency in workflow: this audit matrix was prepared based on the logs of our local calculator audits, along with Node.js and Python oracle scripts and Codex 5.5 Extra High assistance.
 
-Evidence summary: the latest completed 10-hour calculator audit passed 131/131 profile executions, with 74,828,664 randomized core calculator cases, 1,626 Python oracle checks, and 9,718 browser/UI/export samples. No mismatches were reported in that completed 10-hour functional audit. Remaining open items are mutation-test strength, coverage collection tooling, and one later deep state-transition/history assertion listed below.
+Evidence summary: the latest completed 10-hour calculator audit passed 131/131 profile executions, with 74,828,664 randomized core calculator cases, 1,626 Python oracle checks, and 9,718 browser/UI/export samples. No mismatches were reported in that completed 10-hour functional audit. Remaining open items are mutation-test strength, coverage collection tooling, storage UX in restrictive browser contexts, model-factor correlation documentation, and future Monte Carlo distributional tests.
 
 ## Status Legend
 
@@ -32,7 +32,7 @@ Evidence summary: the latest completed 10-hour calculator audit passed 131/131 p
 | Overall full audit report status | OPEN | Yes, overall report remained YELLOW | Functional calculator checks passed; YELLOW remained because mutation testing and coverage tooling were not fully satisfied. |
 | Mutation testing | OPEN | Yes, survived mutants were reported | Needs stronger tests to kill remaining survived mutants. |
 | Coverage tooling | SKIPPED | Yes, coverage tool missing | Needs `c8` or `nyc` to collect coverage. |
-| Later deep state-transition/history check | FAIL | Yes, latest `npm run test:deep` failed in history distance-basis storage | Open item; see section B.2. |
+| Later deep state-transition/history check | FIXED | Yes, `npm run test:deep` failed in history distance-basis storage | Fixed in the Node VM harness by sharing the same `localStorage` mock between the VM global and `window.localStorage`; latest `npm run test:deep` passes. |
 
 ## A. Calculator Source Files Under Code Audit
 
@@ -61,13 +61,13 @@ Evidence summary: the latest completed 10-hour calculator audit passed 131/131 p
 | `npm run test:universe-scale` | PASS | No current error | Universe-scale coherence checks pass. |
 | `npm run test:state-transition` | PASS | No current error | Core state-transition checks pass. |
 | `npm run test:state-transition:core` | PASS | No current error | Same core state-transition path used by `npm run test:state-transition`. |
-| `npm run test:state-transition:deep` | FAIL | Yes, latest local run failed at history active distance model/basis storage | Open issue: history entry was not available for the distance-basis assertion after many preceding PASS checks. |
+| `npm run test:state-transition:deep` | FIXED | Yes, earlier local run failed at history active distance model/basis storage | Fixed harness `window.localStorage` mock; latest local run passes in full. |
 | `npm run test:preset-state-reset` | PASS | No current error | Preset reset isolation checks pass. |
 | `npm run test:calibration` | PASS | No current error | Calibration/accessibility/source checks pass. |
 | `npm run test:source-links` | PASS | No current error | Visible source-link checks pass. |
 | `npm run test:biogeo-sources` | PASS | No current error | Bio/geophysical source checks pass. |
 | `npm run test:absolute` | PASS | No current error | Absolute deep audit passed 22 sections, 1,515 assertions, and 0 failures. |
-| `npm run test:deep` | FAIL | Yes, same latest failure as `test:state-transition:deep` | Alias for the deep state-transition path; not currently included in `test:all`. |
+| `npm run test:deep` | FIXED | Yes, same earlier failure as `test:state-transition:deep` | Alias for the deep state-transition path; latest local run passes in full. |
 | `npm run test:all` | PASS | No current error | Combined CI-style calculator suite passes; it does not include `test:absolute` or `test:deep`. |
 
 ## B.1 Absolute Deep Audit Sections
@@ -110,8 +110,22 @@ Evidence summary: the latest completed 10-hour calculator audit passed 131/131 p
 | Visible restore checks across presets | PASS | No current error | Pessimist, consensus, optimist, and Kepler visible restore paths returned MC, distance, and Fermi panels to baseline. |
 | Distance model off/on scenario state | PASS | No current error | Distance model toggles did not mark the scientific scenario modified. |
 | LaTeX deterministic/current/stale MC export states | PASS | No current error | Deterministic-only, current MC, and stale MC export checks passed. |
-| History active distance model and MC q50 basis | FAIL | Yes, latest `test:deep` reported no stored history entry for this assertion | Open issue to inspect in `saveHistoryEntry()` / distance history flow. |
-| JSON export agreement with history distance basis | FAIL | Yes, follow-up assertion hit undefined history data | Open issue depends on the missing history entry above. |
+| History active distance model and MC q50 basis | FIXED | Yes, earlier `test:deep` reported no stored history entry for this assertion | Root cause was a test-harness `window.localStorage` mock gap; latest `test:deep` passes this assertion. |
+| JSON export agreement with history distance basis | FIXED | Yes, earlier follow-up assertion hit undefined history data | Fixed by the same harness storage patch; latest `test:deep` passes JSON/history agreement. |
+
+## B.3 Independent 2026-06-11 Review Additions
+
+| Item | Status | Error observed | Fixed/current state |
+| --- | --- | --- | --- |
+| Independent recomputation of four deterministic preset outputs | PASS | No mismatch | Pessimist, consensus, Kepler/Gaia, and optimist deterministic outputs were independently recomputed and matched the calculator golden outputs. |
+| Deep-test Node VM storage harness | FIXED | Yes, `window.localStorage` was missing from the VM `window` mock while global `localStorage` existed | Harness now shares one storage mock between global `localStorage` and `window.localStorage`; `npm run test:deep` passes. |
+| Production storage crash safety | PASS | No production crash path found in reviewed storage access | `safeHistoryStorage()`, read, write, and clear paths are guarded; restricted storage degrades history rather than calculator execution. |
+| Restrictive browser / Wix iframe history UX | OPEN | No crash, but history may silently be unavailable or ephemeral | Recommended future improvement: storage sentinel round-trip and a visible history-unavailable note. |
+| Manual iOS Safari / Wix history persistence check | OPEN | Not performed locally | Recommended manual QA: run live embedded page on real iOS Safari, calculate, reload, and confirm whether history persists. |
+| Eta-Earth comparison caveat for factor decomposition | OPEN | Review-level documentation gap | Recommended documentation note: direct comparison with published eta-Earth values can over-filter when `f_composition` and `f_size` are interpreted as independent extra filters. |
+| Core-factor correlation note | OPEN | Review-level documentation gap | Recommended documentation note for correlated core factors such as H2O/CHNOPS, magnetosphere/size, and rotation/lunar stability. |
+| Monte Carlo sampler distributional tests | OPEN | Not currently covered by existing tests | Future tests should check distribution shape and quantile convergence, not only reproducibility and ordering. |
+| Debug visibility for `saveHistoryEntry()` catch path | OPEN | Silent catch made harness diagnosis slower | Optional code-hygiene improvement: debug-mode warning for history persistence failures. |
 
 ## C. Deterministic Calculator Mathematics
 

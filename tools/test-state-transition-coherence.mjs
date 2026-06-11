@@ -284,19 +284,22 @@ function createHarness() {
     }
   };
 
+  const globalLocalStorageMock = (() => {
+    const store = new Map();
+    return {
+      getItem(key) { return store.has(key) ? store.get(key) : null; },
+      setItem(key, value) { store.set(key, String(value)); },
+      removeItem(key) { store.delete(key); }
+    };
+  })();
+
   const context = vm.createContext({
     console,
     document,
-    localStorage: (() => {
-      const store = new Map();
-      return {
-        getItem(key) { return store.has(key) ? store.get(key) : null; },
-        setItem(key, value) { store.set(key, String(value)); },
-        removeItem(key) { store.delete(key); }
-      };
-    })(),
+    localStorage: globalLocalStorageMock,
     location: { href: 'https://example.test/calculator' },
     window: {
+      localStorage: globalLocalStorageMock,
       addEventListener() {},
       innerWidth: 1280,
       innerHeight: 720,
