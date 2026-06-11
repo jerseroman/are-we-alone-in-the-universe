@@ -20,6 +20,14 @@ where `d` is the spatial dimension and `V_d` is the unit-ball volume in that dim
 
 The default Milky Way distance reference now uses a radial-density Poisson approximation. The model assumes an exponential stellar disk, applies the GHZ radial boundaries, applies the same simplified metallicity and supernova-survival weighting used by the radial GHZ module, and normalizes the resulting intensity to the selected planet count.
 
+The current radial GHZ approximation uses these explicit constants:
+
+- metallicity proxy: `[Fe/H](R) = 0.5 - 0.07 R`, with `R` in kpc;
+- metallicity transition: `w_met = 1 / (1 + exp(-([Fe/H] - [Fe/H]_threshold) / 0.05))`;
+- supernova-survival proxy: `w_SN = 1 / (1 + exp(-0.8 (R - 4)))`.
+
+The `-0.07 dex/kpc` metallicity slope is a simplified model parameter, not a fitted result in this application. It is close to Cepheid-based thin-disk gradients reported in the literature; for example, Genovali et al. 2014 report approximately `-0.060 +/- 0.002 dex/kpc` over a broad Galactocentric range. The sigmoid metallicity transition replaces a previous hard cutoff so small changes to the threshold do not create stepwise jumps at radial-bin centres.
+
 For an inhomogeneous Poisson process with spatial intensity `lambda(x)`, the probability of finding no point inside a search region `B(r)` is:
 
 `P(D > r) = exp(-Lambda(r))`
@@ -51,3 +59,4 @@ The radial model is still a simplified model. It does not simulate spiral arms, 
 - Chandrasekhar 1943, `Stochastic Problems in Physics and Astronomy`, Review of Modern Physics 15, for the classical nearest-neighbour/random stellar-distribution framing.
 - Freeman 1970, `On the Disks of Spiral and S0 Galaxies`, https://doi.org/10.1086/150474, for the exponential disk context.
 - Lineweaver et al. 2004, `The Galactic Habitable Zone and the Age Distribution of Complex Life in the Milky Way`, https://arxiv.org/abs/astro-ph/0401024, for the GHZ annular/time-dependent framing.
+- Genovali et al. 2014, `On the fine structure of the Cepheid metallicity gradient in the Galactic thin disk`, https://doi.org/10.1051/0004-6361/201323198, for a Cepheid thin-disk metallicity-gradient comparison scale.

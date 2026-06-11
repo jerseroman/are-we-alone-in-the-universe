@@ -15,6 +15,7 @@ node_modules/
 dist/
 build/
 .cache/
+audit-output/
 
 # Internal audit artifacts (not part of the public release)
 docs/audits/

@@ -1654,6 +1654,14 @@ function setFermiMode(mode) {
 const HISTORY_STORAGE_KEY = 'simHistory';
 const HISTORY_SCHEMA_VERSION = 1;
 
+function safeHistoryStorage() {
+  try {
+    return window.localStorage;
+  } catch (e) {
+    return null;
+  }
+}
+
 function normalizeHistoryStore(parsed) {
   if (Array.isArray(parsed)) {
     return {
@@ -1680,8 +1688,9 @@ function normalizeHistoryStore(parsed) {
   };
 }
 
-function readHistoryStore(storage = localStorage) {
+function readHistoryStore(storage = safeHistoryStorage()) {
   try {
+    if (!storage) return normalizeHistoryStore(null);
     const raw = storage.getItem(HISTORY_STORAGE_KEY);
     if (!raw) return normalizeHistoryStore(null);
     return normalizeHistoryStore(JSON.parse(raw));
@@ -1690,21 +1699,24 @@ function readHistoryStore(storage = localStorage) {
   }
 }
 
-function writeHistoryStore(store, storage = localStorage) {
+function writeHistoryStore(store, storage = safeHistoryStorage()) {
   const normalized = normalizeHistoryStore(store);
   try {
+    if (!storage) return normalized;
     storage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(normalized));
   } catch (e) {}
   return normalized;
 }
 
-function clearHistoryStore(storage = localStorage) {
+function clearHistoryStore(storage = safeHistoryStorage()) {
   try {
+    if (!storage) return;
     storage.removeItem(HISTORY_STORAGE_KEY);
   } catch (e) {}
 }
 
 window.normalizeHistoryStore = normalizeHistoryStore;
+window.safeHistoryStorage = safeHistoryStorage;
 window.readHistoryStore = readHistoryStore;
 window.writeHistoryStore = writeHistoryStore;
 window.clearHistoryStore = clearHistoryStore;

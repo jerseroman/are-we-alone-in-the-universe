@@ -20,6 +20,8 @@ The calculator supports three distribution modes:
 - `normal`: parameters use bounded normal sampling around the central value.
 - `uniform`: parameters are sampled uniformly from the configured min/max interval.
 
+For positive count-like parameters in adaptive log-normal mode, the implementation uses a small spread floor equal to 10% of the central value when the configured interval would otherwise imply a narrower standard deviation. Bounded normal mode does not apply that 10% central-value floor; it uses the configured interval spread directly. Therefore switching between `lognormal` and `normal` changes both distribution shape and, for very narrow positive intervals, the effective spread. This is a model-internal uncertainty setting, not an empirical confidence interval.
+
 All modes respect the configured ranges. Probability-like values are constrained to valid probability ranges. Positive count-like values are constrained to non-negative values. If a parameter that is sampled from its visible min/max interval has inconsistent bounds — minimum greater than maximum, or a central value outside `[min, max]` — Monte Carlo is blocked and a configuration warning is shown until the bounds are corrected; the bounds are not silently expanded or swapped, and no Monte Carlo result is produced or exported for that state.
 
 ## Preset and Modified-Preset State

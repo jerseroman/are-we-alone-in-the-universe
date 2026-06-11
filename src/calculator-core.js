@@ -2821,6 +2821,25 @@ function computeHostChannels(omitMLock = false) {
   };
 }
 
+const RADIAL_GHZ_METALLICITY_INTERCEPT_DEX = 0.5;
+const RADIAL_GHZ_METALLICITY_GRADIENT_DEX_PER_KPC = -0.07;
+const RADIAL_GHZ_METALLICITY_TRANSITION_DEX = 0.05;
+const RADIAL_GHZ_SN_SURVIVAL_SLOPE_PER_KPC = 0.8;
+const RADIAL_GHZ_SN_SURVIVAL_MIDPOINT_KPC = 4;
+
+function radialGHZMetallicityDex(R) {
+  return RADIAL_GHZ_METALLICITY_INTERCEPT_DEX + RADIAL_GHZ_METALLICITY_GRADIENT_DEX_PER_KPC * R;
+}
+
+function radialGHZMetallicityWeight(R, metThresh) {
+  const feH = radialGHZMetallicityDex(R);
+  return 1 / (1 + Math.exp(-(feH - metThresh) / RADIAL_GHZ_METALLICITY_TRANSITION_DEX));
+}
+
+function radialGHZSupernovaSurvival(R) {
+  return 1 / (1 + Math.exp(-RADIAL_GHZ_SN_SURVIVAL_SLOPE_PER_KPC * (R - RADIAL_GHZ_SN_SURVIVAL_MIDPOINT_KPC)));
+}
+
 function computeRadialGHZDetails(sampled = null) {
   const Ntot = Math.max(0, sampled?.adv_N_total_stars ?? pf('adv_N_total_stars'));
   const Rd = Math.max(0.1, sampled?.adv_scale_length ?? pf('adv_scale_length'));
@@ -2848,12 +2867,9 @@ function computeRadialGHZDetails(sampled = null) {
     const annulusWeight = Math.exp(-R / Rd) * 2 * Math.PI * R * dr;
     const starsInRing = normSum > 0 ? (Ntot * annulusWeight) / normSum : 0;
 
-    
-    const feH = 0.5 - 0.07 * R;
-    if (feH < metThresh) continue;
-
-    const snSurvival = 1 / (1 + Math.exp(-0.8 * (R - 4)));
-    N_GHZ_calc += starsInRing * snSurvival;
+    const metallicityWeight = radialGHZMetallicityWeight(R, metThresh);
+    const snSurvival = radialGHZSupernovaSurvival(R);
+    N_GHZ_calc += starsInRing * metallicityWeight * snSurvival;
   }
 
   return {
@@ -3035,10 +3051,9 @@ function E_from(lambda, d) {
 }
 
 function radialGHZWeight(R, Rd, metThresh) {
-  const feH = 0.5 - 0.07 * R;
-  if (feH < metThresh) return 0;
-  const snSurvival = 1 / (1 + Math.exp(-0.8 * (R - 4)));
-  return Math.exp(-R / Rd) * snSurvival;
+  const metallicityWeight = radialGHZMetallicityWeight(R, metThresh);
+  const snSurvival = radialGHZSupernovaSurvival(R);
+  return Math.exp(-R / Rd) * metallicityWeight * snSurvival;
 }
 
 function buildRadialGHZDensityProfile() {
