@@ -8,7 +8,7 @@ Scope boundary: this audit of the code refers specifically to the calculator cod
 
 Transparency in workflow: this audit matrix was prepared based on the logs of our local calculator audits, along with Node.js and Python oracle scripts and Codex 5.5 Extra High assistance.
 
-Evidence summary: the latest completed 10-hour calculator audit passed 131/131 profile executions, with 74,828,664 randomized core calculator cases, 1,626 Python oracle checks, and 9,718 browser/UI/export samples. No current mismatches were reported in the completed functional checks. Remaining open items are mutation-test strength and coverage collection tooling.
+Evidence summary: the latest completed 10-hour calculator audit passed 131/131 profile executions, with 74,828,664 randomized core calculator cases, 1,626 Python oracle checks, and 9,718 browser/UI/export samples. No mismatches were reported in that completed 10-hour functional audit. Remaining open items are mutation-test strength, coverage collection tooling, and one later deep state-transition/history assertion listed below.
 
 ## Status Legend
 
@@ -18,6 +18,7 @@ Evidence summary: the latest completed 10-hour calculator audit passed 131/131 p
 | FIXED | An earlier error was observed and the current relevant run no longer reports it. |
 | PARTIAL | A previous run stopped before completing all intended checks. |
 | SKIPPED | The check did not run because a required tool or condition was missing. |
+| FAIL | The latest local run of this check reported a failing assertion or runtime error. |
 | OPEN | The item remains an improvement target. |
 
 ## Current Calculator-Code Audit Summary
@@ -31,6 +32,7 @@ Evidence summary: the latest completed 10-hour calculator audit passed 131/131 p
 | Overall full audit report status | OPEN | Yes, overall report remained YELLOW | Functional calculator checks passed; YELLOW remained because mutation testing and coverage tooling were not fully satisfied. |
 | Mutation testing | OPEN | Yes, survived mutants were reported | Needs stronger tests to kill remaining survived mutants. |
 | Coverage tooling | SKIPPED | Yes, coverage tool missing | Needs `c8` or `nyc` to collect coverage. |
+| Later deep state-transition/history check | FAIL | Yes, latest `npm run test:deep` failed in history distance-basis storage | Open item; see section B.2. |
 
 ## A. Calculator Source Files Under Code Audit
 
@@ -58,12 +60,58 @@ Evidence summary: the latest completed 10-hour calculator audit passed 131/131 p
 | `npm run test:scenario-coherence` | PASS | No current error | Scenario coherence checks pass. |
 | `npm run test:universe-scale` | PASS | No current error | Universe-scale coherence checks pass. |
 | `npm run test:state-transition` | PASS | No current error | Core state-transition checks pass. |
+| `npm run test:state-transition:core` | PASS | No current error | Same core state-transition path used by `npm run test:state-transition`. |
+| `npm run test:state-transition:deep` | FAIL | Yes, latest local run failed at history active distance model/basis storage | Open issue: history entry was not available for the distance-basis assertion after many preceding PASS checks. |
 | `npm run test:preset-state-reset` | PASS | No current error | Preset reset isolation checks pass. |
 | `npm run test:calibration` | PASS | No current error | Calibration/accessibility/source checks pass. |
 | `npm run test:source-links` | PASS | No current error | Visible source-link checks pass. |
 | `npm run test:biogeo-sources` | PASS | No current error | Bio/geophysical source checks pass. |
-| `npm run test:absolute` | PASS | No current error | Absolute preset/export-state audit passes in current baseline. |
-| `npm run test:all` | PASS | No current error | Combined CI-style calculator test suite passes. |
+| `npm run test:absolute` | PASS | No current error | Absolute deep audit passed 22 sections, 1,515 assertions, and 0 failures. |
+| `npm run test:deep` | FAIL | Yes, same latest failure as `test:state-transition:deep` | Alias for the deep state-transition path; not currently included in `test:all`. |
+| `npm run test:all` | PASS | No current error | Combined CI-style calculator suite passes; it does not include `test:absolute` or `test:deep`. |
+
+## B.1 Absolute Deep Audit Sections
+
+| Section | Status | Error observed | Fixed/current state |
+| --- | --- | --- | --- |
+| Bootstrap | PASS | No current error | 14 assertions passed. |
+| Static Integrity | PASS | No current error | 151 assertions passed. |
+| Browser Bootstrap and Runtime Smoke Test | PASS | No current error | 20 assertions passed. |
+| Deterministic Model | PASS | No current error | 17 assertions passed. |
+| Preset Roundtrip | PASS | No current error | 400 assertions passed. |
+| Preset Switching | PASS | No current error | 240 assertions passed. |
+| MC Basis | PASS | No current error | 11 assertions passed. |
+| MC Reproducibility | PASS | No current error | 132 assertions passed. |
+| Bounds Validation | PASS | No current error | 75 assertions passed. |
+| MC-only Controls | PASS | No current error | 25 assertions passed. |
+| Bayesian Toggle | PASS | No current error | 11 assertions passed. |
+| Galaxy Presets | PASS | No current error | 39 assertions passed. |
+| Advanced Modules | PASS | No current error | 40 assertions passed. |
+| Distance Models | PASS | No current error | 9 assertions passed. |
+| Universe Scaling | PASS | No current error | 13 assertions passed. |
+| Export Share History | PASS | No current error | 24 assertions passed. |
+| Charts State Invalidation | PASS | No current error | 6 assertions passed. |
+| Source Docs Wording | PASS | No current error | 69 assertions passed. |
+| Registry Consistency | PASS | No current error | 176 assertions passed. |
+| Cache Invalidation | PASS | No current error | 24 assertions passed. |
+| Performance | PASS | No current error | 3 assertions passed. |
+| Existing Test Orchestration | PASS | No current error | 16 assertions passed. |
+| Absolute audit total | PASS | No current error | 1,515 assertions passed with 0 failures. |
+
+## B.2 Deep State-Transition Test Areas
+
+| Area | Status | Error observed | Fixed/current state |
+| --- | --- | --- | --- |
+| Core state-transition smoke path | PASS | No current error | Galaxy preset metadata, sampling uncertainty, Bayesian reconciliation, MC bounds basis, and explicit preset/custom modes passed. |
+| Modified Pessimist / Rare Earth N_GHZ tracking | PASS | No current error | Modified preset-local labels, warnings, Monte Carlo summary, and universe-scale basis passed for central/min/max edits. |
+| Modified Pessimist / Rare Earth complex-life tracking | PASS | No current error | Modified preset-local labels, warnings, Monte Carlo summary, and universe-scale basis passed for central/min/max edits. |
+| N_GHZ scale regression after edit | PASS | No current error | Modified preset-local uncertainty and universe-scale labels passed. |
+| Chart invalidation after input changes | PASS | No current error | Histogram and KDE stale-state checks passed. |
+| Visible restore checks across presets | PASS | No current error | Pessimist, consensus, optimist, and Kepler visible restore paths returned MC, distance, and Fermi panels to baseline. |
+| Distance model off/on scenario state | PASS | No current error | Distance model toggles did not mark the scientific scenario modified. |
+| LaTeX deterministic/current/stale MC export states | PASS | No current error | Deterministic-only, current MC, and stale MC export checks passed. |
+| History active distance model and MC q50 basis | FAIL | Yes, latest `test:deep` reported no stored history entry for this assertion | Open issue to inspect in `saveHistoryEntry()` / distance history flow. |
+| JSON export agreement with history distance basis | FAIL | Yes, follow-up assertion hit undefined history data | Open issue depends on the missing history entry above. |
 
 ## C. Deterministic Calculator Mathematics
 
@@ -266,7 +314,50 @@ Evidence summary: the latest completed 10-hour calculator audit passed 131/131 p
 | Coverage collection | SKIPPED | Coverage tool missing | Install/wire `c8` or `nyc`. |
 | Performance profile | PASS | No current error | 5,000 cases completed; performance report generated. |
 
-## O. Previous Calculator-Code Audit Executions Reviewed
+## O. Previous Model-Validation Audit Findings
+
+These entries come from the earlier calculator-focused `MODEL_VALIDATION_AUDIT.md` run on 2026-06-06. The old root file was replaced by this matrix, but its code-level findings are retained here.
+
+| Finding | Status | Error observed | Fixed/current state |
+| --- | --- | --- | --- |
+| AUD-HIGH-001 sparse probability display | FIXED | Yes, tiny nonzero sparse probabilities could look like `0.0%` | `fmtExistencePct(pAtLeastOne)` is used for sparse distance/Fermi text and share text. |
+| AUD-HIGH-002 external-galaxy SETI console branch | FIXED | Yes, console trace could diverge from runtime external-galaxy range-gate logic | Console SETI trace mirrors `computeDetectionFilter()` for external range-gate cases. |
+| AUD-HIGH-003 JSON detection basis export | FIXED | Yes, JSON detection fields could miss the currently displayed Fermi/detection basis | JSON export includes current detection basis fields, detection count, and Fermi mode. |
+| AUD-MED-004 2D SETI density wording | FIXED | Yes, area-based SETI density wording could sound like a 3D sphere | UI wording now uses observer-centred detection area/search geometry. |
+| AUD-MED-005 duplicate legacy Fermi supplement | FIXED | Yes, legacy duplicate Fermi rendering created repeated/ambiguous context | SETI information is rendered in the SETI signal context and diagnostics path. |
+| AUD-MED-006 detection verdict wording | FIXED | Yes, wording risked over-reading model output as observational existence | Detection verdicts refer to active detectable transmitters under assumptions. |
+| AUD-MED-007 Fermi/historical JSON context | FIXED | Yes, JSON export lacked full Fermi tension and historical context metadata | JSON includes `results.fermi_context` with basis and omission metadata when needed. |
+| AUD-LOW-008 LaTeX export scope note | FIXED | Yes, LaTeX export did not explicitly state compact table scope | LaTeX export documents compact scope and points full SETI/Fermi/historical context to JSON. |
+
+## O.1 Previous Model-Validation Acceptance Tests
+
+| Acceptance test | Status | Error observed | Fixed/current state |
+| --- | --- | --- | --- |
+| Probability factor clamp with `10`, `-1`, `NaN`, and empty inputs | PASS | Earlier invalid-input risk was tested | Deterministic output remains finite and warnings are visible. |
+| Disabled optional filters: H2O, CHNOPS, complex life, and `f_x` | PASS | No current mismatch | Disabled optional factors are effective factor `1` in deterministic and MC paths. |
+| `customInput` invalid min/max and central-outside-range handling | PASS | Earlier silent-bound risk was tested | Invalid custom bounds block MC and show warnings; clean preset-local sampling is not blocked by unrelated visible bounds. |
+| MC current/stale/not-run state | PASS | Earlier stale-export risk was tested | Editing a scientific input after current MC marks MC stale and JSON numeric MC fields become null. |
+| Quantile ordering | PASS | No current mismatch | `q025 <= q50 <= q975` for MC runs. |
+| Deterministic equals MC when all min/max equal central | PASS | No current mismatch | Degenerate sampling collapses all samples to deterministic output. |
+| Sparse Pessimist distance/Fermi display | FIXED | Yes, sparse output could falsely look like `0.0%` | Sparse display uses nonzero odds/percentage form from `fmtExistencePct`. |
+| Sparse share text | FIXED | Yes, share summary could inherit false-looking `0.0%` wording | Pessimist sparse share text no longer reports false-looking zero probability. |
+| SETI `lambda_det = 0` | PASS | No current mismatch | `N_det = 0`, `P>=1 = 0`, wait time unavailable, and no finite transmitter distance scale. |
+| SETI `lambda_det ~= 1` | PASS | No current mismatch | Displayed `P>=1` is approximately `63.2%`. |
+| Small SETI lambda | PASS | No current mismatch | For `lambda_det << 1`, displayed `P>=1` is approximately lambda and does not round nonzero values to zero. |
+| SETI wait times | PASS | No current mismatch | If `N_det > 0`, `mean_wait = L / N_det`, `median_wait = ln(2) * mean_wait`, and mean exceeds median. |
+| Detectable-transmitter distance beyond horizon | PASS | No current mismatch | UI says fewer than one expected on average and does not call the scale reachable. |
+| External galaxy console, M31 with `L = 30000` | FIXED | Yes, external-galaxy console/runtime branch mismatch was found | Console and UI show range gate `0` and `N_det = 0`. |
+| External galaxy console, M31 with `L > 2537000` | FIXED | Yes, external-galaxy console/runtime branch mismatch was found | Console and UI show range gate `1` and the same `N_det`. |
+| JSON detection basis for deterministic vs MC Fermi mode | FIXED | Yes, JSON basis export could diverge from displayed Fermi mode | Deterministic Fermi mode exports deterministic basis; MC Fermi mode exports MC q50 basis. |
+| JSON export labels | PASS | No current mismatch | Deterministic, MC median, MC arithmetic mean, q025/q975, active distance model, detection basis, and Fermi/historical context labels match UI labels. |
+| LaTeX export labels and stale/not-run MC rows | PASS | No current mismatch | Deterministic and MC rows match UI labels; stale/not-run MC rows use nonnumeric placeholders. |
+| Share text overclaim scan | PASS | Earlier wording risk was tested | Share text avoids "nearest planet" for modelled distance scale and avoids proof/confirmed-civilisation/direct-existence wording. |
+| Historical lookback context | PASS | Earlier historical-anchor mapping risk was tested | 11.77-year, 26-year, 3000 BCE, zero-year, and older-anchor checks pass. |
+| SETI label scan | FIXED | Yes, legacy detectability-section label remained before cleanup | Target wording is "SETI signal context". |
+| Geometry wording scan | FIXED | Yes, area-based SETI formula could be described as a sphere | Area-based SETI density wording avoids sphere terminology. |
+| Generated HTML synchronization | PASS | No stale inline logic found | `index.html` references modular JS/CSS source files and does not contain copied inline stale calculator logic. |
+
+## P. Previous Calculator-Code Audit Executions Reviewed
 
 | Execution | Status | Error observed | Fixed/current state |
 | --- | --- | --- | --- |
