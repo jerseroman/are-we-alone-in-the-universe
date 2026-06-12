@@ -7,7 +7,7 @@
     "type": "git",
     "url": "https://github.com/jerseroman/are-we-alone-in-the-universe"
   },
-  "license": "SEE LICENSE IN LICENSE.md",
+  "license": "AGPL-3.0-only",
   "scripts": {
     "verify": "node tools/verify-static-site.mjs",
     "check:syntax": "node tools/check-syntax.mjs",

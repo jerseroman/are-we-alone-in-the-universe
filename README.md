@@ -63,9 +63,9 @@ It is a structured modelling tool for exploring assumptions about modelled Earth
 - `docs/MODEL_SCOPE.md` — model scope, assumptions, and limitations
 - `docs/MONTE_CARLO_METHOD.md` — Monte Carlo sampling and sampled model interval semantics
 - `docs/DISTANCE_MODEL_METHOD.md` — nearest-neighbour distance model assumptions
-- `docs/REUSE_AND_ATTRIBUTION.md` — reuse, fork, and attribution rules
+- `docs/REUSE_AND_ATTRIBUTION.md` — AGPLv3 reuse and attribution notes
 - `.github/ISSUE_TEMPLATE/` — structured issue report templates
-- `LICENSE.md` — custom source-available attribution license
+- `LICENSE.md` — GNU Affero General Public License v3.0 (AGPLv3)
 - `NOTICE.md` — short attribution notice
 - `CITATION.cff` — citation metadata
 - `.zenodo.json` — Zenodo GitHub-release metadata
@@ -119,15 +119,13 @@ External assets used by the page may include:
 
 These dependencies are loaded in the browser from their respective CDN sources.
 
-## Source availability
+## License and reuse
 
-This repository is source-available for transparency, inspection, citation, and review.
+This repository is licensed under the GNU Affero General Public License v3.0 (AGPLv3), SPDX identifier `AGPL-3.0-only`.
 
-Source-available does not mean open source.
+Use, copying, modification, redistribution, and network deployment are governed by the AGPLv3 terms in `LICENSE.md`.
 
-The project may be viewed, studied, cited, and reviewed under the conditions described in `LICENSE.md`.
-
-Forking, redistribution, derivative use, hosted copies, and commercial use are governed by the custom license terms in `LICENSE.md`.
+Modified versions that interact with users remotely through a computer network must offer Corresponding Source as required by AGPLv3 section 13.
 
 ## Attribution
 
@@ -135,21 +133,15 @@ Original project by Roman Jerše:
 
 https://www.arewealoneintheuniverse.com/
 
-Any fork, redistribution, derivative version, public copy, or hosted version must preserve attribution to Roman Jerše and include a visible link to:
+Preserve copyright, license, and attribution notices as required by AGPLv3.
 
-https://www.arewealoneintheuniverse.com/
-
-See `LICENSE.md`, `NOTICE.md`, and `docs/REUSE_AND_ATTRIBUTION.md` for the full attribution and reuse conditions.
+See `LICENSE.md`, `NOTICE.md`, and `docs/REUSE_AND_ATTRIBUTION.md` for license and attribution notes.
 
 ## License
 
-This project is source-available, not open source.
+This project is licensed under the GNU Affero General Public License v3.0 (AGPLv3).
 
-Non-commercial review, inspection, citation, and limited derivative use are allowed only under the conditions stated in `LICENSE.md`.
-
-Commercial use requires prior explicit written permission from Roman Jerše.
-
-Do not assume that standard open-source permissions apply.
+See `LICENSE.md` for the full license text.
 
 ## Citation
 
@@ -157,7 +149,7 @@ If you cite, review, discuss, or reference this project, use the citation inform
 
 ## Zenodo Publication
 
-Zenodo-ready metadata is provided in `.zenodo.json`. The project uses a custom source-available non-commercial attribution license, represented in Zenodo metadata with the closest controlled-vocabulary license identifier `other-nc`; the authoritative terms remain in `LICENSE.md`, `NOTICE.md`, and `docs/REUSE_AND_ATTRIBUTION.md`.
+Zenodo-ready metadata is provided in `.zenodo.json`. The project license is declared with the SPDX identifier `AGPL-3.0-only`; the authoritative license text remains in `LICENSE.md`.
 
 Review `.zenodo.json`, `LICENSE.md`, `NOTICE.md`, and `docs/REUSE_AND_ATTRIBUTION.md` before creating a Zenodo record or GitHub-Zenodo release archive.
 
