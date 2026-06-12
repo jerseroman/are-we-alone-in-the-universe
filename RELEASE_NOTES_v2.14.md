@@ -1,6 +1,6 @@
 # Are We Alone in the Universe v2.14 - Audit, SETI Context, and AGPLv3 Release
 
-Tag: `v2.14-public-review`
+Tag: `v2.14`
 
 Release date: 2026-06-12
 

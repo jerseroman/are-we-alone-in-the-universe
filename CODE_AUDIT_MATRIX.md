@@ -2,11 +2,11 @@
 
 This document contains the list of calculator code tests, calculator audit profiles, oracle tests, browser tests, and stress test cases that have been performed for version 2.14.
 
-Several lengthy audits of the calculator code were conducted on our systems for a total period of 20 hours, including two 10-hour time-boxed audit runs in addition to smoke, static analysis, browser, oracle, and specific regression audits.
+Several lengthy audits of the calculator code were conducted on my local system for a total period of 20 hours, including two 10-hour time-boxed audit runs in addition to smoke, static analysis, browser, oracle, and specific regression audits.
 
 Scope boundary: this audit of the code refers specifically to the calculator code implementation and its results. It does not constitute certification.
 
-Transparency in workflow: this audit matrix was prepared based on the logs of our local calculator audits, along with Node.js and Python oracle scripts and Codex 5.5 Extra High assistance.
+Transparency in workflow: this audit matrix was prepared based on the logs of my local calculator audits, along with Node.js and Python oracle scripts and AI-assisted static analysis with OpenAI Codex.
 
 Evidence summary: the latest completed 10-hour calculator audit passed 131/131 profile executions, with 74,828,664 randomized core calculator cases, 1,626 Python oracle checks, and 9,718 browser/UI/export samples. No mismatches were reported in that completed 10-hour functional audit. Remaining open items are mutation-test strength, coverage collection tooling, storage UX in restrictive browser contexts, model-factor correlation documentation, and future Monte Carlo distributional tests.
 
