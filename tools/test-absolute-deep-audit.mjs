@@ -1700,7 +1700,7 @@ await section('Export Share History', () => {
   const mc = runSeededMc(h, { samples: 64, seed: 202618, mcMode: 'presetLocal' });
   h.calculateDistanceToNearestPlanet();
   const json = h.buildJSONExportSnapshot();
-  assert(json && json.version === '2.13', 'JSON export contains version', json);
+  assert(json && json.version === '2.14', 'JSON export contains version', json);
   assert(json.preset === 'kepler', 'JSON export contains active preset', json);
   assert(json.scenario_state && json.scenario_state.state === 'preset', 'JSON export contains clean scenario state', json.scenario_state);
   assertRelApproxEqual(json.results.deterministic, h.getRuntimeSnapshot().deterministicPlanets, 1e-15, 'JSON deterministic equals current UI state');

@@ -1,6 +1,6 @@
 {
   "name": "are-we-alone-in-the-universe",
-  "version": "2.13.0",
+  "version": "2.14.0",
   "description": "Static browser-based Earth-like planet calculator for transparent astrobiological scenario modelling.",
   "private": true,
   "repository": {

@@ -1,6 +1,6 @@
 # Calculator Code Audit Matrix
 
-This document contains the list of calculator code tests, calculator audit profiles, oracle tests, browser tests, and stress test cases that have been performed for version 2.13.
+This document contains the list of calculator code tests, calculator audit profiles, oracle tests, browser tests, and stress test cases that have been performed for version 2.14.
 
 Several lengthy audits of the calculator code were conducted on our systems for a total period of 20 hours, including two 10-hour time-boxed audit runs in addition to smoke, static analysis, browser, oracle, and specific regression audits.
 
@@ -66,7 +66,7 @@ Evidence summary: the latest completed 10-hour calculator audit passed 131/131 p
 | `npm run test:calibration` | PASS | No current error | Calibration/accessibility/source checks pass. |
 | `npm run test:source-links` | PASS | No current error | Visible source-link checks pass. |
 | `npm run test:biogeo-sources` | PASS | No current error | Bio/geophysical source checks pass. |
-| `npm run test:absolute` | PASS | No current error | Absolute deep audit passed 22 sections, 1,515 assertions, and 0 failures. |
+| `npm run test:absolute` | PASS | No current error | Absolute deep audit passed 22 sections, 1,510 assertions, and 0 failures. |
 | `npm run test:deep` | FIXED | Yes, same earlier failure as `test:state-transition:deep` | Alias for the deep state-transition path; latest local run passes in full. |
 | `npm run test:all` | PASS | No current error | Combined CI-style calculator suite passes; it does not include `test:absolute` or `test:deep`. |
 
@@ -75,7 +75,7 @@ Evidence summary: the latest completed 10-hour calculator audit passed 131/131 p
 | Section | Status | Error observed | Fixed/current state |
 | --- | --- | --- | --- |
 | Bootstrap | PASS | No current error | 14 assertions passed. |
-| Static Integrity | PASS | No current error | 151 assertions passed. |
+| Static Integrity | PASS | No current error | 149 assertions passed. |
 | Browser Bootstrap and Runtime Smoke Test | PASS | No current error | 20 assertions passed. |
 | Deterministic Model | PASS | No current error | 17 assertions passed. |
 | Preset Roundtrip | PASS | No current error | 400 assertions passed. |
@@ -91,12 +91,12 @@ Evidence summary: the latest completed 10-hour calculator audit passed 131/131 p
 | Universe Scaling | PASS | No current error | 13 assertions passed. |
 | Export Share History | PASS | No current error | 24 assertions passed. |
 | Charts State Invalidation | PASS | No current error | 6 assertions passed. |
-| Source Docs Wording | PASS | No current error | 69 assertions passed. |
+| Source Docs Wording | PASS | No current error | 66 assertions passed. |
 | Registry Consistency | PASS | No current error | 176 assertions passed. |
 | Cache Invalidation | PASS | No current error | 24 assertions passed. |
 | Performance | PASS | No current error | 3 assertions passed. |
 | Existing Test Orchestration | PASS | No current error | 16 assertions passed. |
-| Absolute audit total | PASS | No current error | 1,515 assertions passed with 0 failures. |
+| Absolute audit total | PASS | No current error | 1,510 assertions passed with 0 failures. |
 
 ## B.2 Deep State-Transition Test Areas
 
@@ -120,8 +120,8 @@ Evidence summary: the latest completed 10-hour calculator audit passed 131/131 p
 | Independent recomputation of four deterministic preset outputs | PASS | No mismatch | Pessimist, consensus, Kepler/Gaia, and optimist deterministic outputs were independently recomputed and matched the calculator golden outputs. |
 | Deep-test Node VM storage harness | FIXED | Yes, `window.localStorage` was missing from the VM `window` mock while global `localStorage` existed | Harness now shares one storage mock between global `localStorage` and `window.localStorage`; `npm run test:deep` passes. |
 | Production storage crash safety | PASS | No production crash path found in reviewed storage access | `safeHistoryStorage()`, read, write, and clear paths are guarded; restricted storage degrades history rather than calculator execution. |
-| Restrictive browser / Wix iframe history UX | OPEN | No crash, but history may silently be unavailable or ephemeral | Recommended future improvement: storage sentinel round-trip and a visible history-unavailable note. |
-| Manual iOS Safari / Wix history persistence check | OPEN | Not performed locally | Recommended manual QA: run live embedded page on real iOS Safari, calculate, reload, and confirm whether history persists. |
+| Restrictive browser / embedded history UX | OPEN | No crash, but history may silently be unavailable or ephemeral | Recommended future improvement: storage sentinel round-trip and a visible history-unavailable note. |
+| Manual iOS Safari / embedded history persistence check | OPEN | Not performed locally | Recommended manual QA: run live embedded page on real iOS Safari, calculate, reload, and confirm whether history persists. |
 | Eta-Earth comparison caveat for factor decomposition | OPEN | Review-level documentation gap | Recommended documentation note: direct comparison with published eta-Earth values can over-filter when `f_composition` and `f_size` are interpreted as independent extra filters. |
 | Core-factor correlation note | OPEN | Review-level documentation gap | Recommended documentation note for correlated core factors such as H2O/CHNOPS, magnetosphere/size, and rotation/lunar stability. |
 | Monte Carlo sampler distributional tests | OPEN | Not currently covered by existing tests | Future tests should check distribution shape and quantile convergence, not only reproducibility and ordering. |

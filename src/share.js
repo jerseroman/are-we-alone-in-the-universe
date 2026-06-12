@@ -151,7 +151,7 @@ function buildJSONExportSnapshot() {
 
   const snap = {
     calculator: 'Are We Alone in the Universe? Earth-like Planet Calculator',
-    version: '2.13',
+    version: '2.14',
     timestamp: new Date().toISOString(),
     preset: activePreset || 'custom',
     scenario_label: typeof getScenarioExportLabel === 'function' ? getScenarioExportLabel() : (activePreset || 'custom'),
@@ -316,7 +316,7 @@ function buildLatexExportText() {
     : bayesianMode;
 
   return (
-    '% Are We Alone in the Universe? Earth-like Planet Calculator v2.13\n' +
+    '% Are We Alone in the Universe? Earth-like Planet Calculator v2.14\n' +
     '% Exported: ' + new Date().toISOString() + '\n' +
     '% Scenario: ' + (typeof getScenarioExportLabel === 'function' ? getScenarioExportLabel() : (activePreset || 'custom')) + ' | Galaxy: ' + galaxyName + ' | Observational prior: ' + bayesLabel + '\n\n' +
     '% MC mode: ' + exportedMcMode + ' | Uncertainty basis: ' + exportedBasis + ' | simulationCompleted: ' + String(!!simulationCompleted) + ' | MC state: ' + mcState + '\n' +
@@ -355,7 +355,7 @@ window.exportLatex = exportLatex;
 // When updating source DOIs or titles, update both locations or refactor exportBibtex to read from the registry.
 function exportBibtex() {
   const bib =
-    '% BibTeX references - Are We Alone in the Universe? Earth-like Planet Calculator v2.13\n' +
+    '% BibTeX references - Are We Alone in the Universe? Earth-like Planet Calculator v2.14\n' +
     '% Exported: ' + new Date().toISOString() + '\n\n' +
     '@article{Drake1965,\n  author={Drake, Frank},\n  title={The Radio Search for Intelligent Extraterrestrial Life},\n  journal={Current Aspects of Exobiology},\n  year={1965},\n  pages={323--345}\n}\n\n' +
     '@article{Lineweaver2004,\n  author={Lineweaver, Charles H.},\n  title={The Galactic Habitable Zone and the Age Distribution of Complex Life in the Milky Way},\n  journal={Science},\n  volume={303},\n  number={5654},\n  pages={59--62},\n  year={2004},\n  doi={10.1126/science.1092322}\n}\n\n' +

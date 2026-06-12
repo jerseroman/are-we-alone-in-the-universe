@@ -26,7 +26,7 @@ The calculator uses four calibration badges:
 
 `MS` is not a failure label; it indicates that the cited literature supports the mechanism but not the exact displayed number. `MP` is not necessarily wrong; it marks scenario/user-driven assumptions. `LC` is the only class that should be interpreted as direct literature/reference calibration.
 
-## Post-audit Transparency Notes (v2.13)
+## Post-audit Transparency Notes (v2.14)
 
 After the full Math/Fermi audit, additional UI transparency was added for conceptually overlapping filters, Fermi-tension heuristic buckets, and maintenance risks around duplicated citation metadata. These changes do not alter formulas or numerical defaults. The specific items:
 

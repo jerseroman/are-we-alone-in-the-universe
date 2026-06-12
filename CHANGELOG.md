@@ -1,5 +1,41 @@
 # Changelog
 
+## v2.14 - 2026-06-12
+
+### Release And License
+
+- Updated the public review build from `v2.13` to `v2.14`.
+- Replaced the previous custom source-available non-commercial license with GNU AGPLv3 only (`AGPL-3.0-only`).
+- Updated active application, package, citation, Zenodo, export, test, README, cache-buster, and footer version metadata to `2.14`.
+- Added `RELEASE_NOTES_v2.14.md` for GitHub Release and Zenodo publication notes.
+
+### Audit-Driven Fixes
+
+- Added `CODE_AUDIT_MATRIX.md` with calculator audit coverage, fixed findings, and remaining open audit limitations.
+- Fixed deep state-transition test storage by sharing the same mock between global `localStorage` and `window.localStorage`.
+- Added JSON export checks for deterministic vs Monte Carlo Fermi/detection basis consistency.
+- Added historical signal-context regression checks for near-present, around-2000, and BCE/CE boundary cases.
+- Clarified sparse Poisson probability wording so expected counts below one are not described as impossible outcomes.
+- Replaced legacy SETI/civilisation-existence wording with active-detectable-transmitter wording where the SETI filter is being described.
+- Removed misleading "detection sphere" wording from area-based SETI density displays.
+
+### Calculator And Export Fixes
+
+- Fixed Sobol sensitivity filtering so it uses the same active sampled-parameter set as Monte Carlo.
+- Removed a duplicated Calculate button block.
+- Fixed the static Kepler/Gaia preset label.
+- Added an external-galaxy SETI range-gate branch.
+- Added count-basis disclosure to detection displays and JSON exports.
+- Expanded JSON Fermi, detection, horizon, and historical-context metadata.
+- Clarified LaTeX export scope and renamed export filenames from `habitability-*` to `earth-like-candidate-*`.
+
+### Assets And Repository Hygiene
+
+- Added local UI imagery under `assets/images/` and updated UI image references to local assets.
+- Added social metadata, canonical URL, favicon, and README banner/badges.
+- Added `CONTRIBUTING.md`.
+- Removed obsolete embed build script.
+
 ## v2.13 - 2026-05-23; semantic-coherence patch 2026-05-27
 
 ### Monte Carlo Semantic Coherence — Fixed

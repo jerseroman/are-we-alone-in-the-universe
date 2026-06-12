@@ -114,7 +114,7 @@ function scanFiles() {
     path.join(root, 'index.html'),
     path.join(root, 'README.md'),
     path.join(root, 'CHANGELOG.md'),
-    path.join(root, 'RELEASE_NOTES_v2.13.md')
+    path.join(root, 'RELEASE_NOTES_v2.14.md')
   ];
 
   files.push(...walk(path.join(root, 'src'), file => file.endsWith('.js')));
