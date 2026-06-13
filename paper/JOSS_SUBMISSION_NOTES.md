@@ -22,7 +22,7 @@ The software is particularly relevant for astrobiology education, exoplanet-demo
 
 ## AI disclosure to keep consistent everywhere
 
-OpenAI ChatGPT, including GPT-5.5 Thinking, and OpenAI Codex were used as assistive tools for drafting, copy-editing, repository review, audit-prompt design, and test-planning support. All AI-assisted outputs were reviewed, edited, validated, and accepted or rejected by the human author. The author made the core scientific, modelling, release, and wording decisions and remains responsible for accuracy, originality, licensing, and compliance.
+OpenAI ChatGPT, including GPT-5.5 Thinking, OpenAI Codex, and Anthropic Claude were used as assistive tools for drafting, copy-editing, repository review, audit-prompt design, and test-planning support. All AI-assisted outputs were reviewed, edited, validated, and accepted or rejected by the human author. The author made the core scientific, modelling, release, and wording decisions and remains responsible for accuracy, originality, licensing, and compliance.
 
 During JOSS review, do not use AI to generate substantive replies to editors or reviewers, except for translation or language polishing where disclosed.
 
