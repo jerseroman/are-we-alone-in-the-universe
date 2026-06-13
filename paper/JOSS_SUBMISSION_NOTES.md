@@ -16,15 +16,21 @@ Are We Alone in the Universe? Earth-like Planet Calculator is a browser-based re
 
 ## Suggested JOSS submission form text
 
-This submission describes v2.15 of a browser-based astrobiology scenario calculator. The software provides transparent, auditable estimates of potentially Earth-like candidates under user-selected assumptions, with deterministic calculations, Monte Carlo uncertainty propagation, optional planetary constraints, release notes, tests, documentation, and citation metadata. The main scholarly contribution is not a new observational result, but a reusable and inspectable modelling workflow that makes the conditional structure of Earth-like-candidate estimates explicit.
+TThis submission describes v2.15.0 of a browser-based astrobiology scenario calculator. The software provides transparent, auditable estimates of potentially Earth-like candidates under user-selected assumptions, with deterministic calculations, seeded Monte Carlo uncertainty propagation, optional planetary constraints, validation warnings, release notes, tests, documentation, citation metadata, and a Zenodo software archive. The main scholarly contribution is not a new observational result, but a reusable and inspectable modelling workflow that makes the conditional structure of Earth-like-candidate estimates explicit.
 
 The software is particularly relevant for astrobiology education, exoplanet-demography sensitivity analysis, and public-facing scientific communication where assumptions must remain visible and reproducible. It complements exoplanet catalogues and specialist simulation tools by providing a lightweight, browser-native, parameter-transparent scenario instrument.
 
-## AI disclosure to keep consistent everywhere
+Related publication status: no peer-reviewed article about this software has been published or submitted elsewhere. A separate short methods paper may be prepared later, but this JOSS submission concerns the software implementation and its research-software workflow.
 
-OpenAI ChatGPT, including GPT-5.5 Thinking, OpenAI Codex, and Anthropic Claude were used as assistive tools for drafting, copy-editing, repository review, audit-prompt design, and test-planning support. All AI-assisted outputs were reviewed, edited, validated, and accepted or rejected by the human author. The author made the core scientific, modelling, release, and wording decisions and remains responsible for accuracy, originality, licensing, and compliance.
+Potential conflicts of interest: none declared. No external funding supported this work.
 
-During JOSS review, do not use AI to generate substantive replies to editors or reviewers, except for translation or language polishing where disclosed.
+## AI disclosure
+
+Generative AI tools were used in a limited assistive role during the preparation of this software. OpenAI ChatGPT, including GPT-5.5 Thinking, OpenAI Codex, and Anthropic Claude Opus 4.8 + VS supported drafting, copy-editing, partial code-writing assistance, code-review support, documentation review, audit-prompt design, and test-planning support. These tools were used across code, paper text, documentation, and review-preparation materials, but they did not originate or determine the project concept, core research questions, scientific framing, scientific rationale, model assumptions, parameter choices, software architecture, validation strategy, interpretation of results. 
+
+All AI-assisted text, code suggestions, repository changes, and methodological suggestions were reviewed, edited, validated, and either accepted or rejected by the human author. The author remains responsible for the accuracy, originality, licensing, security, reproducibility, and compliance of the submitted work.
+
+For any later JOSS review correspondence, generative AI will be limited to translation or language polishing where disclosed; substantive scientific and technical responses to editors and reviewers will be written and approved by the author.
 
 ## Critical readiness checks before pressing submit
 
