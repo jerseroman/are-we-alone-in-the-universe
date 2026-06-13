@@ -107,6 +107,8 @@ function loadCalculator() {
       monteCarloCalculate,
       runMonteCarloSimulation,
       createSeededRng,
+      sampleLogitNormalQuantile,
+      sampleLogNormalQuantile,
       buildDistanceMetrics,
       getSimulationOptions,
       getMonteCarloBoundsDescriptor,
@@ -231,6 +233,41 @@ if (summarizeSequence(directA) === summarizeSequence(directB)) {
 const defaultRun = loadCalculator().monteCarloCalculate({ samples: sampleCount, updateUi: false });
 assertValidSummary('default unseeded Monte Carlo', defaultRun);
 pass('Default unseeded Monte Carlo mode returns a valid summary.');
+
+{
+  const calculator = loadCalculator();
+  const cases = [
+    {
+      label: 'logit-normal q50 near lower probability edge',
+      actual: calculator.sampleLogitNormalQuantile(0.02, 0.01, 0.5, 0.5),
+      expected: 0.02
+    },
+    {
+      label: 'logit-normal q50 with broad asymmetric probability bounds',
+      actual: calculator.sampleLogitNormalQuantile(0.05, 0.01, 0.9, 0.5),
+      expected: 0.05
+    },
+    {
+      label: 'log-normal q50 near upper positive bound',
+      actual: calculator.sampleLogNormalQuantile(0.9, 0, 1, 0.5),
+      expected: 0.9
+    },
+    {
+      label: 'log-normal q50 for asymmetric N_GHZ global envelope',
+      actual: calculator.sampleLogNormalQuantile(1e10, 5e9, 4e10, 0.5),
+      expected: 1e10
+    }
+  ];
+
+  for (const item of cases) {
+    const tolerance = Math.max(1e-6, Math.abs(item.expected) * 1e-5);
+    if (Math.abs(item.actual - item.expected) <= tolerance) {
+      pass(`${item.label}: bounded adaptive median remains anchored at ${fmt(item.expected)}.`);
+    } else {
+      fail(`${item.label}: q50=${fmt(item.actual)}, expected ${fmt(item.expected)}.`);
+    }
+  }
+}
 
 const distanceHarness = loadCalculator();
 const simulationOptions = distanceHarness.getSimulationOptions();
@@ -385,7 +422,7 @@ if (pessimistInside || pessimistComparison.warning) {
 }
 
 if (
-  Math.abs(pessimistCase.deterministic - 1.27575e-6) <= 1e-18 &&
+  Math.abs(pessimistCase.deterministic - 6.804e-6) <= 1e-18 &&
   pessimistCase.summary.p500 < 0.0001 &&
   pessimistCase.summary.mean < 0.001
 ) {

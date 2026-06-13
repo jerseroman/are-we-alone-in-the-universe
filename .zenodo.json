@@ -5,8 +5,8 @@
     }
   ],
   "title": "Are We Alone in the Universe? Earth-like Planet Calculator",
-  "version": "2.14",
-  "publication_date": "2026-06-12",
+  "version": "2.15",
+  "publication_date": "2026-06-13",
   "upload_type": "software",
   "access_right": "open",
   "license": "AGPL-3.0-only",
@@ -33,7 +33,7 @@
     "nearest-neighbour distance scale",
     "Milky Way"
   ],
-  "description": "<p>Are We Alone in the Universe? Earth-like Planet Calculator is a static browser-based scientific modelling tool for examining how different astrophysical and planetary assumptions shape estimates of potentially Earth-like candidate environments in the Milky Way and the observable universe.</p><p>Version 2.14 updates the project license to GNU AGPLv3, adds a calculator code audit matrix, improves SETI/Fermi detectability wording and export metadata, fixes Sobol sensitivity filtering, removes a duplicate Calculate button rendering bug, clarifies sparse Poisson probability displays, and documents the radial-GHZ metallicity and supernova-survival weighting used by the distance model.</p><p>The software is intended for exploratory modelling, sensitivity analysis, and methodological communication. Its numerical outputs are conditional scenario estimates derived from explicit assumptions, not observational measurements, empirical occurrence-rate determinations, or claims about confirmed biospheres, inhabited worlds, or technologically detectable activity.</p>",
+  "description": "<p>Are We Alone in the Universe? Earth-like Planet Calculator is a static browser-based scientific modelling tool for examining how different astrophysical and planetary assumptions shape estimates of potentially Earth-like candidate environments in the Milky Way and the observable universe.</p><p>Version 2.15 adds a targeted source and prior update for water availability, CHNOPS availability, axial-tilt suitability, and lunar or equivalent obliquity stabilization, while preserving the calculator's established methodological framing. It also incorporates the post-audit numerical and UI fixes prepared for the v2.15 public review build.</p><p>The software is intended for exploratory modelling, sensitivity analysis, and methodological communication. Its numerical outputs are conditional scenario estimates derived from explicit assumptions, not observational measurements, empirical occurrence-rate determinations, or claims about confirmed biospheres, inhabited worlds, or technologically detectable activity.</p>",
   "related_identifiers": [
     {
       "identifier": "https://github.com/jerseroman/are-we-alone-in-the-universe",

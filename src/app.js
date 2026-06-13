@@ -2933,7 +2933,7 @@ function renderDetectionPanel() {
         return (value / 1e6).toFixed(2) + ' million light-years';
       };
       var subPoissonWarning = r.N_det < 1
-        ? '<div style="font-size:9.2px;color:var(--red);margin-top:5px;line-height:1.35;"><strong>Sub-Poisson regime:</strong> fewer than one active detectable transmitter is expected on average inside the current detection horizon. Non-detection is therefore the statistically dominant outcome, although the Poisson probability is not zero.</div>'
+        ? '<div style="font-size:9.2px;color:var(--text-dim);margin-top:5px;line-height:1.35;"><strong>Sub-Poisson regime:</strong> fewer than one active detectable transmitter is expected on average inside the current detection horizon. Non-detection is therefore the statistically dominant outcome, although the Poisson probability is not zero.</div>'
         : '';
       if (r.is_external_reference && Number.isFinite(r.earth_distance)) {
         if (r.nearest_beyond_horizon) {

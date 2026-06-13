@@ -17,13 +17,13 @@
   <meta name="twitter:image" content="https://www.arewealoneintheuniverse.com/assets/images/Banner.jpg">
   <link rel="icon" type="image/webp" href="assets/images/site-logo.webp">
   <title>
-   Are We Alone in the Universe? Earth-like Planet Calculator   / Version 2.14
+   Are We Alone in the Universe? Earth-like Planet Calculator   / Version 2.15
   </title>
   <script async crossorigin="anonymous" id="MathJax-script" integrity="sha384-Wuix6BuhrWbjDBs24bXrjf4ZQ5aFeFWBuKkFekO2t8xFU0iNaLQfp2K6/1Nxveei" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"></script>
   <script crossorigin="anonymous" integrity="sha384-VzkrKzZ91/plZ4HYGoiYkmzTHxxDK2ezfxfzA5Sg/EhhKf9MY0SkYZ0pBd4yG1CF" src="https://cdn.jsdelivr.net/npm/apexcharts@5.12.0/dist/apexcharts.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&amp;family=Nunito:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
   <link crossorigin="anonymous" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" rel="stylesheet"/>
-  <link href="src/styles.css?v=site-v2.14-20260612" rel="stylesheet">
+  <link href="src/styles.css?v=site-v2.15-20260613" rel="stylesheet">
  </head>
  <body>
 <noscript>
@@ -38,12 +38,12 @@
     <div class="header-eyebrow">
      Cosmic Earth Analog Calculator
      <span class="version-badge">
-      v2.14
+      v2.15
      </span>
     </div>
     <div class="header-inner">
      <div class="header-logo-wrap">
-      <img alt="Are We Alone in the Universe? Earth-like Planet Calculator logo" src="assets/images/site-logo.webp"/>
+      <img alt="Are We Alone in the Universe? Earth-like Planet Calculator logo" src="assets/images/site-logo.webp" onerror="this.onerror=null;this.src='https://static.wixstatic.com/media/313d4b_66bb920e17f3482a9a091b858d62bad3~mv2.webp';"/>
      </div>
      <div class="header-text">
       <h1>
@@ -727,18 +727,18 @@
     
     <div class="input-card physical" id="card-f_lunar_stability">
       <div class="card-icons">
-        <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. Large moons can affect obliquity stability, but the cited literature does not provide this exact occurrence range for lunar stabilizers.">MS</span>
+        <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. Lissauer et al. 2012 weakens the strict large-Moon requirement, but the displayed range remains a model prior rather than a measured occurrence rate.">MS</span>
         <div class="tooltip">
           <img src="assets/images/info-icon.webp" alt="Info">
           <span class="tooltiptext">
             <strong>Lunar stabilizer (f_moon)</strong><br>
-            Large moons can affect obliquity stability, and the cited literature supports the stabilizing mechanism. The displayed 0.20–0.80 range is an exploratory model prior, not a measured occurrence rate for lunar stabilizers.<br>
+            Lissauer et al. 2012 weakens the strict large-Moon requirement by showing that moonless Earth-like obliquity evolution need not be immediately catastrophic. The displayed 0.40–0.90 range is an exploratory model prior, not a measured occurrence rate for lunar stabilizers.<br>
             <span class="lit">
-              Laskar et al. 1993   / Lissauer et al. 2012   / Ćuk &amp; Stewart 2012 (Moon-formation context)
+              Lissauer et al. 2012   / Laskar et al. 1993 (stabilizing-moon contrast)
             </span>
           </span>
         </div>
-        <a href="https://doi.org/10.1038/361615a0" target="_blank" rel="noopener noreferrer">
+        <a href="https://doi.org/10.1016/j.icarus.2011.10.013" target="_blank" rel="noopener noreferrer">
           <img src="assets/images/source-link-icon.png" alt="Link">
         </a>
       </div>
@@ -746,22 +746,22 @@
       <label>Lunar Stabilizer (f_moon)</label>
       <div class="param-inputs">
         <div class="param-mean-row">
-          <input id="f_lunar_stability" max="1" min="0" step="0.01" type="number" value="0.50">
+          <input id="f_lunar_stability" max="1" min="0" step="0.01" type="number" value="0.70">
           <button class="interval-toggle" onclick="toggleInterval('f_lunar_stability')">±</button>
         </div>
         <div class="interval-row" id="interval-f_lunar_stability">
           <span class="interval-label">min</span>
-          <input id="f_lunar_stability_min" max="1" min="0" step="0.01" type="number" value="0.20">
+          <input id="f_lunar_stability_min" max="1" min="0" step="0.01" type="number" value="0.40">
           <span class="interval-label">max</span>
-          <input id="f_lunar_stability_max" max="1" min="0" step="0.01" type="number" value="0.80">
+          <input id="f_lunar_stability_max" max="1" min="0" step="0.01" type="number" value="0.90">
         </div>
       </div>
       <div class="input-note">Large moon or equivalent stabilizer.</div>
       <div class="lit-range source-links">
-        <span>Mechanism-supported model range: 0.20 ~ 0.80   /</span>
-        <a class="source-link" href="https://doi.org/10.1038/361615a0" target="_blank" rel="noopener noreferrer" aria-label="Open source: Laskar et al. 1993">Laskar et al. 1993 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">  /</span>
+        <span>Mechanism-supported model range: 0.40 ~ 0.90   /</span>
         <a class="source-link" href="https://doi.org/10.1016/j.icarus.2011.10.013" target="_blank" rel="noopener noreferrer" aria-label="Open source: Lissauer et al. 2012">Lissauer et al. 2012 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">  /</span>
+        <a class="source-link" href="https://doi.org/10.1038/361615a0" target="_blank" rel="noopener noreferrer" aria-label="Open source: Laskar et al. 1993">Laskar et al. 1993 <span class="source-link-icon" aria-hidden="true">↗</span></a>
       </div>
     </div>
 
@@ -850,18 +850,18 @@
     
     <div class="input-card physical" id="card-f_tilt">
       <div class="card-icons">
-        <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. Obliquity affects seasonality and climate stability, but the displayed value is not a directly measured occurrence fraction.">MS</span>
+        <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. Lissauer et al. 2012 and high-obliquity climate work support a less restrictive tilt prior, but the displayed value is not a measured occurrence fraction.">MS</span>
         <div class="tooltip">
           <img src="assets/images/info-icon.webp" alt="Info">
           <span class="tooltiptext">
             <strong>Favorable axial tilt (f_ε)</strong><br>
-            Obliquity affects seasonality, climate stability and habitability conditions. The cited literature supports the mechanism, but the displayed 0.30–0.65 range is an interpretive model prior, not a directly measured universal frequency.<br>
+            Lissauer et al. 2012 and high-obliquity climate work support a less restrictive axial-tilt filter than the previous Moon-dependent framing. The displayed 0.40–0.85 range is an interpretive model prior, not a directly measured universal frequency.<br>
             <span class="lit">
-              Williams &amp; Pollard 2002   / Linsenmeier et al. 2015
+              Lissauer et al. 2012   / Linsenmeier et al. 2015
             </span>
           </span>
         </div>
-        <a href="https://doi.org/10.1016/j.pss.2014.11.003" target="_blank" rel="noopener noreferrer">
+        <a href="https://doi.org/10.1016/j.icarus.2011.10.013" target="_blank" rel="noopener noreferrer">
           <img src="assets/images/source-link-icon.png" alt="Link">
         </a>
       </div>
@@ -869,20 +869,20 @@
       <label>Favorable Tilt (f_ε)</label>
       <div class="param-inputs">
         <div class="param-mean-row">
-          <input id="f_tilt" max="1" min="0" step="0.01" type="number" value="0.50">
+          <input id="f_tilt" max="1" min="0" step="0.01" type="number" value="0.60">
           <button class="interval-toggle" onclick="toggleInterval('f_tilt')">±</button>
         </div>
         <div class="interval-row" id="interval-f_tilt">
           <span class="interval-label">min</span>
-          <input id="f_tilt_min" max="1" min="0" step="0.01" type="number" value="0.30">
+          <input id="f_tilt_min" max="1" min="0" step="0.01" type="number" value="0.40">
           <span class="interval-label">max</span>
-          <input id="f_tilt_max" max="1" min="0" step="0.01" type="number" value="0.65">
+          <input id="f_tilt_max" max="1" min="0" step="0.01" type="number" value="0.85">
         </div>
       </div>
       <div class="input-note">Obliquity-related climate suitability.</div>
       <div class="lit-range source-links">
-        <span>Mechanism-supported model range: 0.30 ~ 0.65   /</span>
-        <a class="source-link" href="https://doi.org/10.1017/S1473550402001064" target="_blank" rel="noopener noreferrer" aria-label="Open source: Williams &amp; Pollard 2002">Williams &amp; Pollard 2002 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span>Mechanism-supported model range: 0.40 ~ 0.85   /</span>
+        <a class="source-link" href="https://doi.org/10.1016/j.icarus.2011.10.013" target="_blank" rel="noopener noreferrer" aria-label="Open source: Lissauer et al. 2012">Lissauer et al. 2012 <span class="source-link-icon" aria-hidden="true">↗</span></a>
         <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1016/j.pss.2014.11.003" target="_blank" rel="noopener noreferrer" aria-label="Open source: Linsenmeier et al. 2015">Linsenmeier et al. 2015 <span class="source-link-icon" aria-hidden="true">↗</span></a>
       </div>
@@ -896,18 +896,18 @@
       </div>
 
       <div class="card-icons">
-        <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. Volatile delivery is supported by the cited literature, but this is not a measured frequency of planets with surface liquid water.">MS</span>
+        <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. Water-content and snow-line models support the water-availability framing, but this is not a measured frequency of planets with stable surface oceans.">MS</span>
         <div class="tooltip">
           <img src="assets/images/info-icon.webp" alt="Info">
           <span class="tooltiptext">
             <strong>Surface water (f_H₂O)</strong><br>
-            Volatile delivery is a literature-supported mechanism, but the displayed 0.05–0.30 range is an exploratory model prior rather than a measured frequency of planets with surface liquid water.<br>
+            Water-content and snow-line models are closer to this filter than a generic volatile-delivery source. The displayed 0.10–0.80 range is an exploratory model prior rather than a measured frequency of planets with stable surface oceans.<br>
             <span class="lit">
-              Morbidelli et al. 2012
+              Tian &amp; Ida 2015   / Mulders et al. 2015
             </span>
           </span>
         </div>
-        <a href="https://doi.org/10.1146/annurev-earth-042711-105319" target="_blank" rel="noopener noreferrer">
+        <a href="https://doi.org/10.1038/ngeo2372" target="_blank" rel="noopener noreferrer">
           <img src="assets/images/source-link-icon.png" alt="Link">
         </a>
       </div>
@@ -915,14 +915,14 @@
       <label>Surface Water (f_H₂O)</label>
       <div class="param-inputs">
         <div class="param-mean-row">
-          <input id="f_H2O" max="1" min="0" step="0.01" type="number" value="0.10">
+          <input id="f_H2O" max="1" min="0" step="0.01" type="number" value="0.30">
           <button class="interval-toggle" onclick="toggleInterval('f_H2O')">±</button>
         </div>
         <div class="interval-row" id="interval-f_H2O">
           <span class="interval-label">min</span>
-          <input id="f_H2O_min" max="1" min="0" step="0.01" type="number" value="0.05">
+          <input id="f_H2O_min" max="1" min="0" step="0.01" type="number" value="0.10">
           <span class="interval-label">max</span>
-          <input id="f_H2O_max" max="1" min="0" step="0.01" type="number" value="0.30">
+          <input id="f_H2O_max" max="1" min="0" step="0.01" type="number" value="0.80">
         </div>
       </div>
       <div class="input-note">Surface liquid water filter.</div>
@@ -930,8 +930,10 @@
         Surface-water availability depends partly on atmospheric retention and volatile delivery. If those advanced modules are enabled separately, the model may apply multiple related constraints.
       </div>
       <div class="lit-range source-links">
-        <span>Mechanism-supported model range: 0.05 ~ 0.30   /</span>
-        <a class="source-link" href="https://doi.org/10.1146/annurev-earth-042711-105319" target="_blank" rel="noopener noreferrer" aria-label="Open source: Morbidelli et al. 2012">Morbidelli et al. 2012 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span>Mechanism-supported model range: 0.10 ~ 0.80   /</span>
+        <a class="source-link" href="https://doi.org/10.1038/ngeo2372" target="_blank" rel="noopener noreferrer" aria-label="Open source: Tian &amp; Ida 2015">Tian &amp; Ida 2015 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">  /</span>
+        <a class="source-link" href="https://arxiv.org/abs/1505.03516" target="_blank" rel="noopener noreferrer" aria-label="Open source: Mulders et al. 2015">Mulders et al. 2015 <span class="source-link-icon" aria-hidden="true">↗</span></a>
       </div>
     </div>
 
@@ -943,18 +945,18 @@
       </div>
 
       <div class="card-icons">
-        <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. Stellar abundance literature supports the elemental context, but planetary CHNOPS accessibility is uncertain and not directly measured by this range.">MS</span>
+        <span class="calibration-badge calibration-ms" tabindex="0" aria-label="Calibration status: mechanism-supported model prior" data-tooltip="Mechanism-supported model prior. Chemical-habitability and phosphorus literature better match planetary CHNOPS accessibility, but the displayed range is still not directly measured.">MS</span>
         <div class="tooltip">
           <img src="assets/images/info-icon.webp" alt="Info">
           <span class="tooltiptext">
             <strong>CHNOPS elements (f_CHNOPS)</strong><br>
-            Asplund 2009 supports the baseline stellar/solar abundance context for biogenic elements. The displayed 0.05–0.50 range represents uncertain planetary accessibility and is an exploratory model prior, not a directly measured CHNOPS availability fraction.<br>
+            Chemical-habitability literature better matches planetary CHNOPS supply and retention than solar abundance tables. The displayed 0.05–0.50 range represents uncertain planetary accessibility and is an exploratory model prior, not a directly measured CHNOPS availability fraction.<br>
             <span class="lit">
-              Asplund et al. 2009 (solar abundances)   / planetary accessibility remains uncertain
+              Krijt et al. 2022   / Hinkel et al. 2020
             </span>
           </span>
         </div>
-        <a href="https://doi.org/10.1146/annurev.astro.46.060407.145222" target="_blank" rel="noopener noreferrer">
+        <a href="https://arxiv.org/abs/2203.10056" target="_blank" rel="noopener noreferrer">
           <img src="assets/images/source-link-icon.png" alt="Link">
         </a>
       </div>
@@ -975,8 +977,9 @@
       <div class="input-note">Essential biochemistry availability.</div>
       <div class="lit-range source-links">
         <span>Model range: 0.05 ~ 0.50   /</span>
-        <a class="source-link" href="https://doi.org/10.1146/annurev.astro.46.060407.145222" target="_blank" rel="noopener noreferrer" aria-label="Open source: Asplund et al. 2009">Asplund et al. 2009 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">  / planetary accessibility uncertain</span>
+        <a class="source-link" href="https://arxiv.org/abs/2203.10056" target="_blank" rel="noopener noreferrer" aria-label="Open source: Krijt et al. 2022">Krijt et al. 2022 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">  /</span>
+        <a class="source-link" href="https://doi.org/10.3847/2041-8213/abb3cb" target="_blank" rel="noopener noreferrer" aria-label="Open source: Hinkel et al. 2020">Hinkel et al. 2020 <span class="source-link-icon" aria-hidden="true">↗</span></a>
       </div>
     </div>
   </div>
@@ -1403,11 +1406,11 @@
        <div class="adv-inline-note" id="adv-vol-note">
        </div>
        <div class="lit-range source-links">
-        <a class="source-link" href="https://doi.org/10.1146/annurev-earth-042711-105319" target="_blank" rel="noopener noreferrer" aria-label="Open source: Morbidelli et al. 2012">Morbidelli et al. 2012 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <a class="source-link" href="https://doi.org/10.1038/ngeo2372" target="_blank" rel="noopener noreferrer" aria-label="Open source: Tian &amp; Ida 2015">Tian &amp; Ida 2015 <span class="source-link-icon" aria-hidden="true">↗</span></a>
+        <span class="source-separator">  /</span>
+        <a class="source-link" href="https://arxiv.org/abs/1505.03516" target="_blank" rel="noopener noreferrer" aria-label="Open source: Mulders et al. 2015">Mulders et al. 2015 <span class="source-link-icon" aria-hidden="true">↗</span></a>
         <span class="source-separator">  /</span>
         <a class="source-link" href="https://doi.org/10.1016/j.icarus.2003.11.019" target="_blank" rel="noopener noreferrer" aria-label="Open source: Raymond et al. 2004">Raymond et al. 2004 <span class="source-link-icon" aria-hidden="true">↗</span></a>
-        <span class="source-separator">  /</span>
-        <a class="source-link" href="https://doi.org/10.1146/annurev-earth-060313-054834" target="_blank" rel="noopener noreferrer" aria-label="Open source: Tian 2015">Tian 2015 <span class="source-link-icon" aria-hidden="true">↗</span></a>
        </div>
       </div>
      </div>
@@ -2418,17 +2421,17 @@
     </div>
    </div>
    <div class="footer">
-    <span>© Are We Alone in the Universe? Research modelling tool v2.14   / Also by the author of: <a href="https://www.apocalypseclock.com/" rel="noopener noreferrer" target="_blank" style="text-decoration:none;color:inherit;">Apocalypse Clock</a></span>
+    <span>© Are We Alone in the Universe? Research modelling tool v2.15   / Also by the author of: <a href="https://www.apocalypseclock.com/" rel="noopener noreferrer" target="_blank" style="text-decoration:none;color:inherit;">Apocalypse Clock</a></span>
    </div>
   </div>
   <div id="copy-tooltip">
    Copied!
   </div>
-  <script src="src/scientific-parameters.js?v=site-v2.14-20260612"></script>
-  <script src="src/calculator-core.js?v=site-v2.14-20260612"></script>
-<script src="src/charts.js?v=site-v2.14-20260612"></script>
-<script src="src/share.js?v=site-v2.14-20260612"></script>
-<script src="src/accessibility.js?v=site-v2.14-20260612"></script>
-<script src="src/app.js?v=site-v2.14-20260612"></script>
+  <script src="src/scientific-parameters.js?v=site-v2.15-20260613"></script>
+  <script src="src/calculator-core.js?v=site-v2.15-20260613"></script>
+<script src="src/charts.js?v=site-v2.15-20260613"></script>
+<script src="src/share.js?v=site-v2.15-20260613"></script>
+<script src="src/accessibility.js?v=site-v2.15-20260613"></script>
+<script src="src/app.js?v=site-v2.15-20260613"></script>
  </body>
 </html>

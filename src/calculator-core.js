@@ -1,4 +1,4 @@
-function byId(id) {
+﻿function byId(id) {
   return document.getElementById(id);
 }
 
@@ -462,11 +462,11 @@ const DEFAULT_PARAMETER_BOUNDS = Object.freeze({
   f_orbit: Object.freeze({ min: 0.10, max: 0.21 }),
   f_stability: Object.freeze({ min: 0.30, max: 0.70 }),
   f_magnetosphere: Object.freeze({ min: 0.20, max: 0.70 }),
-  f_lunar_stability: Object.freeze({ min: 0.20, max: 0.80 }),
+  f_lunar_stability: Object.freeze({ min: 0.40, max: 0.90 }),
   f_size: Object.freeze({ min: 0.30, max: 0.65 }),
   f_rotation: Object.freeze({ min: 0.15, max: 0.35 }),
-  f_tilt: Object.freeze({ min: 0.30, max: 0.65 }),
-  f_H2O: Object.freeze({ min: 0.05, max: 0.30 }),
+  f_tilt: Object.freeze({ min: 0.40, max: 0.85 }),
+  f_H2O: Object.freeze({ min: 0.10, max: 0.80 }),
   f_CHNOPS: Object.freeze({ min: 0.05, max: 0.50 }),
   f_complex_life: Object.freeze({ min: 0.000000001, max: 1.0 }),
   f_x: Object.freeze({ min: 0.5, max: 1.0 })
@@ -715,8 +715,11 @@ const PRESET_LOCAL_WIDTH_PROFILES = {
 };
 
 const PRESET_LOCAL_PARAM_WIDTHS = Object.freeze({
-  N_GHZ: 'medium',
-  N_p_star: 'medium',
+  // GHZ star count is an interpretive prior and should remain the dominant
+  // scale uncertainty in clean named presets; planet multiplicity is better
+  // constrained by occurrence-rate surveys.
+  N_GHZ: 'broad',
+  N_p_star: 'narrow',
   f_sun_type: 'medium',
   f_sun_age: 'narrow',
   f_composition: 'medium',
@@ -743,6 +746,10 @@ const PRESET_LOCAL_PARAM_WIDTHS = Object.freeze({
   adv_f_rad: 'medium',
   adv_P_rocky: 'medium'
 });
+
+const SOBOL_BASE_SAMPLE_COUNT = 1000;
+
+const SOBOL_DEFAULT_SEED = 20260613;
 
 const PRESET_LOCAL_UNCERTAINTY_BASIS =
   'Scenario-local transformed-space bands centered on the selected preset central values; not observational confidence intervals.';
@@ -797,11 +804,11 @@ const PRESETS = {
     f_orbit: 0.10,
     f_stability: 0.30,
     f_magnetosphere: 0.20,
-    f_lunar_stability: 0.20,
+    f_lunar_stability: 0.40,
     f_size: 0.30,
     f_rotation: 0.15,
-    f_tilt: 0.30,
-    f_H2O: 0.05,
+    f_tilt: 0.40,
+    f_H2O: 0.10,
     f_CHNOPS: 0.05,
     f_complex_life: 0.000001,
     f_x: 1,
@@ -821,11 +828,11 @@ const PRESETS = {
     f_orbit: 0.18,
     f_stability: 0.50,
     f_magnetosphere: 0.50,
-    f_lunar_stability: 0.50,
+    f_lunar_stability: 0.70,
     f_size: 0.50,
     f_rotation: 0.27,
-    f_tilt: 0.50,
-    f_H2O: 0.10,
+    f_tilt: 0.60,
+    f_H2O: 0.30,
     f_CHNOPS: 0.10,
     f_complex_life: 0.01,
     f_x: 1,
@@ -845,11 +852,11 @@ const PRESETS = {
     f_orbit: 0.21,
     f_stability: 0.70,
     f_magnetosphere: 0.70,
-    f_lunar_stability: 0.80,
+    f_lunar_stability: 0.90,
     f_size: 0.65,
     f_rotation: 0.35,
-    f_tilt: 0.65,
-    f_H2O: 0.30,
+    f_tilt: 0.85,
+    f_H2O: 0.80,
     f_CHNOPS: 0.50,
     f_complex_life: 1.0,
     f_x: 1,
@@ -869,11 +876,11 @@ const PRESETS = {
     f_orbit: 0.21,
     f_stability: 0.50,
     f_magnetosphere: 0.50,
-    f_lunar_stability: 0.50,
+    f_lunar_stability: 0.70,
     f_size: 0.55,
     f_rotation: 0.27,
-    f_tilt: 0.50,
-    f_H2O: 0.15,
+    f_tilt: 0.60,
+    f_H2O: 0.30,
     f_CHNOPS: 0.15,
     f_complex_life: 0.01,
     f_x: 1,
@@ -1249,98 +1256,98 @@ const STAR_DB = [
 ];
 
 const HISTORY_DB = [
-    {y:-10000, text:"the end of the last Ice Age   glaciers were retreating across the northern hemisphere, sea levels were rising, and the first permanent human settlements were just beginning to appear in the Levant"},
-    {y:-9900, text:"the very dawn of the Neolithic revolution   wild grasses were beginning to be harvested in the Fertile Crescent and the first proto-agricultural communities were experimenting with settled life"},
+    {y:-10000, text:"the end of the last Ice Age - glaciers were retreating across the northern hemisphere, sea levels were rising, and the first permanent human settlements were just beginning to appear in the Levant"},
+    {y:-9900, text:"the very dawn of the Neolithic revolution - wild grasses were beginning to be harvested in the Fertile Crescent and the first proto-agricultural communities were experimenting with settled life"},
     {y:-9800, text:"when Jericho was among the earliest known permanent settlements on Earth, housing a few hundred people beside a perennial spring in the Jordan Valley"},
     {y:-9700, text:"when the Younger Dryas cold reversal had just ended and a warmer, wetter climate was enabling the spread of wild cereal grasses across the Near East"},
-    {y:-9600, text:"when Göbekli Tepe in southeastern Turkey was being constructed   the world's oldest known monumental stone structure, built by hunter-gatherers before farming existed"},
-    {y:-9500, text:"when the first domesticated dogs were living alongside humans across Eurasia and the Near East   humanity's oldest partnership with another species"},
-    {y:-9400, text:"when early Natufian communities in the Levant were storing surplus wild grain   the first tentative steps toward food storage and sedentary life"},
+    {y:-9600, text:"when Göbekli Tepe in southeastern Turkey was being constructed - the world's oldest known monumental stone structure, built by hunter-gatherers before farming existed"},
+    {y:-9500, text:"when the first domesticated dogs were living alongside humans across Eurasia and the Near East - humanity's oldest partnership with another species"},
+    {y:-9400, text:"when early Natufian communities in the Levant were storing surplus wild grain - the first tentative steps toward food storage and sedentary life"},
     {y:-9300, text:"when figs may have been the first deliberately cultivated plant, grown in early settlements in the Jordan Valley centuries before wheat or barley"},
     {y:-9200, text:"when humans were beginning to manage wild sheep and goat herds across the Zagros Mountains of what is now Iran"},
     {y:-9100, text:"when the last land bridge between Britain and continental Europe still existed, and hunter-gatherers roamed what would become the floor of the North Sea"},
-    {y:-9000, text:"when farming was independently beginning in multiple regions   the Fertile Crescent, China, and possibly New Guinea   one of the most consequential transitions in human history"},
+    {y:-9000, text:"when farming was independently beginning in multiple regions - the Fertile Crescent, China, and possibly New Guinea - one of the most consequential transitions in human history"},
     {y:-8900, text:"when the first mudbrick buildings were appearing in the Levant and Anatolia, replacing temporary shelters with permanent structures"},
-    {y:-8800, text:"when cattle were being domesticated in the Near East from wild aurochs   large, dangerous animals tamed over generations of selective herding"},
+    {y:-8800, text:"when cattle were being domesticated in the Near East from wild aurochs - large, dangerous animals tamed over generations of selective herding"},
     {y:-8700, text:"when emmer wheat and einkorn wheat were being deliberately cultivated in the Fertile Crescent, marking the definitive beginning of agriculture"},
-    {y:-8600, text:"when the earliest known pottery was being made in East Asia   among the first human-made containers for storing and cooking food"},
+    {y:-8600, text:"when the earliest known pottery was being made in East Asia - among the first human-made containers for storing and cooking food"},
     {y:-8500, text:"when pigs were being domesticated independently in the Near East and China, and the human population of Earth was perhaps 5 million people"},
     {y:-8400, text:"when early farming villages were spreading across Anatolia and the Levant, each housing dozens to hundreds of people in a new way of living"},
-    {y:-8300, text:"when increasingly organised water management was beginning to support farming communities in Mesopotamia and nearby regions   humans were starting to reshape landscapes more deliberately"},
-    {y:-8200, text:"the 8.2 kiloyear climate event   a sudden cold snap lasting about 150 years disrupted early farming communities across the Near East and may have triggered population movements"},
+    {y:-8300, text:"when increasingly organised water management was beginning to support farming communities in Mesopotamia and nearby regions - humans were starting to reshape landscapes more deliberately"},
+    {y:-8200, text:"the 8.2 kiloyear climate event - a sudden cold snap lasting about 150 years disrupted early farming communities across the Near East and may have triggered population movements"},
     {y:-8100, text:"when large Pre-Pottery Neolithic communities were expanding across Anatolia and the Levant, with dense mud-brick settlements becoming a new social form"},
     {y:-8000, text:"when early farming villages across southwest Asia were growing denser and more permanent, prefiguring later large Neolithic settlements"},
     {y:-7900, text:"when farming communities were spreading into Europe along the Danube River corridor, bringing agriculture to populations who had been hunter-gatherers for tens of thousands of years"},
-    {y:-7800, text:"when obsidian from volcanic sources in Anatolia was being traded across hundreds of kilometres   evidence of the first long-distance exchange networks"},
-    {y:-7700, text:"when the Black Sea basin may have been flooded catastrophically as Mediterranean waters broke through the Bosporus   a possible origin of ancient flood myths"},
-    {y:-7600, text:"when linen textiles were being woven in the Near East   among the earliest known woven fabrics, made from cultivated flax"},
-    {y:-7500, text:"when native copper was beginning to be worked into small ornaments in parts of southwest Asia and southeastern Europe   long before full metallurgy transformed society"},
+    {y:-7800, text:"when obsidian from volcanic sources in Anatolia was being traded across hundreds of kilometres - evidence of the first long-distance exchange networks"},
+    {y:-7700, text:"when the Black Sea basin may have been flooded catastrophically as Mediterranean waters broke through the Bosporus - a possible origin of ancient flood myths"},
+    {y:-7600, text:"when linen textiles were being woven in the Near East - among the earliest known woven fabrics, made from cultivated flax"},
+    {y:-7500, text:"when native copper was beginning to be worked into small ornaments in parts of southwest Asia and southeastern Europe - long before full metallurgy transformed society"},
     {y:-7400, text:"when farming had reached southeastern Europe and Çatalhöyük in central Anatolia was emerging as one of the earliest and largest Neolithic settlements"},
     {y:-7300, text:"when the first known temples dedicated to ritual worship were being built in the Near East, suggesting organised religious practice"},
     {y:-7200, text:"when herding societies were expanding across southwest Asia and the Eurasian steppe was still millennia away from true horse domestication"},
-    {y:-7100, text:"when rice cultivation was beginning in the Yangtze River valley of China   an independent agricultural revolution that would sustain billions of people"},
+    {y:-7100, text:"when rice cultivation was beginning in the Yangtze River valley of China - an independent agricultural revolution that would sustain billions of people"},
     {y:-7000, text:"when Çatalhöyük was among the great Neolithic settlements of Anatolia, while the first proto-urban communities were developing in Mesopotamia"},
-    {y:-6900, text:"when the Ubaid culture was emerging in southern Mesopotamia   the foundation on which Sumerian civilization would eventually be built"},
+    {y:-6900, text:"when the Ubaid culture was emerging in southern Mesopotamia - the foundation on which Sumerian civilization would eventually be built"},
     {y:-6800, text:"when millet farming was beginning in northern China and Africa, extending the agricultural revolution to new regions and crops"},
-    {y:-6700, text:"when the first known evidence of wine production appears in Georgia   grapes were being fermented in clay jars as early as 6,700 BC"},
-    {y:-6600, text:"when irrigation canals were being dug in Mesopotamia to bring water to fields far from rivers   the beginnings of large-scale landscape engineering"},
-    {y:-6500, text:"when megalithic tomb construction was beginning in Europe   massive stone monuments that required coordinated labour and reflected complex beliefs about death"},
-    {y:-6400, text:"when the Vinča culture in the Balkans was producing some of the earliest known symbolic writing-like markings   possibly proto-script"},
-    {y:-6300, text:"when sailing vessels were first being used in the Persian Gulf and Mediterranean   humanity was beginning to use the sea as a highway"},
-    {y:-6200, text:"when Eridu in Mesopotamia was among the earliest known temple settlements in the southern alluvium   a community that would later become central to Sumerian tradition"},
+    {y:-6700, text:"when the first known evidence of wine production appears in Georgia - grapes were being fermented in clay jars as early as 6,700 BC"},
+    {y:-6600, text:"when irrigation canals were being dug in Mesopotamia to bring water to fields far from rivers - the beginnings of large-scale landscape engineering"},
+    {y:-6500, text:"when megalithic tomb construction was beginning in Europe - massive stone monuments that required coordinated labour and reflected complex beliefs about death"},
+    {y:-6400, text:"when the Vinča culture in the Balkans was producing some of the earliest known symbolic writing-like markings - possibly proto-script"},
+    {y:-6300, text:"when sailing vessels were first being used in the Persian Gulf and Mediterranean - humanity was beginning to use the sea as a highway"},
+    {y:-6200, text:"when Eridu in Mesopotamia was among the earliest known temple settlements in the southern alluvium - a community that would later become central to Sumerian tradition"},
     {y:-6100, text:"when the Sahara was still green and fertile, supporting large populations of pastoralists and hunter-gatherers across what is now barren desert"},
     {y:-6000, text:"when copper smelting was beginning to appear in southeastern Europe and Anatolia, and the earliest known cheese-making was occurring in Poland"},
-    {y:-5900, text:"when the megalithic monument of Carnac in Brittany, France was being constructed   thousands of standing stones aligned across the landscape"},
+    {y:-5900, text:"when the megalithic monument of Carnac in Brittany, France was being constructed - thousands of standing stones aligned across the landscape"},
     {y:-5800, text:"when the first known writing-like symbols were being incised on clay tokens in Mesopotamia to track goods and transactions"},
     {y:-5700, text:"when agriculture was spreading into the Nile Valley and the foundations of what would become Egyptian civilisation were being laid"},
-    {y:-5600, text:"when the first known beer was being brewed in Mesopotamia   fermented grain drinks became central to ancient urban life"},
-    {y:-5500, text:"when the Cucuteni-Trypillia culture in Eastern Europe was building some of the largest settlements in the world at that time   proto-urban villages of up to 15,000 people"},
+    {y:-5600, text:"when the first known beer was being brewed in Mesopotamia - fermented grain drinks became central to ancient urban life"},
+    {y:-5500, text:"when the Cucuteni-Trypillia culture in Eastern Europe was building some of the largest settlements in the world at that time - proto-urban villages of up to 15,000 people"},
     {y:-5400, text:"when late Neolithic societies across Eurasia were expanding exchange networks and experimenting with new technologies, though wheeled vehicles still lay in the future"},
     {y:-5300, text:"when Ötzi the Iceman's ancestors were living in the Alps and the Bronze Age was still two millennia away"},
     {y:-5200, text:"when the earliest known hieroglyphic precursors were appearing in Egypt and complex societies were emerging in the Nile Valley"},
     {y:-5100, text:"when Uruk in Mesopotamia was becoming the world's first true city, with a population that may have reached 50,000 people"},
     {y:-5000, text:"when the earliest wheel and wheeled-vehicle traditions were still in the future, while the Sahara was beginning its long transition toward the desert we know today"},
-    {y:-4900, text:"when the Uruk period in Mesopotamia was transforming city life   temples, administrators, and early bureaucracy were emerging"},
+    {y:-4900, text:"when the Uruk period in Mesopotamia was transforming city life - temples, administrators, and early bureaucracy were emerging"},
     {y:-4800, text:"when megalithic culture was spreading across Atlantic Europe and massive stone tombs were being built from Portugal to Scandinavia"},
     {y:-4700, text:"when increasingly intensive agriculture was spreading across Mesopotamia and other early farming regions, setting the stage for later plough-based cultivation"},
     {y:-4600, text:"when gold was first being worked in the Balkans and trade networks were connecting communities across thousands of kilometres"},
     {y:-4500, text:"when ceremonial earthworks and monument building were spreading in prehistoric Britain, long before Stonehenge reached its famous stone phases"},
     {y:-4400, text:"when steppe pastoral societies were expanding across the Pontic-Caspian world, centuries before horse domestication transformed Eurasia"},
-    {y:-4300, text:"when the first pictographic writing was developing in Mesopotamia   symbols pressed into clay to record grain, livestock, and labour"},
+    {y:-4300, text:"when the first pictographic writing was developing in Mesopotamia - symbols pressed into clay to record grain, livestock, and labour"},
     {y:-4200, text:"when the Uruk expansion was spreading Mesopotamian culture across the Near East through trade and colonisation"},
     {y:-4100, text:"when the earliest known wheeled carts were in use and bronze was beginning to be alloyed from copper and tin"},
     {y:-4000, text:"when the wheel and the ox-drawn plough were transforming agriculture across Eurasia and the first bronze tools were appearing"},
-    {y:-3900, text:"when proto-cuneiform writing was developing in Uruk   humans were on the verge of recording language itself, not just quantities"},
-    {y:-3800, text:"when Skara Brae, a remarkably preserved stone village in Orkney, Scotland, was being inhabited   complete with stone furniture and drainage systems"},
+    {y:-3900, text:"when proto-cuneiform writing was developing in Uruk - humans were on the verge of recording language itself, not just quantities"},
+    {y:-3800, text:"when Skara Brae, a remarkably preserved stone village in Orkney, Scotland, was being inhabited - complete with stone furniture and drainage systems"},
     {y:-3700, text:"when the first Egyptian hieroglyphs were being inscribed and the two kingdoms of Upper and Lower Egypt were about to be unified"},
     {y:-3600, text:"when megalithic passage-tomb traditions were flourishing in Atlantic Europe, aligned with the sky and embedded in elaborate ritual landscapes"},
     {y:-3500, text:"when Sumerian city-states were flourishing, the first true writing systems were in use, and the Bronze Age was fully underway in the Near East"},
     {y:-3400, text:"when the first dynasty of Egypt was being established and long-distance trade was connecting the Near East, Egypt, and the Indus Valley"},
-    {y:-3300, text:"when Ötzi the Iceman was alive in the Alps   his frozen body, discovered in 1991, gives us a vivid snapshot of late Neolithic European life"},
-    {y:-3200, text:"when Newgrange in Ireland was being constructed and the Indus Valley civilisation was beginning to emerge in what is now Pakistan   two remarkable worlds far apart in space but close in time"},
-    {y:-3100, text:"when the first pharaoh Narmer unified Upper and Lower Egypt   the beginning of one of history's longest-lasting civilisations"},
+    {y:-3300, text:"when Ötzi the Iceman was alive in the Alps - his frozen body, discovered in 1991, gives us a vivid snapshot of late Neolithic European life"},
+    {y:-3200, text:"when Newgrange in Ireland was being constructed and the Indus Valley civilisation was beginning to emerge in what is now Pakistan - two remarkable worlds far apart in space but close in time"},
+    {y:-3100, text:"when the first pharaoh Narmer unified Upper and Lower Egypt - the beginning of one of history's longest-lasting civilisations"},
 
-    {y:-3000, text:"the dawn of recorded history   Sumerian city-states flourished in Mesopotamia, cuneiform writing was invented, and the Bronze Age had just begun"},
+    {y:-3000, text:"the dawn of recorded history - Sumerian city-states flourished in Mesopotamia, cuneiform writing was invented, and the Bronze Age had just begun"},
     {y:-2900, text:"the Early Dynastic Period in Egypt, when the first pharaohs unified the Nile valley and proto-hieroglyphic writing spread"},
     {y:-2800, text:"the beginning of Stonehenge construction in Britain and the height of the early Sumerian city-states"},
     {y:-2700, text:"the Old Kingdom of Egypt, when Pharaoh Djoser commissioned the first stepped pyramid at Saqqara"},
     {y:-2600, text:"the construction of the Great Pyramid of Giza and the peak of the Indus Valley civilization at Mohenjo-daro"},
     {y:-2500, text:"when the Sphinx was built, copper tools were widespread, and the Indus Valley cities reached their greatest extent"},
-    {y:-2400, text:"the rise of the Akkadian Empire in Mesopotamia under Sargon of Akkad   the world's first true empire"},
+    {y:-2400, text:"the rise of the Akkadian Empire in Mesopotamia under Sargon of Akkad - the world's first true empire"},
     {y:-2300, text:"the Akkadian Empire at its height, when Sargon's armies controlled territory from the Persian Gulf to the Mediterranean"},
-    {y:-2200, text:"a period of dramatic collapse   prolonged drought destabilized the Old Kingdom of Egypt and several Bronze Age civilizations simultaneously"},
+    {y:-2200, text:"a period of dramatic collapse - prolonged drought destabilized the Old Kingdom of Egypt and several Bronze Age civilizations simultaneously"},
     {y:-2100, text:"the Third Dynasty of Ur in Mesopotamia, when the earliest known formal law code, attributed to Ur-Nammu, was written"},
-    {y:-2000, text:"the Middle Bronze Age   Minoan civilization on Crete was flourishing and Babylon was rising as a major city"},
+    {y:-2000, text:"the Middle Bronze Age - Minoan civilization on Crete was flourishing and Babylon was rising as a major city"},
     {y:-1900, text:"the completion of Stonehenge and the beginning of Babylon's dominance over Mesopotamian city-states"},
     {y:-1800, text:"the era of Hammurabi's famous law code and the earliest fully alphabetic writing systems"},
     {y:-1700, text:"the Hyksos invasion of Egypt, which introduced horse-drawn chariots and transformed Bronze Age warfare"},
     {y:-1600, text:"the emergence of Mycenaean civilization in Greece and the massive Thera volcanic eruption, possibly linked to the decline of Minoan Crete"},
     {y:-1500, text:"the New Kingdom of Egypt at its height, with Pharaoh Tuthmosis III commanding the largest Egyptian empire in history"},
     {y:-1400, text:"the Amarna Period in Egypt, when Akhenaten briefly introduced a form of monotheism centred on the sun disk"},
-    {y:-1300, text:"the Battle of Kadesh between Egypt and the Hittites   the earliest known peace treaty was signed shortly after"},
-    {y:-1200, text:"the Late Bronze Age Collapse, when nearly every major civilization around the Mediterranean simultaneously fell   one of history's great unsolved mysteries"},
+    {y:-1300, text:"the Battle of Kadesh between Egypt and the Hittites - the earliest known peace treaty was signed shortly after"},
+    {y:-1200, text:"the Late Bronze Age Collapse, when nearly every major civilization around the Mediterranean simultaneously fell - one of history's great unsolved mysteries"},
     {y:-1100, text:"the beginning of the Iron Age and the spread of the Phoenician alphabet, which would become the ancestor of nearly all modern scripts"},
-    {y:-1000, text:"when King David unified the Kingdom of Israel and the Zhou Dynasty governed China   an era of parallel civilizations across Eurasia"},
+    {y:-1000, text:"when King David unified the Kingdom of Israel and the Zhou Dynasty governed China - an era of parallel civilizations across Eurasia"},
     {y:-900, text:"the expansion of the Assyrian Empire and the founding of Carthage by Phoenician settlers in North Africa"},
     {y:-800, text:"when Homer composed the Iliad and Odyssey and the first Olympic Games were held in Greece in 776 BC"},
     {y:-700, text:"the Assyrian Empire at its peak and the introduction of the first metal coins in Lydia in western Anatolia"},
@@ -1350,15 +1357,15 @@ const HISTORY_DB = [
     {y:-300, text:"when Alexander the Great had already conquered from Greece to India, and Euclid was laying the foundations of geometry"},
     {y:-200, text:"the Roman Republic's rapid expansion and the beginning of construction on the Great Wall of China"},
     {y:-100, text:"when Julius Caesar was born, the Roman Republic neared its end, and the Silk Road began connecting East and West"},
-    {y:0, text:"the beginning of the Common Era   the Roman Empire dominated the Mediterranean world, the population of Earth was roughly 300 million, and major civilizations across Eurasia were linked by trade and empire"},
+    {y:0, text:"the beginning of the Common Era - the Roman Empire dominated the Mediterranean world, the population of Earth was roughly 300 million, and major civilizations across Eurasia were linked by trade and empire"},
     {y:100, text:"the height of the Roman Empire under Trajan, when the Colosseum stood complete and early Christianity was spreading across the Mediterranean"},
     {y:200, text:"when the Roman Empire began to fragment and China was divided in the Three Kingdoms period"},
     {y:300, text:"when Emperor Constantine legalised Christianity and founded Constantinople, reshaping the future of European civilisation"},
-    {y:400, text:"the collapse of the Western Roman Empire   Alaric sacked Rome in 410, Huns swept across Europe, and Augustine of Hippo wrote his Confessions"},
+    {y:400, text:"the collapse of the Western Roman Empire - Alaric sacked Rome in 410, Huns swept across Europe, and Augustine of Hippo wrote his Confessions"},
     {y:500, text:"just after the fall of the Western Roman Empire in 476, when the Byzantine Empire thrived and the Maya Classic Period reached its peak"},
     {y:600, text:"when Muhammad founded Islam and the Tang Dynasty began in China, opening two of the most transformative centuries in world history"},
     {y:700, text:"the beginning of the Islamic Golden Age and Arab armies reaching as far as Spain and India within a single generation"},
-    {y:800, text:"when Charlemagne was crowned Holy Roman Emperor and the Viking Age began   Europe was being reshaped from both north and south"},
+    {y:800, text:"when Charlemagne was crowned Holy Roman Emperor and the Viking Age began - Europe was being reshaped from both north and south"},
     {y:900, text:"when Vikings reached North America centuries before Columbus and the classic Maya civilisation was mysteriously collapsing"},
     {y:1000, text:"when Leif Eriksson reached Vinland, the Song Dynasty flourished in China, and the global human population stood at roughly 300 million"},
     {y:1100, text:"the era of the First Crusade, the construction of Notre-Dame cathedral, and the spread of the magnetic compass to Europe"},
@@ -1374,13 +1381,13 @@ const HISTORY_DB = [
 
     {y:1e6, text:"roughly 1 million years ago, when Homo erectus was spreading across Africa and Asia and the first controlled use of fire was beginning"},
     {y:2e6, text:"roughly 2 million years ago, when Homo habilis was using the first stone tools and the Pleistocene glaciations had just begun"},
-    {y:3e6, text:"roughly 3 million years ago, when Australopithecus afarensis   the species of the famous fossil Lucy   was walking upright across the African savanna"},
+    {y:3e6, text:"roughly 3 million years ago, when Australopithecus afarensis - the species of the famous fossil Lucy - was walking upright across the African savanna"},
     {y:4e6, text:"roughly 4 million years ago, when the earliest bipedal hominins roamed Africa and the Pliocene climate was warmer than today"},
     {y:5e6, text:"roughly 5 million years ago, when hominins and chimpanzees diverged from their last common ancestor and grasslands were spreading across Africa"},
-    {y:6e6, text:"roughly 6 million years ago, when Sahelanthropus tchadensis   possibly the oldest known hominin   was living in what is now Chad"},
+    {y:6e6, text:"roughly 6 million years ago, when Sahelanthropus tchadensis - possibly the oldest known hominin - was living in what is now Chad"},
     {y:7e6, text:"roughly 7 million years ago, when great apes were still diversifying and the African continent's landscapes were undergoing major ecological shifts"},
     {y:8e6, text:"roughly 8 million years ago, during the late Miocene, when ape species were widespread across Eurasia and Africa"},
-    {y:9e6, text:"roughly 9 million years ago, when Sivapithecus   a possible ancestor of orangutans   was foraging in the forests of Asia"},
+    {y:9e6, text:"roughly 9 million years ago, when Sivapithecus - a possible ancestor of orangutans - was foraging in the forests of Asia"},
     {y:10e6, text:"roughly 10 million years ago, at the start of the late Miocene global cooling that would drive grassland expansion and ultimately favour bipedal hominins"},
 
     {y:20e6, text:"roughly 20 million years ago, in the early Miocene, when whales had become fully aquatic, kelp forests appeared, and apes were rapidly diversifying"},
@@ -1394,16 +1401,16 @@ const HISTORY_DB = [
     {y:90e6, text:"roughly 90 million years ago, when warm shallow seas covered much of what is now North America and massive marine reptiles patrolled the depths"},
     {y:100e6, text:"roughly 100 million years ago, in the mid-Cretaceous, when flowering plants were diversifying explosively and the first bees were evolving alongside them"},
 
-    {y:200e6, text:"roughly 200 million years ago, in the early Jurassic, when Pangaea was beginning to break apart and the first mammals   tiny, shrew-like creatures   were appearing alongside the dominant dinosaurs"},
+    {y:200e6, text:"roughly 200 million years ago, in the early Jurassic, when Pangaea was beginning to break apart and the first mammals - tiny, shrew-like creatures - were appearing alongside the dominant dinosaurs"},
     {y:300e6, text:"roughly 300 million years ago, in the Carboniferous, when vast coal forests covered the continents, giant dragonflies with 70-centimetre wingspans filled the air, and the first reptiles were evolving"},
     {y:400e6, text:"roughly 400 million years ago, in the Devonian, when the first land vertebrates were hauling themselves onto shore, forests appeared for the first time, and the first seeds evolved"},
-    {y:500e6, text:"roughly 500 million years ago, just after the Cambrian explosion   the most dramatic burst of animal diversification in Earth's history   when the first vertebrates, jawless fish, were just appearing"},
+    {y:500e6, text:"roughly 500 million years ago, just after the Cambrian explosion - the most dramatic burst of animal diversification in Earth's history - when the first vertebrates, jawless fish, were just appearing"},
     {y:600e6, text:"roughly 600 million years ago, in the Ediacaran period, when the first multicellular animals were leaving their soft impressions in seafloor sediments"},
     {y:700e6, text:"roughly 700 million years ago, during the Snowball Earth episodes, when the entire planet may have been covered in ice and only hardy cyanobacteria kept the biosphere alive"},
-    {y:800e6, text:"roughly 800 million years ago, when eukaryotes were diversifying and sexual reproduction evolved   one of the most consequential innovations in the history of life"},
+    {y:800e6, text:"roughly 800 million years ago, when eukaryotes were diversifying and sexual reproduction evolved - one of the most consequential innovations in the history of life"},
     {y:900e6, text:"roughly 900 million years ago, when the first multicellular organisms were appearing and atmospheric oxygen was slowly accumulating to levels that would eventually make complex life possible"},
     {y:1000e6, text:"roughly 1 billion years ago, when the supercontinent Rodinia existed, simple algae dominated the oceans, and Earth's atmosphere still contained far less oxygen than today"},
-    {y:1100e6, text:"roughly 1.1 billion years ago, in the Proterozoic, when stromatolites   layered microbial mats   dominated Earth's shallow seas and the continents were bare and lifeless"}
+    {y:1100e6, text:"roughly 1.1 billion years ago, in the Proterozoic, when stromatolites - layered microbial mats - dominated Earth's shallow seas and the continents were bare and lifeless"}
 ];
 
 const HISTORICAL_SIGNAL_CONTEXT_V2 = [
@@ -1473,7 +1480,7 @@ const HISTORICAL_SIGNAL_CONTEXT_V2 = [
   [1, 'around the 1 BCE / 1 CE boundary', 'roughly the Augustan Roman and Han-dynasty era, when major Eurasian civilizations were linked by trade and empire'],
 
   [-100, 'around 100 BCE', 'roughly the late Roman Republic and Han-dynasty era, when Julius Caesar was born and Silk Road exchange was expanding'],
-  [-200, 'around 200 BCE', 'roughly the Roman Republics expansion and early Han era, when Mediterranean and Chinese state systems were growing'],
+  [-200, 'around 200 BCE', 'roughly the Roman Republic\'s expansion and early Han era, when Mediterranean and Chinese state systems were growing'],
   [-300, 'around 300 BCE', 'roughly the Hellenistic era after Alexander, when Euclid, Alexandria and Mauryan India shaped ancient knowledge'],
   [-400, 'around 400 BCE', 'roughly the Plato, Persian and late-classical Greek era, when philosophy and imperial politics were deeply intertwined'],
   [-500, 'around 500 BCE', 'roughly the Athenian democracy, Persian Empire, Buddha and Confucius era, when several major intellectual traditions formed'],
@@ -1494,7 +1501,7 @@ const HISTORICAL_SIGNAL_CONTEXT_V2 = [
   [-2000, 'around 2000 BCE', 'roughly the Ur III, Minoan and early Babylonian era, when palace economies and long-distance trade were growing'],
   [-2100, 'around 2100 BCE', 'roughly the Third Dynasty of Ur era, when formal law codes and state bureaucracy were expanding'],
   [-2200, 'around 2200 BCE', 'roughly the 4.2-kiloyear disruption, when drought and political collapse affected several Bronze Age societies'],
-  [-2300, 'around 2300 BCE', 'roughly the Akkadian Empire era, when Sargon and his successors ruled one of historys earliest empires'],
+  [-2300, 'around 2300 BCE', 'roughly the Akkadian Empire era, when Sargon and his successors ruled one of history\'s earliest empires'],
   [-2400, 'around 2400 BCE', 'roughly the Early Dynastic Mesopotamian and Old Kingdom Egyptian era, when cities and pyramids defined state power'],
   [-2500, 'around 2500 BCE', 'roughly the Great Pyramid, Sphinx and Indus urban era, when monumental architecture and planned cities flourished'],
   [-2600, 'around 2600 BCE', 'roughly the pyramid-building and mature Indus Valley era, when large urban societies expanded'],
@@ -2437,49 +2444,147 @@ function sampleNormalBounded(meanVal, lo, hi, rng = Math.random) {
   return clamp(meanVal, lo, hi);
 }
 
+const medianAnchoredCenterCache = new Map();
+
+function truncatedNormalMedianBalance(center, medianZ, loZ, hiZ, spread) {
+  return (
+    2 * normalCdf((medianZ - center) / spread) -
+    normalCdf((loZ - center) / spread) -
+    normalCdf((hiZ - center) / spread)
+  );
+}
+
+function medianAnchoredTruncatedNormalCenter(medianZ, loZ, hiZ, spread) {
+  if (
+    !Number.isFinite(medianZ) ||
+    !Number.isFinite(loZ) ||
+    !Number.isFinite(hiZ) ||
+    !Number.isFinite(spread) ||
+    spread <= 0 ||
+    hiZ <= loZ
+  ) {
+    return medianZ;
+  }
+
+  const cacheKey = [medianZ, loZ, hiZ, spread]
+    .map(value => Number(value).toPrecision(17))
+    .join('|');
+  if (medianAnchoredCenterCache.has(cacheKey)) return medianAnchoredCenterCache.get(cacheKey);
+
+  const target = clamp(medianZ, loZ, hiZ);
+  const edgeTolerance = Math.max(1e-12, Math.abs(hiZ - loZ) * 1e-12);
+  if (target <= loZ + edgeTolerance || target >= hiZ - edgeTolerance) {
+    medianAnchoredCenterCache.set(cacheKey, target);
+    return target;
+  }
+
+  const fTarget = truncatedNormalMedianBalance(target, target, loZ, hiZ, spread);
+  if (Math.abs(fTarget) < 1e-12) {
+    medianAnchoredCenterCache.set(cacheKey, target);
+    return target;
+  }
+
+  let low = target;
+  let high = target;
+  const direction = fTarget > 0 ? 1 : -1;
+  const initialStep = Math.max(spread, (hiZ - loZ) / 4, 1e-6);
+
+  for (let i = 0; i < 80; i++) {
+    const candidate = target + direction * initialStep * Math.pow(1.5, i);
+    const fCandidate = truncatedNormalMedianBalance(candidate, target, loZ, hiZ, spread);
+    if (!Number.isFinite(fCandidate)) break;
+
+    if (direction > 0) {
+      low = target;
+      high = candidate;
+      if (fCandidate <= 0) break;
+    } else {
+      low = candidate;
+      high = target;
+      if (fCandidate >= 0) break;
+    }
+  }
+
+  let fLow = truncatedNormalMedianBalance(low, target, loZ, hiZ, spread);
+  let fHigh = truncatedNormalMedianBalance(high, target, loZ, hiZ, spread);
+
+  if (!(fLow >= 0 && fHigh <= 0)) {
+    const fallback = Math.abs(fLow) <= Math.abs(fHigh) ? low : high;
+    if (medianAnchoredCenterCache.size > 1000) medianAnchoredCenterCache.clear();
+    medianAnchoredCenterCache.set(cacheKey, fallback);
+    return fallback;
+  }
+
+  for (let i = 0; i < 80; i++) {
+    const mid = (low + high) / 2;
+    const fMid = truncatedNormalMedianBalance(mid, target, loZ, hiZ, spread);
+    if (!Number.isFinite(fMid) || Math.abs(fMid) < 1e-12) {
+      if (medianAnchoredCenterCache.size > 1000) medianAnchoredCenterCache.clear();
+      medianAnchoredCenterCache.set(cacheKey, mid);
+      return mid;
+    }
+    if (fMid > 0) {
+      low = mid;
+      fLow = fMid;
+    } else {
+      high = mid;
+      fHigh = fMid;
+    }
+  }
+
+  const center = (low + high) / 2;
+  if (medianAnchoredCenterCache.size > 1000) medianAnchoredCenterCache.clear();
+  medianAnchoredCenterCache.set(cacheKey, center);
+  return center;
+}
+
+function sampleMedianAnchoredTruncatedNormalZ(medianZ, loZ, hiZ, spread, u) {
+  if (hiZ <= loZ) return clamp(medianZ, loZ, hiZ);
+
+  const center = medianAnchoredTruncatedNormalCenter(medianZ, loZ, hiZ, spread);
+  const cdfLo = normalCdf((loZ - center) / spread);
+  const cdfHi = normalCdf((hiZ - center) / spread);
+  const span = cdfHi - cdfLo;
+  if (!Number.isFinite(span) || span <= 1e-12) return clamp(medianZ, loZ, hiZ);
+
+  const p = cdfLo + clamp(u, 1e-12, 1 - 1e-12) * span;
+  return clamp(center + spread * inverseNormalCdf(p), loZ, hiZ);
+}
+
 function sampleLogNormalBounded(meanVal, lo, hi, rng = Math.random) {
   if (meanVal <= 0) return 0;
 
-  // Median-anchored log-normal: the preset central value is interpreted as the
-  // MEDIAN of the factor's distribution, not as its arithmetic expectation.
-  // For independent log-normal factors this is the mathematically clean
-  // convention because median(prod Xi) = prod median(Xi). The arithmetic mean
-  // of the product naturally exceeds the median (Jensen's inequality); that
-  // drift is a real propagated-uncertainty effect, not a sampling artifact.
+  // Median-anchored bounded log-normal: choose the transformed normal center
+  // so the distribution's median remains at the central value after truncation.
+  // Without this correction, asymmetric bounds near a registry edge shift q50
+  // away from the user's central value.
   const uncertaintyFraction = getSamplingUncertaintyFraction();
   const sd = Math.max((hi - lo) * uncertaintyFraction / 2, meanVal * 0.1, 1e-12);
   const variance = sd * sd;
-  const mu = Math.log(meanVal);
+  const medianZ = Math.log(Math.max(meanVal, 1e-12));
+  const loZ = lo <= 0 ? Math.log(1e-12) : Math.log(lo);
+  const hiZ = Math.log(Math.max(hi, 1e-12));
   const sigma = Math.sqrt(Math.log(1 + variance / (meanVal * meanVal)));
 
-  for (let i = 0; i < 14; i++) {
-    const v = Math.exp(mu + sigma * boxMuller(rng));
-    if (v >= lo && v <= hi) return v;
-  }
-  return clamp(meanVal, lo, hi);
+  return clamp(Math.exp(sampleMedianAnchoredTruncatedNormalZ(medianZ, loZ, hiZ, sigma, rng())), lo, hi);
 }
 
 function sampleLogitNormalBounded(meanVal, lo, hi, rng = Math.random) {
-  // Median-anchored logit-normal: the preset central value m is interpreted as
-  // the MEDIAN of the probability factor. Then median(logistic(Z)) =
-  // logistic(logit(m)) = m, so MC median for the factor matches the preset
-  // value regardless of how asymmetric the bounds are around m. The previous
-  // moments-correction multiplier on the center pushed E[logistic(Z)] toward
-  // m, which broke down when m sat near the registry edges (Pessimist).
+  // Median-anchored bounded logit-normal: choose the transformed normal center
+  // so the truncated distribution has q50 at m. An untruncated logit-normal has
+  // median m automatically; truncation breaks that property unless the center
+  // is adjusted for asymmetric bounds.
   const m = clamp(meanVal, Math.max(lo, 1e-9), Math.min(hi, 1 - 1e-9));
   const lo2 = clamp(lo, 1e-9, 1 - 1e-9);
   const hi2 = clamp(hi, 1e-9, 1 - 1e-9);
   const uncertaintyFraction = getSamplingUncertaintyFraction();
 
   const spread = Math.max((logit(hi2) - logit(lo2)) * uncertaintyFraction / 2, 1e-6);
-  const center = logit(m);
+  const medianZ = logit(m);
+  const loZ = logit(lo2);
+  const hiZ = logit(hi2);
 
-  for (let i = 0; i < 14; i++) {
-    const z = center + spread * boxMuller(rng);
-    const v = logistic(z);
-    if (v >= lo && v <= hi) return v;
-  }
-  return clamp(m, lo, hi);
+  return clamp(logistic(sampleMedianAnchoredTruncatedNormalZ(medianZ, loZ, hiZ, spread, rng())), lo2, hi2);
 }
 
 function sampleNormalQuantile(meanVal, lo, hi, u) {
@@ -2497,31 +2602,31 @@ function sampleLogNormalQuantile(meanVal, lo, hi, u) {
   if (meanVal <= 0) return 0;
   if (hi <= lo) return clamp(meanVal, lo, hi);
 
-  // Median-anchored — see sampleLogNormalBounded for the rationale.
+  // Median-anchored after truncation - see sampleLogNormalBounded.
   const uncertaintyFraction = getSamplingUncertaintyFraction();
   const sd = Math.max((hi - lo) * uncertaintyFraction / 2, meanVal * 0.1, 1e-12);
   const variance = sd * sd;
-  const mu = Math.log(meanVal);
+  const medianZ = Math.log(Math.max(meanVal, 1e-12));
+  const loZ = lo <= 0 ? Math.log(1e-12) : Math.log(lo);
+  const hiZ = Math.log(Math.max(hi, 1e-12));
   const sigma = Math.sqrt(Math.log(1 + variance / (meanVal * meanVal)));
-  const cdfLo = lo <= 0 ? 0 : normalCdf((Math.log(Math.max(lo, 1e-12)) - mu) / sigma);
-  const cdfHi = normalCdf((Math.log(Math.max(hi, 1e-12)) - mu) / sigma);
-  const p = cdfLo + u * Math.max(cdfHi - cdfLo, 1e-12);
-  return clamp(Math.exp(mu + sigma * inverseNormalCdf(p)), lo, hi);
+
+  return clamp(Math.exp(sampleMedianAnchoredTruncatedNormalZ(medianZ, loZ, hiZ, sigma, u)), lo, hi);
 }
 
 function sampleLogitNormalQuantile(meanVal, lo, hi, u) {
-  // Median-anchored — see sampleLogitNormalBounded for the rationale.
+  // Median-anchored after truncation - see sampleLogitNormalBounded.
   const m = clamp(meanVal, Math.max(lo, 1e-9), Math.min(hi, 1 - 1e-9));
   const lo2 = clamp(lo, 1e-9, 1 - 1e-9);
   const hi2 = clamp(hi, 1e-9, 1 - 1e-9);
   const uncertaintyFraction = getSamplingUncertaintyFraction();
 
   const spread = Math.max((logit(hi2) - logit(lo2)) * uncertaintyFraction / 2, 1e-6);
-  const center = logit(m);
-  const cdfLo = normalCdf((logit(lo2) - center) / spread);
-  const cdfHi = normalCdf((logit(hi2) - center) / spread);
-  const p = cdfLo + u * Math.max(cdfHi - cdfLo, 1e-12);
-  return clamp(logistic(center + spread * inverseNormalCdf(p)), lo2, hi2);
+  const medianZ = logit(m);
+  const loZ = logit(lo2);
+  const hiZ = logit(hi2);
+
+  return clamp(logistic(sampleMedianAnchoredTruncatedNormalZ(medianZ, loZ, hiZ, spread, u)), lo2, hi2);
 }
 
 function sampleUniformCentered(meanVal, lo, hi, isProbability, isPositive, u) {
@@ -3968,7 +4073,7 @@ function buildFermiContext(distLy, refModel = null, options = {}) {
       : `Even <span class="bold-number">f<sub>tx</sub> = 1</span> would not yield one expected active detectable transmitter in range under the current assumptions.`;
 
     const subPoissonText = detection.N_det < 1
-      ? `<div style="margin-top:5px;color:var(--red);"><strong>Sub-Poisson regime:</strong> fewer than one active detectable transmitter is expected on average inside the current detection horizon. Non-detection is therefore the statistically dominant outcome, although the Poisson probability is not zero.</div>`
+      ? `<div style="margin-top:5px;color:var(--text-dim);"><strong>Sub-Poisson regime:</strong> fewer than one active detectable transmitter is expected on average inside the current detection horizon. Non-detection is therefore the statistically dominant outcome, although the Poisson probability is not zero.</div>`
       : '';
 
     const distanceFrameParts = [];
@@ -4256,7 +4361,7 @@ function computeTemporal() {
   return { tStart, tComplex, window, cWindow, headStart };
 }
 
-function computeSobolIndices(N_samples) {
+function computeSobolIndices(N_samples, rng = Math.random) {
   N_samples = N_samples || 300;
   const dist = (byId('distribution') || {}).value || 'lognormal';
 
@@ -4283,7 +4388,7 @@ function computeSobolIndices(N_samples) {
     for (let i = 0; i < N_samples; i++) {
       const row = {};
       for (const id of activeIds) {
-        row[id] = sampleParam(id, dist, Math.random, boundsDescriptor);
+        row[id] = sampleParam(id, dist, rng, boundsDescriptor);
       }
       mat.push(row);
     }
@@ -4349,7 +4454,9 @@ function computeSobolIndices(N_samples) {
 function runSobolAnalysis(options = {}) {
   if (!simulationCompleted) return null;
 
-  const result = computeSobolIndices(300);
+  const sampleCount = Math.max(100, Math.floor(Number(options.samples) || SOBOL_BASE_SAMPLE_COUNT));
+  const rng = options.rng || createSeededRng(options.seed || SOBOL_DEFAULT_SEED);
+  const result = computeSobolIndices(sampleCount, rng);
   renderSobolPanel(result);
 
   if (options.scrollIntoView && byId('sobol-panel')) {
@@ -4478,3 +4585,5 @@ function computeDetectionFilter(countOverride = mcMedianQ50) {
     earth_distance: null
   };
 }
+
+

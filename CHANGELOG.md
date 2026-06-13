@@ -1,5 +1,30 @@
 # Changelog
 
+## v2.15 - 2026-06-13
+
+### Source And Prior Update
+
+- Updated `f_lunar_stability` to `0.70 [0.40, 0.90]` using Lissauer et al. 2012 as the primary source and Laskar et al. 1993 as the contrast source.
+- Updated `f_tilt` to `0.60 [0.40, 0.85]` using Lissauer et al. 2012 and Linsenmeier et al. 2015.
+- Updated `f_H2O` to `0.30 [0.10, 0.80]` using Tian & Ida 2015 and Mulders et al. 2015.
+- Replaced the CHNOPS source basis with Krijt et al. 2022 and Hinkel et al. 2020 while keeping `f_CHNOPS = 0.10 [0.05, 0.50]`.
+- Added `docs/V2_15_SOURCE_UPDATE.md` and `RELEASE_NOTES_v2.15.md`.
+
+### Numerical And Sensitivity Fixes
+
+- Fixed bounded log-normal and logit-normal sampling so q50 remains anchored at the configured central value after asymmetric truncation.
+- Updated deterministic scenario anchors: Pessimist `0.000006804`, Consensus `13,778.1`, Kepler/Gaia `35,363.79`, and High-End `30,086,210.7`.
+- Adjusted clean named-preset Sobol uncertainty widths so `N_GHZ` is broader than `N_p_star`.
+- Added seeded Sobol regression coverage confirming that `Stars in GHZ` is the top Kepler/Gaia sensitivity driver.
+
+### UI, Metadata, And Tests
+
+- Updated public version metadata, exports, README, 404, citation metadata, Zenodo metadata, and cache-buster strings to v2.15.
+- Added a site-logo fallback in `index.html`.
+- Changed the visible Sub-Poisson explanatory text from red to normal dim text.
+- Restored missing dash separators in visible `HISTORY_DB` signal-context text and corrected two historical possessives.
+- Updated source, calibration, Monte Carlo, numeric, and export tests for the v2.15 behavior.
+
 ## v2.14 - 2026-06-12
 
 ### Release And License

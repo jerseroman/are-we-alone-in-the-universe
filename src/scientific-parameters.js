@@ -44,10 +44,15 @@
       status: 'verified',
       title: 'Carbon Cycling and Habitability of Earth-Sized Stagnant Lid Planets'
     },
-    'Morbidelli et al. 2012': {
-      url: 'https://doi.org/10.1146/annurev-earth-042711-105319',
+    'Tian & Ida 2015': {
+      url: 'https://doi.org/10.1038/ngeo2372',
       status: 'verified',
-      title: 'Building Terrestrial Planets'
+      title: 'Water contents of Earth-mass planets around M dwarfs'
+    },
+    'Mulders et al. 2015': {
+      url: 'https://arxiv.org/abs/1505.03516',
+      status: 'verified',
+      title: 'The snow line in viscous disks around low-mass stars: implications for water delivery to terrestrial planets in the habitable zone'
     },
     'Tian 2015': {
       url: 'https://doi.org/10.1146/annurev-earth-060313-054834',
@@ -244,15 +249,15 @@
       status: 'verified',
       title: 'Climate of Earth-like planets with high obliquity and eccentric orbits: Implications for habitability conditions'
     },
-    'Williams & Pollard 2002': {
-      url: 'https://doi.org/10.1017/S1473550402001064',
+    'Krijt et al. 2022': {
+      url: 'https://arxiv.org/abs/2203.10056',
       status: 'verified',
-      title: 'Earth-like worlds on eccentric orbits: excursions beyond the habitable zone'
+      title: 'Chemical Habitability: Supply and Retention of Life\'s Essential Elements During Planet Formation'
     },
-    'Asplund et al. 2009': {
-      url: 'https://doi.org/10.1146/annurev.astro.46.060407.145222',
+    'Hinkel et al. 2020': {
+      url: 'https://doi.org/10.3847/2041-8213/abb3cb',
       status: 'verified',
-      title: 'The Chemical Composition of the Sun'
+      title: 'The Influence of Stellar Phosphorus on Our Understanding of Exoplanets and Astrobiology'
     },
     'Sandberg et al. 2018': {
       url: 'https://arxiv.org/abs/1806.02404',
@@ -426,16 +431,16 @@
       key: 'f_lunar_stability',
       label: 'Lunar or equivalent stabilizer fraction',
       description: 'Fraction of planets assigned a large moon or equivalent stabilizing mechanism.',
-      central: 0.50,
-      min: 0.20,
-      max: 0.80,
+      central: 0.70,
+      min: 0.40,
+      max: 0.90,
       unit: 'fraction',
-      citationShort: 'Laskar 1993; Lissauer 2012',
-      sourceTitle: 'Stabilization of the Earth’s obliquity by the Moon; obliquity variations of a moonless Earth',
-      doiOrUrl: 'https://doi.org/10.1038/361615a0',
+      citationShort: 'Lissauer 2012; Laskar 1993',
+      sourceTitle: 'Obliquity variations of a moonless Earth; stabilization of the Earth’s obliquity by the Moon',
+      doiOrUrl: 'https://doi.org/10.1016/j.icarus.2011.10.013',
       exactLocation: null,
       valueType: VALUE_TYPES.interpretiveMidpoint,
-      uncertaintyNote: 'Mechanism-supported model prior. Laskar 1993 and Lissauer 2012 frame the obliquity-stabilization debate; the displayed 0.20–0.80 range is not a measured moon-occurrence frequency.',
+      uncertaintyNote: 'Mechanism-supported model prior. Lissauer 2012 weakens the strict large-Moon requirement by showing that moonless Earth-like obliquity evolution need not be immediately catastrophic, while Laskar 1993 remains the stabilizing-moon contrast case. The displayed 0.40–0.90 range is not a measured moon-occurrence frequency.',
       isLiteratureBacked: true,
       needsCitationPrecision: true
     },
@@ -477,16 +482,16 @@
       key: 'f_tilt',
       label: 'Favorable axial tilt fraction',
       description: 'Fraction of planets assigned an axial tilt state favorable to long-term surface habitability.',
-      central: 0.50,
-      min: 0.30,
-      max: 0.65,
+      central: 0.60,
+      min: 0.40,
+      max: 0.85,
       unit: 'fraction',
-      citationShort: 'Williams & Pollard 2002; Linsenmeier 2015',
-      sourceTitle: 'Climate of Earth-like planets with high obliquity and eccentric orbits; Earth-like worlds on eccentric orbits',
-      doiOrUrl: 'https://doi.org/10.1016/j.pss.2014.11.003',
+      citationShort: 'Lissauer 2012; Linsenmeier 2015',
+      sourceTitle: 'Obliquity variations of a moonless Earth; climate of Earth-like planets with high obliquity and eccentric orbits',
+      doiOrUrl: 'https://doi.org/10.1016/j.icarus.2011.10.013',
       exactLocation: null,
       valueType: VALUE_TYPES.interpretiveMidpoint,
-      uncertaintyNote: 'Mechanism-supported model prior. The cited papers describe how obliquity affects climate stability; the displayed 0.30–0.65 range is an interpretive model prior, not a directly measured universal frequency.',
+      uncertaintyNote: 'Mechanism-supported model prior. Lissauer 2012 makes the obliquity filter less restrictive than a simple large-Moon requirement, while Linsenmeier 2015 supports high-obliquity climate context. The displayed 0.40–0.85 range is an interpretive model prior, not a directly measured universal frequency.',
       isLiteratureBacked: true,
       needsCitationPrecision: true
     },
@@ -494,16 +499,16 @@
       key: 'f_H2O',
       label: 'Surface liquid water fraction',
       description: 'Fraction of otherwise suitable planets that pass the liquid-water availability filter.',
-      central: 0.10,
-      min: 0.05,
-      max: 0.30,
+      central: 0.30,
+      min: 0.10,
+      max: 0.80,
       unit: 'fraction',
-      citationShort: 'Morbidelli 2012',
-      sourceTitle: 'Building Terrestrial Planets (volatile-delivery context)',
-      doiOrUrl: 'https://doi.org/10.1146/annurev-earth-042711-105319',
+      citationShort: 'Tian & Ida 2015; Mulders 2015',
+      sourceTitle: 'Water contents of Earth-mass planets around M dwarfs; snow-line implications for water delivery to terrestrial planets in the habitable zone',
+      doiOrUrl: 'https://doi.org/10.1038/ngeo2372',
       exactLocation: null,
       valueType: VALUE_TYPES.interpretiveMidpoint,
-      uncertaintyNote: 'Mechanism-supported model prior. Morbidelli 2012 supports volatile delivery as the relevant formation mechanism; the displayed 0.05–0.30 range is not a measured frequency of planets with surface liquid water.',
+      uncertaintyNote: 'Mechanism-supported model prior. Tian & Ida 2015 and Mulders 2015 are closer to the intended water-availability fraction than a generic volatile-delivery mechanism, but the displayed 0.10–0.80 range remains a model prior rather than a measured frequency of stable surface oceans.',
       isLiteratureBacked: true,
       needsCitationPrecision: true
     },
@@ -515,12 +520,12 @@
       min: 0.05,
       max: 0.50,
       unit: 'fraction',
-      citationShort: 'Asplund 2009',
-      sourceTitle: 'The Chemical Composition of the Sun',
-      doiOrUrl: 'https://doi.org/10.1146/annurev.astro.46.060407.145222',
+      citationShort: 'Krijt et al. 2022; Hinkel et al. 2020',
+      sourceTitle: 'Chemical habitability and supply/retention of CHNOPS during planet formation; stellar phosphorus as an exoplanet habitability constraint',
+      doiOrUrl: 'https://arxiv.org/abs/2203.10056',
       exactLocation: null,
       valueType: VALUE_TYPES.interpretiveMidpoint,
-      uncertaintyNote: 'Mechanism-supported model prior. Asplund 2009 anchors the stellar/solar abundance baseline; the displayed 0.05–0.50 range represents uncertain planetary accessibility, not a measured CHNOPS availability fraction.',
+      uncertaintyNote: 'Mechanism-supported model prior. Krijt et al. 2022 targets chemical habitability and CHNOPS supply/retention during planet formation more directly than solar-abundance tables; Hinkel et al. 2020 highlights phosphorus as a limiting uncertainty. The displayed 0.05–0.50 range remains a model prior, not a measured CHNOPS availability fraction.',
       isLiteratureBacked: true,
       needsCitationPrecision: true
     },
@@ -574,11 +579,11 @@
         f_orbit: 0.10,
         f_stability: 0.30,
         f_magnetosphere: 0.20,
-        f_lunar_stability: 0.20,
+        f_lunar_stability: 0.40,
         f_size: 0.30,
         f_rotation: 0.15,
-        f_tilt: 0.30,
-        f_H2O: 0.05,
+        f_tilt: 0.40,
+        f_H2O: 0.10,
         f_CHNOPS: 0.05,
         f_complex_life: 0.000001,
         f_x: 1
@@ -599,11 +604,11 @@
         f_orbit: 0.18,
         f_stability: 0.50,
         f_magnetosphere: 0.50,
-        f_lunar_stability: 0.50,
+        f_lunar_stability: 0.70,
         f_size: 0.50,
         f_rotation: 0.27,
-        f_tilt: 0.50,
-        f_H2O: 0.10,
+        f_tilt: 0.60,
+        f_H2O: 0.30,
         f_CHNOPS: 0.10,
         f_complex_life: 0.01,
         f_x: 1
@@ -624,11 +629,11 @@
         f_orbit: 0.21,
         f_stability: 0.70,
         f_magnetosphere: 0.70,
-        f_lunar_stability: 0.80,
+        f_lunar_stability: 0.90,
         f_size: 0.65,
         f_rotation: 0.35,
-        f_tilt: 0.65,
-        f_H2O: 0.30,
+        f_tilt: 0.85,
+        f_H2O: 0.80,
         f_CHNOPS: 0.50,
         f_complex_life: 1.0,
         f_x: 1
@@ -649,11 +654,11 @@
         f_orbit: 0.21,
         f_stability: 0.50,
         f_magnetosphere: 0.50,
-        f_lunar_stability: 0.50,
+        f_lunar_stability: 0.70,
         f_size: 0.55,
         f_rotation: 0.27,
-        f_tilt: 0.50,
-        f_H2O: 0.15,
+        f_tilt: 0.60,
+        f_H2O: 0.30,
         f_CHNOPS: 0.15,
         f_complex_life: 0.01,
         f_x: 1
@@ -684,7 +689,7 @@
 
   const SCIENTIFIC_PARAMETER_REGISTRY = Object.freeze({
     version: '1.0.0',
-    calculatorVersion: '2.14',
+    calculatorVersion: '2.15',
     parameterOrder: SCIENTIFIC_PARAMETER_ORDER,
     parameters: SCIENTIFIC_PARAMETERS,
     presets: SCIENTIFIC_PRESETS,

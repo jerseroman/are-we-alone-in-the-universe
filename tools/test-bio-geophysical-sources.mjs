@@ -73,8 +73,8 @@ const cards = [
   {
     id: 'card-f_lunar_stability',
     label: 'Lunar Stabilizer',
-    expectLabels: ['Laskar et al. 1993', 'Lissauer et al. 2012'],
-    expectHrefs: ['10.1038/361615a0', '10.1016/j.icarus.2011.10.013'],
+    expectLabels: ['Lissauer et al. 2012', 'Laskar et al. 1993'],
+    expectHrefs: ['10.1016/j.icarus.2011.10.013', '10.1038/361615a0'],
     expectRangeWording: /Mechanism-supported model range/i,
     forbidWording: [/^Lit\. range/m]
   },
@@ -97,26 +97,26 @@ const cards = [
   {
     id: 'card-f_tilt',
     label: 'Favorable Tilt',
-    expectLabels: ['Williams & Pollard 2002', 'Linsenmeier et al. 2015'],
-    expectHrefs: ['10.1017/S1473550402001064', '10.1016/j.pss.2014.11.003'],
+    expectLabels: ['Lissauer et al. 2012', 'Linsenmeier et al. 2015'],
+    expectHrefs: ['10.1016/j.icarus.2011.10.013', '10.1016/j.pss.2014.11.003'],
     expectRangeWording: /Mechanism-supported model range/i,
-    forbidWording: [/^Lit\. range/m, /S0012821X15003510/]
+    forbidWording: [/^Lit\. range/m, /S0012821X15003510/, /Williams & Pollard 2002/]
   },
   {
     id: 'card-f_H2O',
     label: 'Surface Water',
-    expectLabels: ['Morbidelli et al. 2012'],
-    expectHrefs: ['10.1146/annurev-earth-042711-105319'],
+    expectLabels: ['Tian & Ida 2015', 'Mulders et al. 2015'],
+    expectHrefs: ['10.1038/ngeo2372', '1505.03516'],
     expectRangeWording: /Mechanism-supported model range/i,
-    forbidWording: [/^Lit\. range/m]
+    forbidWording: [/^Lit\. range/m, /Morbidelli et al\. 2012/]
   },
   {
     id: 'card-f_CHNOPS',
     label: 'CHNOPS',
-    expectLabels: ['Asplund et al. 2009'],
-    expectHrefs: ['10.1146/annurev.astro.46.060407.145222'],
+    expectLabels: ['Krijt et al. 2022', 'Hinkel et al. 2020'],
+    expectHrefs: ['2203.10056', '10.3847/2041-8213/abb3cb'],
     expectRangeWording: /Model range/i,
-    forbidWording: [/^Lit\. range/m]
+    forbidWording: [/^Lit\. range/m, /Asplund et al\. 2009/]
   }
 ];
 
@@ -176,12 +176,12 @@ for (const card of cards) {
   }
 }
 
-if (!/Morbidelli et al\. 2012/.test(registry)) {
-  fail('Registry missing Morbidelli et al. 2012 entry.');
+if (!/Tian & Ida 2015/.test(registry) || !/Mulders et al\. 2015/.test(registry)) {
+  fail('Registry missing Tian & Ida 2015 or Mulders et al. 2015 entries.');
 }
 const f_H2OBlock = /f_H2O:\s*\{[\s\S]*?\},/m.exec(registry);
-if (f_H2OBlock && !/doiOrUrl:\s*'https:\/\/doi\.org\/10\.1146\/annurev-earth-042711-105319'/.test(f_H2OBlock[0])) {
-  fail('f_H2O registry entry missing Morbidelli DOI.');
+if (f_H2OBlock && !/doiOrUrl:\s*'https:\/\/doi\.org\/10\.1038\/ngeo2372'/.test(f_H2OBlock[0])) {
+  fail('f_H2O registry entry missing Tian & Ida DOI.');
 }
 
 const f_rotationBlock = /f_rotation:\s*\{[\s\S]*?\},/m.exec(registry);
@@ -193,11 +193,22 @@ if (f_rotationBlock && /aa40791/i.test(f_rotationBlock[0])) {
 }
 
 const f_tiltBlock = /f_tilt:\s*\{[\s\S]*?\},/m.exec(registry);
-if (f_tiltBlock && !/10\.1016\/j\.pss\.2014\.11\.003/.test(f_tiltBlock[0])) {
-  fail('f_tilt registry entry missing correct Linsenmeier 2015 DOI (pss.2014.11.003).');
+if (f_tiltBlock && !/10\.1016\/j\.icarus\.2011\.10\.013/.test(f_tiltBlock[0])) {
+  fail('f_tilt registry entry missing Lissauer 2012 DOI.');
 }
 if (f_tiltBlock && /S0012821X15003510/.test(f_tiltBlock[0])) {
   fail('f_tilt registry entry still references the wrong EPSL article ID.');
+}
+if (f_tiltBlock && /Williams & Pollard 2002/.test(f_tiltBlock[0])) {
+  fail('f_tilt registry entry still references Williams & Pollard 2002 as the active source.');
+}
+
+const f_CHNOPSBlock = /f_CHNOPS:\s*\{[\s\S]*?\},/m.exec(registry);
+if (f_CHNOPSBlock && !/2203\.10056/.test(f_CHNOPSBlock[0])) {
+  fail('f_CHNOPS registry entry missing Krijt et al. 2022 arXiv source.');
+}
+if (f_CHNOPSBlock && /Asplund 2009/.test(f_CHNOPSBlock[0])) {
+  fail('f_CHNOPS registry entry still uses Asplund 2009 as the active source.');
 }
 
 if (failures) {
@@ -206,4 +217,4 @@ if (failures) {
 }
 
 pass(`Bio/Geophysical source links and tooltip framing verified for ${cards.length} cards.`);
-pass('Registry doiOrUrl entries consistent for f_H2O, f_rotation, f_tilt.');
+pass('Registry doiOrUrl entries consistent for f_H2O, f_rotation, f_tilt, and f_CHNOPS.');

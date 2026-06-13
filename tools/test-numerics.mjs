@@ -16,10 +16,10 @@ const {
 
 const scenarioOrder = ['pessimist', 'consensus', 'kepler', 'optimist'];
 const expectedOutputs = {
-  pessimist: 0.0000012757500000000002,
-  consensus: 2733.75,
-  kepler: 10524.937500000002,
-  optimist: 7669034.099999999
+  pessimist: 0.000006804000000000001,
+  consensus: 13778.1,
+  kepler: 35363.79,
+  optimist: 30086210.699999988
 };
 
 function almostEqual(actual, expected, relTol = 1e-12, absTol = 1e-18) {

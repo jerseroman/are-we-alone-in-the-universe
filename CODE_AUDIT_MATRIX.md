@@ -1,6 +1,6 @@
 # Calculator Code Audit Matrix
 
-This document contains the list of calculator code tests, calculator audit profiles, oracle tests, browser tests, and stress test cases that have been performed for version 2.14.
+This document contains the list of calculator code tests, calculator audit profiles, oracle tests, browser tests, and stress test cases that have been performed for version 2.15.
 
 Several lengthy audits of the calculator code were conducted on my local system for a total period of 20 hours, including two 10-hour time-boxed audit runs in addition to smoke, static analysis, browser, oracle, and specific regression audits.
 

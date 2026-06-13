@@ -124,6 +124,8 @@ function loadCalculator() {
       runMonteCarloSimulation,
       monteCarloCalculate,
       createSeededRng,
+      computeSobolIndices,
+      SENS_LABELS,
       getParamSamplingState,
       getMonteCarloBoundsDescriptor,
       getScenarioState,
@@ -160,10 +162,10 @@ function loadCalculator() {
 //     value. Confirms the preset central values themselves are unchanged.
 // ============================================================================
 const expectedDeterministics = {
-  pessimist: 1.27575e-6,
-  consensus: 2733.75,
-  kepler: 10524.9375,
-  optimist: 7669034.1
+  pessimist: 6.804e-6,
+  consensus: 13778.1,
+  kepler: 35363.79,
+  optimist: 30086210.7
 };
 
 const presetKeys = ['pessimist', 'consensus', 'kepler', 'optimist'];
@@ -245,7 +247,39 @@ if (observedModes.size === 1 && observedLabels.size === 1) {
 }
 
 // ============================================================================
-// (4) Monte Carlo summary for each preset: q2.5 < q97.5 (non-degenerate),
+// (4) Clean Kepler Sobol sensitivity should treat N_GHZ as the dominant
+//     scenario scale uncertainty. A previous equal-width local band let
+//     N_p_star overtake it despite N_GHZ being the broader interpretive prior.
+// ============================================================================
+{
+  const calc = loadCalculator();
+  calc.loadPresetForTest('kepler');
+  const nState = calc.getParamSamplingState('N_GHZ');
+  const pState = calc.getParamSamplingState('N_p_star');
+  const nWidth = Math.log(nState.hi / nState.lo);
+  const pWidth = Math.log(pState.hi / pState.lo);
+  const sobol = calc.computeSobolIndices(1000, calc.createSeededRng(20260613));
+  const ranked = sobol.activeIds
+    .slice()
+    .sort((a, b) => sobol.indices[b].T - sobol.indices[a].T);
+  const top = ranked[0];
+
+  if (nWidth > pWidth && top === 'N_GHZ' && sobol.indices.N_GHZ.T > sobol.indices.N_p_star.T) {
+    pass(
+      `Kepler Sobol ranks ${calc.SENS_LABELS[top]} first ` +
+      `(N_GHZ T=${fmt(sobol.indices.N_GHZ.T)}, N_p_star T=${fmt(sobol.indices.N_p_star.T)}).`
+    );
+  } else {
+    fail(
+      `Kepler Sobol ranking regression: top=${top}, ` +
+      `N_GHZ width=${fmt(nWidth)}, N_p_star width=${fmt(pWidth)}, ` +
+      `N_GHZ T=${fmt(sobol.indices.N_GHZ.T)}, N_p_star T=${fmt(sobol.indices.N_p_star.T)}.`
+    );
+  }
+}
+
+// ============================================================================
+// (5) Monte Carlo summary for each preset: q2.5 < q97.5 (non-degenerate),
 //     mean is finite and positive, and the bounds label is unified.
 // ============================================================================
 for (const key of presetKeys) {
@@ -298,7 +332,7 @@ for (const key of presetKeys) {
 }
 
 // ============================================================================
-// (5) Generic degenerate guard: when the user manually sets min == max == mean,
+// (6) Generic degenerate guard: when the user manually sets min == max == mean,
 //     sampleParam must return that single value. This collapse is allowed only
 //     when actual bounds are degenerate, not when the preset is Pessimist.
 // ============================================================================
@@ -331,7 +365,7 @@ for (const key of presetKeys) {
 }
 
 // ============================================================================
-// (6) Modified preset behaviour: editing only N_GHZ switches to
+// (7) Modified preset behaviour: editing only N_GHZ switches to
 //     modifiedPresetLocal. Edited fields use visible bounds; unchanged preset
 //     fields keep scenario-local preset uncertainty.
 // ============================================================================
@@ -376,7 +410,7 @@ for (const key of presetKeys) {
 }
 
 // ============================================================================
-// (7) Modified Consensus / Kepler / Optimist also use modifiedPresetLocal mode.
+// (8) Modified Consensus / Kepler / Optimist also use modifiedPresetLocal mode.
 // ============================================================================
 for (const key of ['consensus', 'kepler', 'optimist']) {
   const calc = loadCalculator();
@@ -391,7 +425,7 @@ for (const key of ['consensus', 'kepler', 'optimist']) {
 }
 
 // ============================================================================
-// (8) Diagnostic summary table — printed for visibility, not asserted.
+// (9) Diagnostic summary table — printed for visibility, not asserted.
 // ============================================================================
 process.stdout.write('\nDiagnostic: per-preset MC summary under presetLocal sampling\n');
 process.stdout.write('preset      | deterministic       | MC arithmetic mean  | q2.5                | q50/median         | q97.5\n');

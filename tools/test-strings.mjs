@@ -114,7 +114,8 @@ function scanFiles() {
     path.join(root, 'index.html'),
     path.join(root, 'README.md'),
     path.join(root, 'CHANGELOG.md'),
-    path.join(root, 'RELEASE_NOTES_v2.14.md')
+    path.join(root, 'RELEASE_NOTES_v2.14.md'),
+    path.join(root, 'RELEASE_NOTES_v2.15.md')
   ];
 
   files.push(...walk(path.join(root, 'src'), file => file.endsWith('.js')));
@@ -730,6 +731,31 @@ const ceqPanelBlock = ceqPanelStart !== -1 && ceqPanelEnd !== -1
   : '';
 if (/Earth-like planets/.test(ceqPanelBlock)) {
   fail('Core-equations panel contains unqualified "Earth-like planets" model-output phrase.');
+}
+
+// Historical signal-context text must not contain the old missing-dash artifact
+// where separator dashes were stripped into three spaces.
+const calculatorCoreText = fs.readFileSync(path.join(root, 'src', 'calculator-core.js'), 'utf8');
+const historyTripleSpaceMatches = calculatorCoreText.match(/text:"[^"]* {3,}[^"]*"/g) || [];
+if (historyTripleSpaceMatches.length > 0) {
+  fail(
+    `HISTORY_DB contains ${historyTripleSpaceMatches.length} text entr` +
+    `${historyTripleSpaceMatches.length === 1 ? 'y' : 'ies'} with three-space dash artifacts.`
+  );
+} else {
+  pass('HISTORY_DB dash separators are normalized.');
+}
+
+if (calculatorCoreText.includes("Roman Republic\\'s expansion")) {
+  pass('Historical context includes corrected Roman Republic possessive.');
+} else {
+  fail('Historical context is missing corrected "Roman Republic\\\'s expansion" wording.');
+}
+
+if (calculatorCoreText.includes("history\\'s earliest empires")) {
+  pass('Historical context includes corrected history possessive.');
+} else {
+  fail('Historical context is missing corrected "history\\\'s earliest empires" wording.');
 }
 
 if (failures) {
