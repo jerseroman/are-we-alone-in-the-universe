@@ -1,5 +1,38 @@
 # Changelog
 
+## v2.16 - 2026-06-14
+
+### Release Framing
+
+- Reframed the current public build as a literature-informed exploratory model with mathematically valid Poisson distance estimates and simplified GHZ comparison geometries.
+- Updated active application, package, citation, Zenodo, export, README, cache-buster, footer, and audit metadata to v2.16.
+- Added `RELEASE_NOTES_v2.16.md` for GitHub release preparation.
+
+### Monte Carlo Reproducibility And Exports
+
+- Added random/fixed Monte Carlo seed controls with numeric validation and deterministic seeded replay.
+- Added secure unseeded seed generation through `globalThis.crypto` when available, with a browser-compatible fallback.
+- Added raw Monte Carlo data export, chart export in PNG/SVG/PDF formats, and a ZIP package containing charts, samples, and reproducibility metadata.
+- Added chart source metadata and a visible chart source footer.
+
+### Export Consistency And Regression Coverage
+
+- Added a self-contained HTML export generator and a consistency test that compares key source/export strings.
+- Added extracted JavaScript syntax validation for generated self-contained HTML exports.
+- Added regression checks for formula middle-dot preservation and the corrected `rho_det * pi` display formula.
+- Added smoke coverage for Monte Carlo seed metadata in share/export paths.
+
+### UI Cleanup
+
+- Removed the therefore symbol from the Interpretation & Fermi Context heading.
+- Moved the MC/DT Fermi controls next to the Interpretation & Fermi Context title.
+- Changed the Fermi panel default to MC when current Monte Carlo data exists, with deterministic fallback when it does not.
+- Fixed Monte Carlo PDF chart label placement so chart text no longer collides with the left edge.
+
+### Non-Changes
+
+- Scientific parameters, presets, Monte Carlo distributions, numerical constants, and the deterministic calculation chain are unchanged by this release.
+
 ## v2.15 - 2026-06-13
 
 ### Source And Prior Update

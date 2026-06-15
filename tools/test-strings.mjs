@@ -115,7 +115,8 @@ function scanFiles() {
     path.join(root, 'README.md'),
     path.join(root, 'CHANGELOG.md'),
     path.join(root, 'RELEASE_NOTES_v2.14.md'),
-    path.join(root, 'RELEASE_NOTES_v2.15.md')
+    path.join(root, 'RELEASE_NOTES_v2.15.md'),
+    path.join(root, 'RELEASE_NOTES_v2.16.md')
   ];
 
   files.push(...walk(path.join(root, 'src'), file => file.endsWith('.js')));
@@ -269,6 +270,22 @@ const publicFacingFiles = [
 ].filter(file => fs.existsSync(file));
 
 runHistoricalSignalContextRegression();
+
+const thereforeSymbol = String.fromCharCode(8756);
+if (combinedText.includes(thereforeSymbol)) {
+  fail('Public source still contains the therefore symbol in visible UI text.');
+}
+
+for (const term of [
+  ['W', 'i', 'x'].join(''),
+  ['P', 'C'].join(''),
+  ['M', 'O', 'B', 'I', 'L', 'E'].join('')
+]) {
+  const pattern = new RegExp(`\\b${term}\\b`, 'i');
+  if (pattern.test(combinedText)) {
+    fail('Public source still contains a banned artifact/platform term.');
+  }
+}
 
 for (const file of files) {
   const text = fs.readFileSync(file, 'utf8');
@@ -456,8 +473,8 @@ const requiredSourceFragments = [
     value: 'Related radiation and space-weather modules may stack with this factor'
   },
   {
-    label: 'BibTeX maintenance comment in share.js',
-    value: 'Maintenance note: this BibTeX list duplicates source metadata'
+    label: 'BibTeX source registry comment in share.js',
+    value: 'This BibTeX list repeats the source registry'
   },
   {
     label: 'GHZ inner fraction named constant',

@@ -1,10 +1,10 @@
-# JOSS submission notes for v2.15
+# JOSS submission notes for v2.16
 
 Repository: https://github.com/jerseroman/are-we-alone-in-the-universe
-Submission branch: `joss-v2.15-paper`
+Submission branch: `joss-v2.16-paper`
 Paper path: `paper/paper.md`
 Bibliography path: `paper/paper.bib`
-Target software version: v2.15
+Target software version: v2.16
 
 ## Submission title
 
@@ -16,7 +16,7 @@ Are We Alone in the Universe? Earth-like Planet Calculator is a browser-based re
 
 ## Suggested JOSS submission form text
 
-TThis submission describes v2.15.0 of a browser-based astrobiology scenario calculator. The software provides transparent, auditable estimates of potentially Earth-like candidates under user-selected assumptions, with deterministic calculations, seeded Monte Carlo uncertainty propagation, optional planetary constraints, validation warnings, release notes, tests, documentation, citation metadata, and a Zenodo software archive. The main scholarly contribution is not a new observational result, but a reusable and inspectable modelling workflow that makes the conditional structure of Earth-like-candidate estimates explicit.
+This submission describes v2.16.0 of a browser-based astrobiology scenario calculator. The software provides transparent, auditable estimates of potentially Earth-like candidates under user-selected assumptions, with deterministic calculations, seeded Monte Carlo uncertainty propagation, optional planetary constraints, validation warnings, release notes, tests, documentation, citation metadata, and a Zenodo software archive. The main scholarly contribution is not a new observational result, but a reusable and inspectable modelling workflow that makes the conditional structure of Earth-like-candidate estimates explicit.
 
 The software is particularly relevant for astrobiology education, exoplanet-demography sensitivity analysis, and public-facing scientific communication where assumptions must remain visible and reproducible. It complements exoplanet catalogues and specialist simulation tools by providing a lightweight, browser-native, parameter-transparent scenario instrument.
 
@@ -34,11 +34,11 @@ For any later JOSS review correspondence, generative AI will be limited to trans
 
 ## Critical readiness checks before pressing submit
 
-- Ensure `README.md`, `package.json`, `CITATION.cff`, `.zenodo.json`, release notes, and GitHub release metadata all agree on v2.15 and the current DOI.
+- Ensure `README.md`, `package.json`, `CITATION.cff`, `.zenodo.json`, release notes, and GitHub release metadata all agree on v2.16 and the current DOI.
 - Confirm that the project uses an OSI-approved license and that the license file is present.
 - Confirm that issues are enabled and readable publicly.
 - Confirm that a public development history of more than six months exists before submission; JOSS currently treats this as a pre-review gate.
-- Confirm that the v2.15 release is tagged and archived on Zenodo, or be prepared to update the archive DOI during review.
+- Confirm that the v2.16 release is tagged and archived on Zenodo, or be prepared to update the archive DOI during review.
 - Run the full test suite immediately before submission.
 
 ## Suggested final pre-submit commands

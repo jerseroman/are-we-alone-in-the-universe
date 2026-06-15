@@ -618,7 +618,7 @@
     .results-panel h2 { text-align:center; }
     .result-line { font-size: 13px; font-weight: 500; color: var(--text); margin: 6px 0; text-align: center; line-height: 1.6; min-height:1em; }
     .result-label { font-size: 9.5px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; margin-right: 5px; }
-    /* Core equations panel */
+    /* Core equations */
     .core-equations-panel {
       margin-bottom:14px;
       border:1px solid var(--border);
@@ -663,7 +663,7 @@
       overflow-x:auto;
       overflow-y:hidden;
     }
-    /* Keep MathJax output compact inside the panel. */
+    /* Keep MathJax from stretching the panel. */
     .core-equations-body mjx-container { font-size:100%; margin:2px 0 !important; }
     .ceq-note {
       font-size:9px;
@@ -711,7 +711,7 @@
     }
     .alert-title .alert-label { color:var(--text-bright); }
 
-    /* Monte Carlo blocked alert — warm red, harmonious with the amber yellow */
+    /* Blocked Monte Carlo alert */
     .alert-item--blocked .alert-title { color:var(--red-warm); }
     .alert-item--blocked .alert-title .alert-label { color:var(--red-warm); }
     .alert-item--blocked { background:var(--red-warm-dim); border-radius:4px; padding:6px 8px; margin:-4px; }
@@ -817,8 +817,8 @@
     .fermi-head {
       display:flex;
       align-items:center;
-      justify-content:space-between;
-      gap:10px;
+      justify-content:flex-start;
+      gap:12px;
       flex-wrap:wrap;
       margin-bottom:12px;
     }
@@ -1495,10 +1495,27 @@
 .det-gauge-label { font-size:11px; font-weight:800; min-width:52px; text-align:right; }
 
 
-.export-btn-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
-.export-btn { font-family:'Nunito',sans-serif; font-size:11px; font-weight:700; padding:8px 14px; border:1px solid var(--border-mid); border-radius:6px; background:var(--panel-alt); color:var(--text-dim); cursor:pointer; transition:all .15s; }
+.export-actions { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+.export-btn-row { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; }
+.export-btn { width:100%; min-height:34px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; gap:4px; font-family:'Nunito',sans-serif; font-size:11px; font-weight:700; padding:8px 10px; border:1px solid var(--border-mid); border-radius:6px; background:var(--panel-alt); color:var(--text-dim); cursor:pointer; transition:all .15s; text-align:center; white-space:nowrap; }
 .export-btn:hover { border-color:var(--accent); color:var(--text-bright); background:var(--accent-dim); }
+.export-select { width:100%; min-height:34px; box-sizing:border-box; font-family:'Nunito',sans-serif; font-size:11px; font-weight:700; padding:8px 28px 8px 10px; border:1px solid var(--border-mid); border-radius:6px; background-color:var(--panel-alt); color:var(--text-dim); outline:none; cursor:pointer; text-align:center; background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-repeat:no-repeat; background-position:right 8px center; background-size:13px; }
+.export-select option { background:var(--panel-alt); color:var(--text-dim); }
+.export-select:hover { border-color:var(--accent); color:var(--text-bright); background-color:var(--accent-dim); }
+.export-select:focus { border-color:var(--accent); box-shadow:0 0 0 2px rgba(96,165,250,0.15); }
 .export-note { font-size:9.5px; color:var(--text-dim); margin-top:8px; line-height:1.5; }
+.export-warning { display:none; margin-top:8px; padding:8px 10px; border:1px solid var(--yellow); border-radius:6px; background:rgba(255,209,102,0.08); color:var(--yellow); font-size:10px; font-weight:700; line-height:1.45; }
+.seed-warning { display:none; margin-top:7px; color:var(--yellow); font-size:9.5px; font-weight:700; line-height:1.45; }
+.seed-action-btn { font-family:'Nunito',sans-serif; font-size:10px; font-weight:800; padding:7px 9px; border:1px solid var(--border-mid); border-radius:5px; background:var(--panel-alt); color:var(--text-dim); cursor:pointer; transition:all .15s ease; white-space:nowrap; }
+.seed-action-btn:hover { color:var(--text-bright); border-color:var(--accent); background:var(--accent-dim); }
+.seed-input-row { display:flex; gap:6px; align-items:center; }
+.seed-input-row .sim-control-input { min-width:0; }
+@media (max-width: 980px) {
+  .export-btn-row { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 560px) {
+  .export-btn-row { grid-template-columns:1fr; }
+}
 
 
 .calc-console-intro { font-size:10.5px; line-height:1.7; color:var(--text-dim); margin-bottom:10px; }

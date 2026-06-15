@@ -1,12 +1,12 @@
 # Calculator Code Audit Matrix
 
-This document contains the list of calculator code tests, calculator audit profiles, oracle tests, browser tests, and stress test cases that have been performed for version 2.15.
+This document contains the list of calculator code tests, calculator audit profiles, oracle tests, browser tests, and stress test cases that have been performed for version 2.16.
 
-Several lengthy audits of the calculator code were conducted on my local system for a total period of 20 hours, including two 10-hour time-boxed audit runs in addition to smoke, static analysis, browser, oracle, and specific regression audits.
+Several lengthy audits of the calculator code were conducted for a total period of 20 hours, including two 10-hour time-boxed audit runs in addition to smoke, static analysis, browser, oracle, and specific regression audits.
 
 Scope boundary: this audit of the code refers specifically to the calculator code implementation and its results. It does not constitute certification.
 
-Transparency in workflow: this audit matrix was prepared based on the logs of my local calculator audits, along with Node.js and Python oracle scripts and AI-assisted static analysis with OpenAI Codex.
+Transparency in workflow: this audit matrix was prepared from calculator audit logs, Node.js and Python oracle scripts, and AI-assisted static analysis with OpenAI Codex.
 
 Evidence summary: the latest completed 10-hour calculator audit passed 131/131 profile executions, with 74,828,664 randomized core calculator cases, 1,626 Python oracle checks, and 9,718 browser/UI/export samples. No mismatches were reported in that completed 10-hour functional audit. Remaining open items are mutation-test strength, coverage collection tooling, storage UX in restrictive browser contexts, model-factor correlation documentation, and future Monte Carlo distributional tests.
 
@@ -252,7 +252,7 @@ Evidence summary: the latest completed 10-hour calculator audit passed 131/131 p
 | Check | Status | Error observed | Fixed/current state |
 | --- | --- | --- | --- |
 | Browser DOM profile | PASS | Earlier standalone browser check was skipped before Playwright install | Latest full browser DOM profile passes. |
-| Mobile vs desktop parity | FIXED | Yes, older deep 10h run had one failure | Latest full run reports PASS. |
+| Responsive layout parity | FIXED | Yes, older deep 10h run had one failure | Latest full run reports PASS. |
 | Sparse SETI UI display | PASS | No current error | Latest browser profile passes. |
 | Module-overlap warning UI | PASS | No current error | Latest browser profile passes. |
 | Browser performance/memory | PASS | No current error | Latest profile passes. |
@@ -303,7 +303,7 @@ Evidence summary: the latest completed 10-hour calculator audit passed 131/131 p
 | `12-json-export-parity` | FIXED | Yes, older deep 10h run had failures | Latest full 10h run passed. |
 | `13-latex-markdown-export-parity` | PASS | No current error | Latest full 10h run passed. |
 | `14-ui-browser-dom` | PASS | Standalone early browser run was skipped before Playwright install | Latest full 10h run passed. |
-| `15-mobile-vs-desktop` | FIXED | Yes, older deep 10h run had a failure | Latest full 10h run passed. |
+| `15-responsive-layout-parity` | FIXED | Yes, older deep 10h run had a failure | Latest full 10h run passed. |
 | `16-seti-sparse-display` | PASS | No current error | Latest full 10h run passed. |
 | `17-module-overlap-warning` | PASS | No current error | Latest full 10h run passed. |
 | `18-performance-memory` | PASS | No current error | Latest full 10h run passed. |
@@ -378,7 +378,7 @@ These entries come from the earlier calculator-focused `MODEL_VALIDATION_AUDIT.m
 | Short deep-random smoke run | PASS | No error in that run | Static and core fuzz profiles passed. |
 | Standalone browser DOM check | SKIPPED | Playwright was missing | Later browser profiles ran after browser tooling was available. |
 | First 10h setup attempt | PARTIAL | `spawnSync npm.cmd EINVAL` and setup failures | Later launch scripts and full runs succeeded. |
-| Older deep 10h audit | PARTIAL | Browser profile failures in JSON export parity and mobile/desktop parity | Latest full 10h run passed those profiles. |
+| Older deep 10h audit | PARTIAL | Browser profile failures in JSON export parity and responsive layout parity | Latest full 10h run passed those profiles. |
 | First full smoke audit | PARTIAL | Wording/security static failures | Later static checks and latest full run passed. |
 | Standalone security static check | PASS | No error after fixes | Security/static profile passed. |
 | Standalone wording static check | PASS | No error after fixes | Wording profile passed. |

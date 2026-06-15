@@ -84,23 +84,17 @@ function fmtPct(p) {
   return '1 in ' + Math.round(inv).toLocaleString();
 }
 
-// Format a Poisson existence probability (value in [0, 1]).
-// For very small but nonzero probabilities (< 0.01 %) the plain .toFixed(1/2)
-// formatters would display "0.0%" or "0.00%", which looks like exactly zero.
-// This function always shows the actual nonzero value and, below the 0.01%
-// threshold, also appends the "1 in X" odds for readability.
-// plain=true returns ASCII-only text (for HTML title/tooltip attributes).
+// Tiny nonzero Poisson probabilities should not print as "0.0%".
+// Below 0.01%, show both the percentage and the "1 in X" odds.
+// plain=true keeps tooltips free of HTML.
 function fmtExistencePct(prob, plain = false) {
   if (!Number.isFinite(prob) || prob <= 0) return '0%';
   if (prob >= 1) return '100%';
 
   const pct = prob * 100;
 
-  // Normal range (>= 0.01 %): delegate to the standard fmtPct which already
-  // handles precision well down to 0.0001 % before switching to "1 in X".
   if (pct >= 0.01) return fmtPct(pct);
 
-  // Sub-0.01 % range: always show the numeric percentage AND the odds.
   const pctStr = pct >= 1e-6
     ? '≈ ' + pct.toFixed(8).replace(/\.?0+$/, '') + '%'
     : '≈ ' + pct.toExponential(2) + '%';
@@ -216,9 +210,7 @@ function sanitizePositive(v, fallback = 0) {
 
 let deterministicPlanets = 0;
 
-// Primary Monte Carlo point estimate: the q50 median of the sample
-// distribution. The arithmetic mean is tracked separately so exports and UI
-// never label the median as an average.
+// The UI treats q50 as the main Monte Carlo point; the arithmetic mean stays separate.
 let mcMedianQ50 = 0;
 
 let mcArithmeticMean = 0;
@@ -273,11 +265,17 @@ let volumeGHZSphere = 0;
 
 let simulationCompleted = false;
 
-// Tri-state Monte Carlo lifecycle, distinct from the boolean simulationCompleted:
+// Monte Carlo has three states, separate from the boolean simulationCompleted:
 //   'not-run' - MC has never completed for the current scenario/session state
 //   'current' - MC completed and still matches the current input state
 //   'stale'   - MC completed previously but was invalidated by a state change
 let monteCarloState = 'not-run';
+
+const MONTE_CARLO_PRNG = 'Mulberry32';
+const MONTE_CARLO_PRNG_DESCRIPTION = 'Mulberry32 32-bit deterministic PRNG';
+const MONTE_CARLO_SEED_MIN = 0;
+const MONTE_CARLO_SEED_MAX = 0xffffffff;
+const MONTE_CARLO_SEED_WARNING_MESSAGE = 'Enter a valid numeric Monte Carlo seed.';
 
 let distanceCalculated = false;
 
@@ -297,12 +295,7 @@ let galaxySettingsBaseline = null;
 
 let bayesianMode = 'post';
 
-// Default Interpretation & Fermi Context view uses the DETERMINISTIC result.
-// For scenario-based presets, the deterministic chain product represents the
-// scenario's point answer; the MC distribution propagates full literature-
-// informed uncertainty and is best treated as a secondary informational view
-// available via the MC RESULT toggle in the Fermi panel.
-let fermiMode = 'dt';
+let fermiMode = 'mc';
 
 let fermiContexts = { mc: null, dt: null };
 
@@ -314,9 +307,7 @@ let scenarioState = 'custom';
 
 let modifiedPresetOrigin = '';
 
-// Backwards-compatible no-ops: the per-field edit tracking that powered the
-// hybrid modified-Pessimist mode has been removed. The functions remain so
-// callers in app.js continue to work without conditional checks.
+// Old callers still call these edit-tracking hooks; leave them harmless.
 function clearParameterFieldEdits() {}
 function recordParameterFieldEdit() {}
 function isParameterFieldEdited() {
@@ -328,6 +319,8 @@ let intervalsVisible = false;
 let lastResults = [];
 
 let lastSampleYields = [];
+
+let lastMonteCarloRunMetadata = null;
 
 let monteCarloYieldStats = null;
 
@@ -431,7 +424,7 @@ const POSITIVE_FIELDS = new Set([
   'adv_N_total_stars'
 ]);
 
-// Export so app.js (and tests) can use the canonical set without duplication.
+// Share this list with app.js and the tests.
 globalThis.PROBABILITY_FIELDS_GLOBAL = PROBABILITY_FIELDS;
 
 const BASE_SAMPLE_IDS = [
@@ -715,9 +708,7 @@ const PRESET_LOCAL_WIDTH_PROFILES = {
 };
 
 const PRESET_LOCAL_PARAM_WIDTHS = Object.freeze({
-  // GHZ star count is an interpretive prior and should remain the dominant
-  // scale uncertainty in clean named presets; planet multiplicity is better
-  // constrained by occurrence-rate surveys.
+  // N_GHZ carries most of the scale uncertainty in clean presets; planet multiplicity is narrower.
   N_GHZ: 'broad',
   N_p_star: 'narrow',
   f_sun_type: 'medium',
@@ -961,17 +952,14 @@ function isVisibleStateEquivalentToPreset(key) {
   return isAdvancedScenarioAtPresetDefault();
 }
 
-// The preset key a modified scenario was derived from (or the active clean
-// preset). Null for a true custom scenario with no preset baseline.
+// Preset behind the current modified scenario; null means true custom.
 function getScenarioOriginPreset() {
   if (scenarioState === 'modified' && modifiedPresetOrigin && PRESETS[modifiedPresetOrigin]) return modifiedPresetOrigin;
   if (scenarioState === 'preset' && activePreset && activePreset !== 'custom' && PRESETS[activePreset]) return activePreset;
   return null;
 }
 
-// A preset-owned parameter is "edited" when its visible central value or either
-// visible bound differs from the preset default. Derived from visible state, so
-// restoring a field exactly to the default automatically clears its edited flag.
+// A preset field counts as edited only while its visible value or bounds differ from the preset.
 function isParameterEditedFromPreset(id, presetKey) {
   const preset = PRESETS[presetKey];
   if (!preset) return true;
@@ -1089,12 +1077,8 @@ function getPresetVisibleBounds(preset, id) {
     return Number.isFinite(min) && Number.isFinite(max) ? { min, max } : null;
   }
 
-  // Fall back to the registry's literature-informed default min/max. These are
-  // the values the per-card UI citations (Henry 2006, Bryson 2021, etc.)
-  // explicitly anchor; we must NOT silently overwrite them with a generic
-  // ±0.3 dex convention, because that would make the visible field values
-  // inconsistent with the cited literature-informed ranges shown below.
-  // Per-preset preset.bounds[id] still wins when explicitly provided.
+  // Use registry bounds unless the preset provides its own. A generic ±0.3 dex
+  // band would make the fields disagree with the source notes shown in the UI.
   return getDefaultParameterBounds(id);
 }
 
@@ -1414,11 +1398,11 @@ const HISTORY_DB = [
 ];
 
 const HISTORICAL_SIGNAL_CONTEXT_V2 = [
-  [2020, 'the early 2020s', 'roughly the pandemic, mRNA-vaccine, remote-work and early generative-AI era, when cloud infrastructure and mobile platforms were already central to daily life'],
-  [2010, 'the early 2010s', 'roughly the smartphone, cloud-computing and social-platform era, when high-energy LHC physics had begun and digital life was becoming mobile-first'],
+  [2020, 'the early 2020s', 'roughly the pandemic, mRNA-vaccine, remote-work and early generative-AI era, when cloud infrastructure and handheld platforms were already central to daily life'],
+  [2010, 'the early 2010s', 'roughly the smartphone, cloud-computing and social-platform era, when high-energy LHC physics had begun and digital life was becoming app-first'],
   [2000, 'around 2000', 'roughly the human-genome draft, continuous International Space Station habitation and mass-internet era, when the global population was near six billion'],
   [1990, 'the 1990s', 'roughly the World Wide Web, GPS civilian-use and post-Cold-War globalization era, when digital networks were moving from laboratories into ordinary life'],
-  [1980, 'the 1980s', 'roughly the personal-computer, early mobile-phone and space-shuttle era, when microelectronics were reshaping work and communications'],
+  [1980, 'the 1980s', 'roughly the personal-computer, early cellular-phone and space-shuttle era, when microelectronics were reshaping work and communications'],
   [1970, 'the 1970s', 'roughly the Apollo-afterglow, Voyager-launch and first-microprocessor era, when modern planetary exploration and computing were accelerating'],
   [1960, 'the 1960s', 'roughly the space-race and civil-rights era, when humans first reached the Moon and radio astronomy was rapidly expanding'],
   [1950, 'the 1950s', 'roughly the early space-age and transistor era, when nuclear physics, radio astronomy and electronic computing were entering modern form'],
@@ -1896,6 +1880,7 @@ function hashSeed(seed) {
 }
 
 function createSeededRng(seed) {
+  // Mulberry32 gives repeatable browser-side draws from a numeric seed.
   let state = Number.isFinite(Number(seed)) ? Number(seed) >>> 0 : hashSeed(seed);
   return function seededRng() {
     state = (state + 0x6D2B79F5) >>> 0;
@@ -1910,6 +1895,100 @@ function resolveRng(options = {}) {
   if (typeof options.rng === 'function') return options.rng;
   if (Object.prototype.hasOwnProperty.call(options, 'seed')) return createSeededRng(options.seed);
   return Math.random;
+}
+
+function normalizeMonteCarloSeed(value) {
+  if (String(value ?? '').trim() === '') return null;
+  const n = Number(value);
+  if (!Number.isFinite(n) || !Number.isInteger(n)) return null;
+  if (n < MONTE_CARLO_SEED_MIN || n > MONTE_CARLO_SEED_MAX) return null;
+  return n >>> 0;
+}
+
+function generateMonteCarloSeed() {
+  const cryptoProvider = typeof globalThis !== 'undefined' ? globalThis.crypto : null;
+  if (cryptoProvider && typeof cryptoProvider.getRandomValues === 'function') {
+    const values = new Uint32Array(1);
+    cryptoProvider.getRandomValues(values);
+    return values[0] >>> 0;
+  }
+  return Math.floor(Math.random() * (MONTE_CARLO_SEED_MAX + 1)) >>> 0;
+}
+
+function getMonteCarloSeedMode() {
+  const mode = ((byId('monte-carlo-seed-mode') || {}).value || 'random').toLowerCase();
+  return mode === 'fixed' ? 'fixed' : 'random';
+}
+
+function showMonteCarloSeedWarning(message = MONTE_CARLO_SEED_WARNING_MESSAGE) {
+  const warning = byId('monte-carlo-seed-warning');
+  if (warning) {
+    warning.textContent = message;
+    warning.style.display = 'block';
+  } else if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+    console.warn(message);
+  }
+  return message;
+}
+
+function clearMonteCarloSeedWarning() {
+  const warning = byId('monte-carlo-seed-warning');
+  if (!warning) return;
+  warning.textContent = '';
+  warning.style.display = 'none';
+}
+
+function updateMonteCarloSeedControlState() {
+  const mode = getMonteCarloSeedMode();
+  const input = byId('monte-carlo-seed');
+  if (!input) return;
+  const fixed = mode === 'fixed';
+  input.disabled = !fixed;
+  input.style.display = fixed ? '' : 'none';
+  if (!fixed) clearMonteCarloSeedWarning();
+}
+
+function resolveMonteCarloSeedForRun(options = {}) {
+  const explicitSeed = Object.prototype.hasOwnProperty.call(options, 'seed');
+  const explicitMode = String(options.seedMode || options.seed_mode || '').toLowerCase();
+
+  if (explicitSeed) {
+    const seed = normalizeMonteCarloSeed(options.seed);
+    if (seed === null) {
+      return { ok: false, message: MONTE_CARLO_SEED_WARNING_MESSAGE };
+    }
+    return {
+      ok: true,
+      seed,
+      seedMode: explicitMode === 'random' ? 'random' : 'fixed',
+      prng: MONTE_CARLO_PRNG,
+      prngDescription: MONTE_CARLO_PRNG_DESCRIPTION
+    };
+  }
+
+  const mode = getMonteCarloSeedMode();
+  if (mode === 'fixed') {
+    const seedInput = byId('monte-carlo-seed');
+    const seed = normalizeMonteCarloSeed(seedInput ? seedInput.value : '');
+    if (seed === null) {
+      return { ok: false, message: MONTE_CARLO_SEED_WARNING_MESSAGE };
+    }
+    return {
+      ok: true,
+      seed,
+      seedMode: 'fixed',
+      prng: MONTE_CARLO_PRNG,
+      prngDescription: MONTE_CARLO_PRNG_DESCRIPTION
+    };
+  }
+
+  return {
+    ok: true,
+    seed: generateMonteCarloSeed(),
+    seedMode: 'random',
+    prng: MONTE_CARLO_PRNG,
+    prngDescription: MONTE_CARLO_PRNG_DESCRIPTION
+  };
 }
 
 function boxMuller(rng = Math.random) {
@@ -2001,15 +2080,13 @@ function resolveMonteCarloBasisMode(options = getSimulationOptions()) {
   const requested = normalizeMonteCarloBasisMode(options.mcMode);
   const scenario = getScenarioState();
 
-  // Explicit user-selected modes are honored.
+  // User-picked modes win.
   if (requested === MONTE_CARLO_BASIS_MODES.globalEnvelope) return requested;
   if (requested === MONTE_CARLO_BASIS_MODES.customInput) return requested;
   if (requested === MONTE_CARLO_BASIS_MODES.modifiedPresetLocal) return requested;
   if (requested === MONTE_CARLO_BASIS_MODES.presetLocal) return requested;
 
-  // Auto resolution: a clean preset stays preset-local; an EDITED preset uses
-  // modified preset-local (not full customInput) so unchanged preset fields keep
-  // scenario-local uncertainty; a true custom scenario uses customInput.
+  // Auto mode keeps clean presets local; edited presets use edited fields only where changed; true custom uses custom input.
   if (scenario.isPreset) return MONTE_CARLO_BASIS_MODES.presetLocal;
   if (scenario.isModified) return MONTE_CARLO_BASIS_MODES.modifiedPresetLocal;
   return MONTE_CARLO_BASIS_MODES.customInput;
@@ -2057,9 +2134,7 @@ function getMonteCarloBoundsDescriptor(options = getSimulationOptions()) {
   };
 }
 
-// Parameters that participate in the current Monte Carlo computation: base
-// non-optional factors always, optional factors only when enabled, advanced
-// sampled factors only when their module is enabled.
+// Optional factors join the sampled set only when their switch is on.
 function parameterEnabledForBoundsDescriptor(id, boundsDescriptor = getMonteCarloBoundsDescriptor()) {
   const sourcePreset =
     boundsDescriptor.mode === MONTE_CARLO_BASIS_MODES.presetLocal
@@ -2092,11 +2167,8 @@ function getMonteCarloSampledParameterIds(boundsDescriptor = getMonteCarloBounds
   return ids;
 }
 
-// A parameter is sampled from its visible min/max only in customInput,
-// globalEnvelope, or (for edited fields) modifiedPresetLocal. In presetLocal —
-// and for unedited fields under modifiedPresetLocal — the sampler uses
-// scenario-local bounds and ignores the visible min/max, so inconsistent visible
-// bounds there are not a blocking error.
+// Visible bounds matter only in custom/global modes, or on edited fields.
+// Clean preset fields keep their scenario-local bands.
 function parameterUsesVisibleBoundsForSampling(id, mode, origin) {
   if (mode === MONTE_CARLO_BASIS_MODES.customInput) return true;
   if (mode === MONTE_CARLO_BASIS_MODES.globalEnvelope) return true;
@@ -2106,9 +2178,7 @@ function parameterUsesVisibleBoundsForSampling(id, mode, origin) {
   return false;
 }
 
-// Returns the set of visible-bound inconsistencies that must block Monte Carlo:
-// a sampled-from-visible-bounds parameter whose min > max, or whose central
-// value lies outside [min, max].
+// Block Monte Carlo only when a sampled visible-bound field has impossible bounds.
 function getMonteCarloBoundsBlockingErrors(boundsDescriptor = getMonteCarloBoundsDescriptor()) {
   const mode = boundsDescriptor.mode;
   const origin = getScenarioOriginPreset();
@@ -2332,8 +2402,7 @@ function getParamSamplingState(id, boundsDescriptor = getMonteCarloBoundsDescrip
     hi = local.hi;
     basis = local.basis || 'scenario-local';
   } else if (boundsDescriptor.mode === MONTE_CARLO_BASIS_MODES.modifiedPresetLocal) {
-    // Edited fields use their visible bounds; unchanged preset fields keep
-    // scenario-local preset uncertainty (so one edit cannot widen unrelated fields).
+    // Edited fields use visible bounds; untouched preset fields keep their preset-local bands.
     const origin = getScenarioOriginPreset();
     if (origin && !isParameterEditedFromPreset(id, origin)) {
       const local = buildPresetLocalBounds(id, meanVal, isProbability, isPositive);
@@ -2554,10 +2623,7 @@ function sampleMedianAnchoredTruncatedNormalZ(medianZ, loZ, hiZ, spread, u) {
 function sampleLogNormalBounded(meanVal, lo, hi, rng = Math.random) {
   if (meanVal <= 0) return 0;
 
-  // Median-anchored bounded log-normal: choose the transformed normal center
-  // so the distribution's median remains at the central value after truncation.
-  // Without this correction, asymmetric bounds near a registry edge shift q50
-  // away from the user's central value.
+  // Shift the transformed center so truncation does not pull q50 away from the central value.
   const uncertaintyFraction = getSamplingUncertaintyFraction();
   const sd = Math.max((hi - lo) * uncertaintyFraction / 2, meanVal * 0.1, 1e-12);
   const variance = sd * sd;
@@ -2570,10 +2636,7 @@ function sampleLogNormalBounded(meanVal, lo, hi, rng = Math.random) {
 }
 
 function sampleLogitNormalBounded(meanVal, lo, hi, rng = Math.random) {
-  // Median-anchored bounded logit-normal: choose the transformed normal center
-  // so the truncated distribution has q50 at m. An untruncated logit-normal has
-  // median m automatically; truncation breaks that property unless the center
-  // is adjusted for asymmetric bounds.
+  // Same idea for logit-normal: after truncation, q50 should still sit at m.
   const m = clamp(meanVal, Math.max(lo, 1e-9), Math.min(hi, 1 - 1e-9));
   const lo2 = clamp(lo, 1e-9, 1 - 1e-9);
   const hi2 = clamp(hi, 1e-9, 1 - 1e-9);
@@ -2602,7 +2665,6 @@ function sampleLogNormalQuantile(meanVal, lo, hi, u) {
   if (meanVal <= 0) return 0;
   if (hi <= lo) return clamp(meanVal, lo, hi);
 
-  // Median-anchored after truncation - see sampleLogNormalBounded.
   const uncertaintyFraction = getSamplingUncertaintyFraction();
   const sd = Math.max((hi - lo) * uncertaintyFraction / 2, meanVal * 0.1, 1e-12);
   const variance = sd * sd;
@@ -2615,7 +2677,6 @@ function sampleLogNormalQuantile(meanVal, lo, hi, u) {
 }
 
 function sampleLogitNormalQuantile(meanVal, lo, hi, u) {
-  // Median-anchored after truncation - see sampleLogitNormalBounded.
   const m = clamp(meanVal, Math.max(lo, 1e-9), Math.min(hi, 1 - 1e-9));
   const lo2 = clamp(lo, 1e-9, 1 - 1e-9);
   const hi2 = clamp(hi, 1e-9, 1 - 1e-9);
@@ -3387,7 +3448,14 @@ function runMonteCarloSimulation(options = {}) {
   const dist = (options.distribution || (byId('distribution') || {}).value || 'lognormal').toLowerCase();
   const simulationOptions = options.simulationOptions || getMonteCarloOptions(options);
   const boundsDescriptor = options.boundsDescriptor || getMonteCarloBoundsDescriptor(simulationOptions);
-  const rng = resolveRng(options);
+  const resolvedSeed = normalizeMonteCarloSeed(
+    Object.prototype.hasOwnProperty.call(options, 'seed') ? options.seed : generateMonteCarloSeed()
+  );
+  const seedForRun = resolvedSeed === null ? generateMonteCarloSeed() : resolvedSeed;
+  const seedMode = String(options.seedMode || options.seed_mode || 'random').toLowerCase() === 'fixed' ? 'fixed' : 'random';
+  const prng = options.prng || MONTE_CARLO_PRNG;
+  const prngDescription = options.prngDescription || MONTE_CARLO_PRNG_DESCRIPTION;
+  const rng = typeof options.rng === 'function' ? options.rng : createSeededRng(seedForRun);
   clearBoundIntervalWarnings();
   const deterministicInputs = getInputsForBoundsDescriptor(boundsDescriptor);
   const deterministicAtRun = computePlanetsAdvanced(applyAdvancedModules(deterministicInputs));
@@ -3538,7 +3606,10 @@ function runMonteCarloSimulation(options = {}) {
     uncertaintyBasisLabel: boundsDescriptor.uncertaintyBasisLabel,
     distribution: dist,
     simulationOptions,
-    seed: Object.prototype.hasOwnProperty.call(options, 'seed') ? options.seed : null
+    seed: seedForRun,
+    seedMode,
+    prng,
+    prngDescription
   };
 }
 
@@ -3547,6 +3618,7 @@ function applyMonteCarloSummary(summary) {
 
   if (!summary.results.length) {
     lastSampleYields = [];
+    lastMonteCarloRunMetadata = null;
     monteCarloYieldStats = null;
     convergenceSummary = null;
     simulationEnvelope = null;
@@ -3562,6 +3634,24 @@ function applyMonteCarloSummary(summary) {
 
   lastResults = summary.results.slice();
   lastSampleYields = Array.isArray(summary.yieldSamples) ? summary.yieldSamples.slice() : [];
+  lastMonteCarloRunMetadata = {
+    requestedSamples: summary.requestedSamples,
+    validSamples: summary.n,
+    deterministic: summary.deterministic,
+    engine: summary.simulationOptions?.engine || ((byId('simulation-engine') || {}).value || 'standard').toLowerCase(),
+    distribution: summary.distribution || ((byId('distribution') || {}).value || 'lognormal').toLowerCase(),
+    correlation: summary.simulationOptions?.correlation || ((byId('correlation-model') || {}).value || 'independent').toLowerCase(),
+    robustBounds: !!summary.simulationOptions?.robustBounds,
+    mcMode: summary.simulationOptions?.mcMode ?? summary.boundsMode ?? null,
+    boundsMode: summary.boundsMode || null,
+    boundsLabel: summary.boundsLabel || null,
+    uncertaintyBasisLabel: summary.uncertaintyBasisLabel || null,
+    seed: normalizeMonteCarloSeed(summary.seed),
+    seedMode: summary.seedMode || 'random',
+    prng: summary.prng || MONTE_CARLO_PRNG,
+    prngDescription: summary.prngDescription || MONTE_CARLO_PRNG_DESCRIPTION,
+    sampleOrder: 'ascending_candidate_count'
+  };
   monteCarloYieldStats = summary.yieldStats || null;
   mcMedianQ50 = Number.isFinite(summary.median) ? summary.median : summary.mean;
   mcArithmeticMean = summary.mean;
@@ -3598,6 +3688,7 @@ function applyMonteCarloSummary(summary) {
   if (typeof renderConvergenceSummary === 'function') renderConvergenceSummary();
   simulationCompleted = true;
   monteCarloState = 'current';
+  if (typeof clearMonteCarloExportWarning === 'function') clearMonteCarloExportWarning();
   if (typeof renderSimulationMethodSummary === 'function') renderSimulationMethodSummary();
 
   if (ADV.enabled && ADV.modules.sensitivity.enabled && typeof SENS !== 'undefined') SENS.render('adv-tornado-container');
@@ -3615,20 +3706,24 @@ function monteCarloCalculate(options = {}) {
   const hasProgrammaticOptions = !!options && Object.keys(options).length > 0;
   const simulationOptions = getMonteCarloOptions(options);
   const boundsDescriptor = getMonteCarloBoundsDescriptor(simulationOptions);
+  const seedResolution = resolveMonteCarloSeedForRun(options);
   const loading = byId('loading');
   if (typeof renderConfigurationWarnings === 'function') renderConfigurationWarnings();
 
-  // Gate: never run Monte Carlo when a parameter sampled from its visible bounds
-  // has inconsistent bounds (min > max, or central outside [min, max]). Blocking
-  // here means simulationCompleted/mcState stay not-run/stale and no invalid MC
-  // values are produced or exported. Deterministic output is left untouched.
+  if (!seedResolution.ok) {
+    if (loading) loading.style.display = 'none';
+    showMonteCarloSeedWarning(seedResolution.message);
+    return null;
+  }
+  clearMonteCarloSeedWarning();
+
+  // Do not run Monte Carlo on impossible sampled bounds; deterministic output is left alone.
   const blockingErrors = getMonteCarloBoundsBlockingErrors(boundsDescriptor);
   if (blockingErrors.length) {
     if (loading) loading.style.display = 'none';
     if (typeof renderConfigurationWarnings === 'function') renderConfigurationWarnings();
     if (typeof renderSimulationMethodSummary === 'function') renderSimulationMethodSummary();
-    // Deterministic output is still valid — re-enable the distance button so
-    // the user is not left with a permanently disabled "Where is Everyone?" button.
+    // Distance can still use deterministic output, so put the button back.
     if (hasDeterministicCalculation && byId('whereAreTheyBtn')) byId('whereAreTheyBtn').disabled = false;
     return null;
   }
@@ -3636,7 +3731,15 @@ function monteCarloCalculate(options = {}) {
   if (loading) loading.style.display = 'block';
 
   const execute = () => {
-    const summary = runMonteCarloSimulation({ ...options, simulationOptions, boundsDescriptor });
+    const summary = runMonteCarloSimulation({
+      ...options,
+      simulationOptions,
+      boundsDescriptor,
+      seed: seedResolution.seed,
+      seedMode: seedResolution.seedMode,
+      prng: seedResolution.prng,
+      prngDescription: seedResolution.prngDescription
+    });
     if (options.updateUi !== false) applyMonteCarloSummary(summary);
     if (loading) loading.style.display = 'none';
     return summary;
@@ -4204,12 +4307,7 @@ function calculateDistanceToNearestPlanet() {
 
     loading.style.display = 'none';
     distanceCalculated = true;
-    // Default Interpretation & Fermi Context view = DETERMINISTIC. Wide
-    // literature-informed Monte Carlo distributions can produce unusable
-    // drift for scenarios whose centrals sit at registry edges (Pessimist,
-    // Optimist); deterministic is the methodological primary for scenario-
-    // based presets. The user can still flip to MC RESULT via the toggle.
-    renderFermiBox('dt');
+    renderFermiBox(hasCurrentMc ? 'mc' : 'dt');
     if (typeof renderDetectionPanel === 'function') renderDetectionPanel();
     saveHistoryEntry();
     updateShareButtons();

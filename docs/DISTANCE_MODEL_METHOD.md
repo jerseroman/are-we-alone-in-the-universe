@@ -1,10 +1,10 @@
 # Distance Model Method
 
-The nearest-distance panel uses Poisson point-process approximations. These are geometric model expectations, not catalogue predictions of known planets.
+The nearest-distance panel uses Poisson point-process approximations. These are mathematically valid geometric model expectations inside a literature-informed exploratory model, not catalogue predictions of known planets.
 
 ## Uniform Comparison Models
 
-The older comparison models treat modelled Earth-like candidates as uniformly distributed in a selected GHZ geometry:
+The older comparison models treat modelled Earth-like candidates as uniformly distributed in simplified GHZ comparison geometries:
 
 - 2D GHZ annulus;
 - 3D GHZ disk;

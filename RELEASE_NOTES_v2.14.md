@@ -99,7 +99,7 @@ Several changes are audit-driven: JSON detection-basis consistency, historical s
 
 ## Verification
 
-Completed locally for this v2.14 preparation:
+Verification completed for v2.14:
 
 - `npm.cmd run verify` - passed.
 - `npm.cmd run check:syntax` - passed.

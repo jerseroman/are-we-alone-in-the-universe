@@ -1,6 +1,6 @@
 {
   "name": "are-we-alone-in-the-universe",
-  "version": "2.15.0",
+  "version": "2.16.0",
   "description": "Static browser-based Earth-like planet calculator for transparent astrobiological scenario modelling.",
   "private": true,
   "repository": {
@@ -10,9 +10,11 @@
   "license": "AGPL-3.0-only",
   "scripts": {
     "verify": "node tools/verify-static-site.mjs",
+    "build:standalone": "node tools/generate-standalone-html.mjs",
     "check:syntax": "node tools/check-syntax.mjs",
     "test:numerics": "node tools/test-numerics.mjs",
     "test:strings": "node tools/test-strings.mjs",
+    "test:standalone-export": "node tools/test-standalone-export-consistency.mjs",
     "test:presets": "node tools/test-presets.mjs",
     "test:montecarlo": "node tools/test-montecarlo.mjs",
     "test:pessimist-mc": "node tools/test-pessimist-mc.mjs",
@@ -27,6 +29,6 @@
     "test:biogeo-sources": "node tools/test-bio-geophysical-sources.mjs",
     "test:absolute": "node tools/test-absolute-deep-audit.mjs",
     "test:deep": "npm run test:state-transition:deep",
-    "test:all": "npm run verify && npm run check:syntax && npm run test:numerics && npm run test:strings && npm run test:presets && npm run test:montecarlo && npm run test:pessimist-mc && npm run test:scenario-coherence && npm run test:universe-scale && npm run test:state-transition:core && npm run test:preset-state-reset && npm run test:calibration && npm run test:source-links && npm run test:biogeo-sources"
+    "test:all": "npm run verify && npm run check:syntax && npm run test:numerics && npm run test:strings && npm run test:standalone-export && npm run test:presets && npm run test:montecarlo && npm run test:pessimist-mc && npm run test:scenario-coherence && npm run test:universe-scale && npm run test:state-transition:core && npm run test:preset-state-reset && npm run test:calibration && npm run test:source-links && npm run test:biogeo-sources"
   }
 }

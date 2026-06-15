@@ -212,23 +212,20 @@ function renderInputValidationWarnings(warnings = []) {
   });
 }
 
-// ── Probability / fraction field clamp (>1 → 1) ─────────────────────────────
-// The canonical probability-field set lives in calculator-core.js.  We access
-// it through the globalThis bridge so app.js is not duplicating the list.
+// Probability and fraction fields stop at 1.
+// The field list lives in calculator-core.js; app.js only reads it here.
 const CLAMP_PROBABILITY_FIELDS = typeof PROBABILITY_FIELDS_GLOBAL !== 'undefined'
   ? PROBABILITY_FIELDS_GLOBAL
   : new Set();
 
-// Derive the base parameter id from a control id (strips _min / _max suffix).
 function _clampBaseId(controlId) {
   return controlId.replace(/_(min|max)$/, '');
 }
 
-// Show or clear the local >1 clamp warning inside the parameter card.
 function showClampWarning(baseId) {
   const card = byId(`card-${baseId}`);
   if (!card || typeof card.querySelectorAll !== 'function') return;
-  if (card.querySelectorAll('.input-clamp-warning').length) return; // already shown
+  if (card.querySelectorAll('.input-clamp-warning').length) return;
   const el = document.createElement('div');
   el.className = 'input-clamp-warning';
   if (typeof el.setAttribute === 'function') el.setAttribute('role', 'status');
@@ -241,7 +238,7 @@ function clearClampWarning(baseId) {
   if (!card || typeof card.querySelectorAll !== 'function') return;
   card.querySelectorAll('.input-clamp-warning').forEach(el => {
     el.remove();
-    // Keep the children array in sync for harnesses where remove() is a no-op.
+    // Some test elements do not remove themselves from children.
     if (Array.isArray(card.children)) {
       const idx = card.children.indexOf(el);
       if (idx !== -1) card.children.splice(idx, 1);
@@ -249,7 +246,6 @@ function clearClampWarning(baseId) {
   });
 }
 
-// Called on input/change for any field.  Returns true if a clamp was applied.
 function applyProbabilityClamp(controlId) {
   const baseId = _clampBaseId(controlId);
   if (!CLAMP_PROBABILITY_FIELDS.has(baseId)) return false;
@@ -259,10 +255,8 @@ function applyProbabilityClamp(controlId) {
 
   const raw = el.value;
   const val = parseFloat(raw);
-  // Only clamp when we have a clearly finite value > 1; partial input like '.'
-  // or '' is left for existing validation.
+  // Do not clamp half-typed input; validation handles it later.
   if (!Number.isFinite(val) || val <= 1) {
-    // Clear any prior clamp warning once value is back in range.
     if (Number.isFinite(val)) clearClampWarning(baseId);
     return false;
   }
@@ -272,7 +266,7 @@ function applyProbabilityClamp(controlId) {
   return true;
 }
 
-// Clear all clamp warnings for a set of ids (called on preset load).
+// Preset loads should not keep old clamp warnings.
 function clearAllClampWarnings(ids = []) {
   const visited = new Set();
   for (const id of ids) {
@@ -500,8 +494,7 @@ function renderConvergenceSummary() {
 
 function invalidateResults(markCustom = true, clearDeterministic = true) {
   if (typeof clearInputValidationWarnings === 'function') clearInputValidationWarnings();
-  // A previously-current Monte Carlo run is now stale (results no longer match
-  // the current input state). A run that never completed stays 'not-run'.
+  // A completed Monte Carlo run no longer matches these inputs; a missing run stays "not-run".
   if (simulationCompleted) monteCarloState = 'stale';
   simulationCompleted = false;
   distanceCalculated = false;
@@ -525,6 +518,7 @@ function invalidateResults(markCustom = true, clearDeterministic = true) {
 
   lastResults = [];
   lastSampleYields = [];
+  lastMonteCarloRunMetadata = null;
   monteCarloYieldStats = null;
   convergenceSummary = null;
   simulationEnvelope = null;
@@ -1461,12 +1455,11 @@ function loadPreset(name) {
   if (name === 'kepler' || name === 'optimist') setBayesian('post', false);
   else setBayesian('pre', false);
 
-  // Clear any per-card clamp warnings left over from prior user edits.
+  // Preset load starts clean; old clamp warnings do not carry over.
   clearAllClampWarnings([...CLAMP_PROBABILITY_FIELDS, ...[...CLAMP_PROBABILITY_FIELDS].map(id => id + '_min'), ...[...CLAMP_PROBABILITY_FIELDS].map(id => id + '_max')]);
 
   invalidateResults(false);
-  // Loading a preset is a fresh scenario slate: Monte Carlo has never completed
-  // for this new state, so reset the lifecycle to 'not-run' (not 'stale').
+  // New preset, new Monte Carlo state. It is not stale because it never ran.
   monteCarloState = 'not-run';
 }
 window.loadPreset = loadPreset;
@@ -1593,9 +1586,7 @@ function syncFermiModeUi() {
 }
 
 function buildFermiCommunicationSupplementHtml(mode = fermiMode) {
-  // Legacy Fermi supplement intentionally removed from the visible panel.
-  // The underlying SETI calculations remain in computeDetectionFilter() and
-  // are rendered once inside the SETI signal context diagnostics.
+  // Kept for old callers; SETI details now appear only once in the narrative.
   return '';
 }
 
@@ -1610,9 +1601,7 @@ function renderFermiBox(preferredMode = null) {
   if (preferredMode && fermiContexts[preferredMode]) {
     fermiMode = preferredMode;
   } else if (!fermiContexts[fermiMode]) {
-    // Prefer deterministic when current mode is unavailable — deterministic
-    // is the methodological primary for scenario-based presets.
-    fermiMode = fermiContexts.dt ? 'dt' : fermiContexts.mc ? 'mc' : 'dt';
+    fermiMode = fermiContexts.mc ? 'mc' : fermiContexts.dt ? 'dt' : 'mc';
   }
 
   syncFermiModeUi();
@@ -1627,8 +1616,6 @@ function renderFermiBox(preferredMode = null) {
   }
 
   summary.innerHTML = buildInterpretationHtml(fermiMode);
-  // The old Fermi supplement duplicated
-  // the SETI signal context and diagnostics already rendered in the narrative.
   const communicationSupplementHtml = '';
   content.innerHTML = buildFermiGroupHtml(
     `<div class="fermi-context-label fermi-reveal-item">Fermi communication context</div>` +
@@ -1732,11 +1719,10 @@ function saveHistoryEntry() {
       ? getMonteCarloState()
       : (simulationCompleted ? 'current' : 'not-run');
     const isCurrentMc = mcState === 'current';
-    // Non-current display placeholder: 'stale' marks an invalidated run,
-    // 'not run' marks a run that never completed. Never store 0 as a placeholder.
+    // Do not turn missing Monte Carlo data into zero.
     const mcPlaceholder = mcState === 'stale' ? 'stale' : 'not run';
     const mcDisplay = v => Number.isFinite(v) ? (v < 1 ? v.toExponential(2) : Math.round(v)) : mcPlaceholder;
-    // Raw numeric value only when the run is current; null otherwise (never an invalid zero placeholder).
+    // Raw values only exist for the current run.
     const mcRaw = v => isCurrentMc && Number.isFinite(v) ? v : null;
     const mcMedianQ50Display = isCurrentMc ? mcDisplay(mcMedianQ50) : mcPlaceholder;
     const mcArithmeticMeanDisplay = isCurrentMc ? mcDisplay(mcArithmeticMean) : mcPlaceholder;
@@ -1756,17 +1742,17 @@ function saveHistoryEntry() {
       mcState,
       staleState: mcState,
       deterministic: deterministicPlanets,
-      // Backward-compatible display fields (read by renderHistory):
+      // Old history rows still read these names.
       mcMedianQ50: mcMedianQ50Display,
       mcArithmeticMean: mcArithmeticMeanDisplay,
       ciLow: mcQ025Display,
       ciHigh: mcQ975Display,
-      // Explicit display fields:
+      // Display names used by current history rendering.
       mcMedianQ50Display,
       mcArithmeticMeanDisplay,
       mcQ025Display,
       mcQ975Display,
-      // Raw numeric fields for auditability (null unless MC is current):
+      // Numbers for audit/export; null unless Monte Carlo is current.
       mcMedianQ50Raw: mcRaw(mcMedianQ50),
       mcArithmeticMeanRaw: mcRaw(mcArithmeticMean),
       mcQ025Raw: mcRaw(mcQ025),
@@ -2028,10 +2014,7 @@ function getUniverseScaleBasis(mode = fermiMode) {
     monteCarloYieldStats.basis === 'per-sample-yield' &&
     monteCarloYieldStats.n > 0
   ) {
-    // Use the MEDIAN per-sample yield (q50), not the arithmetic mean. The
-    // mean of yield samples is also right-skewed for multiplicative chains
-    // and would systematically over-scale the Universe estimate. Median is
-    // the methodologically defensible aggregator here.
+    // Use q50 here. The mean runs high on skewed multiplicative samples and would over-scale the Universe estimate.
     const yieldPoint = Number.isFinite(monteCarloYieldStats.median)
       ? monteCarloYieldStats.median
       : monteCarloYieldStats.mean;
@@ -2605,6 +2588,39 @@ function initBaseEvents() {
     invalidateResults(false, false);
   });
 
+  if (byId('monte-carlo-seed-mode')) {
+    byId('monte-carlo-seed-mode').addEventListener('change', () => {
+      updateMonteCarloSeedControlState();
+      invalidateResults(false, false);
+    });
+  }
+
+  if (byId('monte-carlo-seed')) {
+    byId('monte-carlo-seed').addEventListener('input', () => {
+      const value = byId('monte-carlo-seed').value;
+      if (value === '' || normalizeMonteCarloSeed(value) !== null) clearMonteCarloSeedWarning();
+      else showMonteCarloSeedWarning();
+      invalidateResults(false, false);
+    });
+    byId('monte-carlo-seed').addEventListener('change', () => {
+      const value = byId('monte-carlo-seed').value;
+      if (normalizeMonteCarloSeed(value) === null) showMonteCarloSeedWarning();
+      else clearMonteCarloSeedWarning();
+      invalidateResults(false, false);
+    });
+  }
+
+  if (byId('monte-carlo-new-seed')) {
+    byId('monte-carlo-new-seed').addEventListener('click', () => {
+      const seed = generateMonteCarloSeed();
+      if (byId('monte-carlo-seed-mode')) byId('monte-carlo-seed-mode').value = 'fixed';
+      if (byId('monte-carlo-seed')) byId('monte-carlo-seed').value = String(seed);
+      updateMonteCarloSeedControlState();
+      clearMonteCarloSeedWarning();
+      invalidateResults(false, false);
+    });
+  }
+
   const uncertaintyProfile = byId('uncertainty-profile');
   if (uncertaintyProfile) {
     uncertaintyProfile.addEventListener('change', () => {
@@ -2619,6 +2635,11 @@ function initBaseEvents() {
 
   document.querySelectorAll('input, select').forEach(el => {
     if (el.id === 'detection-L' || el.id === 'detection-f_tx') return;
+    if (el.id === 'monteCarloChartFormat') return;
+    if (
+      el.id === 'monte-carlo-seed-mode' ||
+      el.id === 'monte-carlo-seed'
+    ) return;
 
     if (
       el.id !== 'iterations' &&
@@ -2647,6 +2668,7 @@ function initBaseEvents() {
   });
 
   syncDetectionPresetUi();
+  updateMonteCarloSeedControlState();
   window.addEventListener('load', updateShareButtons);
 }
 

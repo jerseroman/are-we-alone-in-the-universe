@@ -2,7 +2,7 @@
 
 The calculator keeps an auditable scientific parameter registry in `src/scientific-parameters.js`. The registry records the central value, min/max bounds, source metadata, and value semantics for the core parameters used by the base calculator.
 
-The registry is a transparency aid. It does not turn the calculator into proof of extraterrestrial life, an empirical census of life, or a definitive astronomical estimate.
+The registry is a transparency aid inside a literature-informed exploratory model. It does not turn the calculator into proof of extraterrestrial life, an empirical census of life, or a definitive astronomical estimate.
 
 ## Central Value
 

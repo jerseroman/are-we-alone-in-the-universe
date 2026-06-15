@@ -118,22 +118,6 @@ Updated tests to match v2.15 behavior and protect the new fixes:
 - `tools/test-strings.mjs`: includes this v2.15 release notes file in the text-regression scan.
 - `tools/test-strings.mjs`: adds regression checks for `HISTORY_DB` dash separators and the corrected historical possessives.
 
-## Prepared Standalone And Paper Artifacts
-
-The local standalone desktop artifacts were also updated from the same v2.15 calculator state:
-
-- `2.15 PC.HTML`
-- `2.15 MOBILE.HTML`
-
-The local paper HTML artifacts were renamed and updated:
-
-- `Paper pc v2.15.html`
-- `Paper mobile v2.15.html`
-
-In the paper files, old values remain visible with strikethrough styling and the new v2.15 values/sources are shown below them. The CHNOPS row intentionally shows identical old and new numerical values because only the source basis changed.
-
-Standalone PC logo and icon paths were also embedded directly as data images so the file does not display a missing logo or broken `Info` / `Link` images when opened outside the repository folder.
-
 ## Suggested GitHub Release Text
 
 ```text
@@ -152,11 +136,9 @@ The software remains an exploratory modelling tool. Its outputs are conditional 
 
 ## Verification
 
-Completed locally during v2.15 preparation:
+Verification completed for v2.15:
 
 - `npm.cmd run test:all` - passed.
-- Standalone PC/MOBILE validation - passed with v2.15 registry and Kepler deterministic output `35,363.79`.
-- Paper stale-version checks - passed after renaming to v2.15.
 - `npm.cmd run test:strings` - passed after the release-note and metadata updates.
 
 The latest checked v2.15 Kepler/Gaia deterministic output is `35,363.79`.
