@@ -43,6 +43,8 @@ The calculator is designed to explore questions such as:
 
 The model should be interpreted as a literature-informed exploratory model with mathematically valid Poisson distance estimates and simplified GHZ comparison geometries, not as a definitive astronomical census.
 
+The calculator output should be interpreted as a scenario-based model output, not as a prediction, detection claim, or observational census.
+
 ## What this project is not
 
 This calculator is not a deterministic prediction, an observational exoplanet catalogue, or evidence for extraterrestrial life.
@@ -50,26 +52,23 @@ It is a structured modelling tool for exploring assumptions about modelled Earth
 
 ## Repository structure
 
-- `index.html` — GitHub Pages entry point
-- `CHANGELOG.md` — release history
-- `src/calculator-core.js` — core calculation logic
-- `src/app.js` — page initialization and UI wiring
-- `src/charts.js` — chart rendering logic
-- `src/share.js` — share and export behavior
-- `src/accessibility.js` — accessibility support helpers
-- `src/styles.css` — visual styling
-- `assets/images/` — local project imagery and UI image assets
+- `index.html` — static application entry point for GitHub Pages
+- `src/` — browser application source code
+- `assets/images/` — local imagery and UI image assets
+- `docs/` — model-scope, method, and reuse documentation
+- `paper/` — manuscript and paper-related material
+- `tools/` — validation and utility scripts
+- `.github/` — GitHub workflow and issue-template configuration
+- `package.json` — npm metadata and validation commands
+- `REPRODUCIBILITY.md` — reproducibility and verification instructions
 - `CODE_AUDIT_MATRIX.md` — calculator code audit matrix
-- `docs/MODEL_SCOPE.md` — model scope, assumptions, and limitations
-- `docs/MONTE_CARLO_METHOD.md` — Monte Carlo sampling and sampled model interval semantics
-- `docs/DISTANCE_MODEL_METHOD.md` — nearest-neighbour distance model assumptions
-- `docs/REUSE_AND_ATTRIBUTION.md` — AGPLv3 reuse and attribution notes
-- `.github/ISSUE_TEMPLATE/` — structured issue report templates
-- `LICENSE.md` — GNU Affero General Public License v3.0 (AGPLv3)
-- `NOTICE.md` — short attribution notice
+- `CHANGELOG.md` — release history
+- `RELEASE_NOTES_v2.*.md` — release-specific notes
 - `CITATION.cff` — citation metadata
 - `.zenodo.json` — Zenodo GitHub-release metadata
-- `RELEASE_NOTES_v2.16.md` — release notes for GitHub release creation
+- `LICENSE.md` — AGPLv3 license
+- `NOTICE.md` — attribution notice
+- `CONTRIBUTING.md` — contribution guidelines
 - `404.html` — fallback page for GitHub Pages
 - `.nojekyll` — disables Jekyll processing on GitHub Pages
 - `.gitattributes` — line-ending and text-file handling rules
@@ -77,9 +76,13 @@ It is a structured modelling tool for exploring assumptions about modelled Earth
 
 ## Running locally
 
-Open `index.html` directly in a modern browser.
+For ordinary use, open `index.html` directly in a modern browser. No build step is required for the static calculator.
 
-No installation, package manager, server, or build process is required.
+For repository verification and automated tests, use the npm scripts described in `REPRODUCIBILITY.md`, for example:
+
+```bash
+npm run test:all
+```
 
 Recommended browsers:
 
