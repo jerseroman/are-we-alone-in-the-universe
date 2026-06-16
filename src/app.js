@@ -2675,12 +2675,9 @@ function initBaseEvents() {
 window.addEventListener('load', () => {
   if (sfCanvas && sfCtx) {
     resizeSF();
-    initStars();
-    requestAnimationFrame(drawStars);
 
     window.addEventListener('resize', () => {
       resizeSF();
-      initStars();
     });
   }
 
