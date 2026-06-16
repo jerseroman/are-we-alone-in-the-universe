@@ -47,8 +47,7 @@ The calculator output should be interpreted as a scenario-based model output, no
 
 ## What this project is not
 
-This calculator is not a deterministic prediction, an observational exoplanet catalogue, or evidence for extraterrestrial life.
-It is a structured modelling tool for exploring assumptions about modelled Earth-like candidates, uncertainty, and cosmic scale.
+The calculator should not be interpreted as a deterministic prediction, an observational census, a validation of planetary habitability, or evidence for extraterrestrial life. Its results are model-derived, assumption-dependent estimates intended for transparent exploration of uncertainty rather than for confirming habitable or inhabited worlds.
 
 ## Repository structure
 
