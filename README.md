@@ -1,5 +1,5 @@
 # Are We Alone in the Universe? Earth-like Planet Calculator
-![Version](https://img.shields.io/badge/Version-v2.16-2ea44f?labelColor=24292f&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8%2F9hAAACtElEQVR42oVSTYtcRRQ991a9j%2F5werqZ150IMgrqMCEIgkMWonERELIUZiGudCFIFNzlHwQF0Y0Ld4rLEVy4UiGIGIjCwCQLlSxktKHndU8n3a8nk%2F569epkkZ4wNoIHDhTcuueeunWEpOAURIQnZ5IiIryXpucbSbJ5fzBYeaJW09HR0d5qkuySVBURnuaSoAEAq%2FrSbDz%2B1BVFpSCbniyfXLBZu92QOL4A74fi%2FV8i0iepCzcOAGqt1leDbveiiPxu4%2Fj6KbdeGYavgjwzms9v05jnJsPhMyLiRcQDQJqmFZJSD8MPRfWTwcHB%2Bs7Ojjlxag0gXjVaiaInNQiOZ3l%2B4ajff6EoiiSw9mJRFFZE3hz2%2By8KeSCl0mh7e1uxGKBQbYAcwvvLfjzu1JJkh851xZhN5%2F3TBL5ku11CUVw15Dv1ej0TkVwAAoCKyL6Q52HtrxJFr9xL0w1rrZMwvCbk9dVW68csit4vVSrPemPey4%2BPP8t6vSsnv2Sra2s3R4eHG%2BLcGVrrQ2M2K0nyLQDcv3v3Rtbvb9G5b6JqdW82nZbxaEGDx4sEgNHh4ecgs3w%2B%2FyKI49fofX%2Fi%2FY3YmOcD0msQZOVG4x%2F8B5S9XpVAFcDrJoquEPhTRaYl1bdRFFm11brt8vypTqdTJmkW1Mc5GJFNAOsUcaG1HxTOnSPwh38k9FbW7e5D9bjiXARgspxWrbVafwNgYG1bVcsgbxbA90Zk1UZRx4tYAHdW19eHy80AYAfd7jljTOS8%2F8EAL1PkUqPZ%2FAjAz8vvXW4GAA1UN4T8yTu3Mp%2FNPhaRRpamVwGA%2B%2FsxyWB3dzcgaRYJ1H%2BJZr3ed6J6C96TwBaAX8IwfGOW5%2B%2FWm809%2FA9kkmVc2IO1FpPJBFEcYzwe%2Fwby60VtqsADsfaBm07T2tmzt0SkAICHy%2F5hHtoP4SMAAAAASUVORK5CYII%3D)
+![Version](https://img.shields.io/badge/Version-v2.17-2ea44f?labelColor=24292f&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8%2F9hAAACtElEQVR42oVSTYtcRRQ991a9j%2F5werqZ150IMgrqMCEIgkMWonERELIUZiGudCFIFNzlHwQF0Y0Ld4rLEVy4UiGIGIjCwCQLlSxktKHndU8n3a8nk%2F569epkkZ4wNoIHDhTcuueeunWEpOAURIQnZ5IiIryXpucbSbJ5fzBYeaJW09HR0d5qkuySVBURnuaSoAEAq%2FrSbDz%2B1BVFpSCbniyfXLBZu92QOL4A74fi%2FV8i0iepCzcOAGqt1leDbveiiPxu4%2Fj6KbdeGYavgjwzms9v05jnJsPhMyLiRcQDQJqmFZJSD8MPRfWTwcHB%2Bs7Ojjlxag0gXjVaiaInNQiOZ3l%2B4ajff6EoiiSw9mJRFFZE3hz2%2By8KeSCl0mh7e1uxGKBQbYAcwvvLfjzu1JJkh851xZhN5%2F3TBL5ku11CUVw15Dv1ej0TkVwAAoCKyL6Q52HtrxJFr9xL0w1rrZMwvCbk9dVW68csit4vVSrPemPey4%2BPP8t6vSsnv2Sra2s3R4eHG%2BLcGVrrQ2M2K0nyLQDcv3v3Rtbvb9G5b6JqdW82nZbxaEGDx4sEgNHh4ecgs3w%2B%2FyKI49fofX%2Fi%2FY3YmOcD0msQZOVG4x%2F8B5S9XpVAFcDrJoquEPhTRaYl1bdRFFm11brt8vypTqdTJmkW1Mc5GJFNAOsUcaG1HxTOnSPwh38k9FbW7e5D9bjiXARgspxWrbVafwNgYG1bVcsgbxbA90Zk1UZRx4tYAHdW19eHy80AYAfd7jljTOS8%2F8EAL1PkUqPZ%2FAjAz8vvXW4GAA1UN4T8yTu3Mp%2FNPhaRRpamVwGA%2B%2FsxyWB3dzcgaRYJ1H%2BJZr3ed6J6C96TwBaAX8IwfGOW5%2B%2FWm809%2FA9kkmVc2IO1FpPJBFEcYzwe%2Fwby60VtqsADsfaBm07T2tmzt0SkAICHy%2F5hHtoP4SMAAAAASUVORK5CYII%3D)
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20474527-blue)](https://doi.org/10.5281/zenodo.20474527)
 ![Model](https://img.shields.io/badge/Model-Scenario--based%20estimate-informational)
 ![Static App](https://img.shields.io/badge/APP-Static%20browser%20calculator-6f42c1)
@@ -7,7 +7,7 @@
 [![CI](https://github.com/jerseroman/are-we-alone-in-the-universe/actions/workflows/ci.yml/badge.svg)](https://github.com/jerseroman/are-we-alone-in-the-universe/actions/workflows/ci.yml)
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/jerseroman/are-we-alone-in-the-universe/refs/heads/main/assets/images/Banner.jpg" alt="Are We Alone in the Universe? Earth-like Planet Calculator banner" width="100%">
+  <img src="assets/images/Banner.jpg" alt="Are We Alone in the Universe? Earth-like Planet Calculator banner" width="100%">
 </p>
 
 Browser-based calculator for exploring the possible number of modelled Earth-like candidates across the Milky Way and the observable universe using transparent astrophysical assumptions.
@@ -22,7 +22,7 @@ https://jerseroman.github.io/are-we-alone-in-the-universe/
 
 ## Project status
 
-Public review version: 2.16
+Public review version: 2.17
 
 ## Purpose
 
@@ -94,7 +94,7 @@ Recommended browsers:
 
 Repository verification instructions are in `REPRODUCIBILITY.md`.
 
-The v2.16 release is summarized in `RELEASE_NOTES_v2.16.md`.
+The v2.17 release is summarized in `RELEASE_NOTES_v2.17.md`.
 
 The calculator code audit matrix is documented in `CODE_AUDIT_MATRIX.md`.
 

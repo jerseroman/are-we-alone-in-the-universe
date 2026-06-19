@@ -110,7 +110,8 @@ function inlineStylesheets(html, sourceDir, embedAssets) {
 
     const rel = toPosixRelative(file, sourceDir);
     const css = inlineCssUrls(fs.readFileSync(file, 'utf8'), file, sourceDir, embedAssets);
-    return `<style data-inline-source="${htmlAttrEscape(rel)}">\n${css}\n  </style>`;
+    const canonicalCss = css.endsWith('\n') ? css.slice(0, -1) : css;
+    return `<style data-inline-source="${htmlAttrEscape(rel)}">\n${canonicalCss}</style>`;
   });
 }
 
@@ -123,7 +124,8 @@ function inlineScripts(html, sourceDir) {
 
     const rel = toPosixRelative(file, sourceDir);
     const js = fs.readFileSync(file, 'utf8').replace(/<\/script/gi, '<\\/script');
-    return `<script data-inline-source="${htmlAttrEscape(rel)}">\n${js}\n</script>`;
+    const spacing = before && /^\s+$/.test(before) ? before : ' ';
+    return `<script${spacing}data-inline-source="${htmlAttrEscape(rel)}">\n${js}</script>`;
   });
 }
 

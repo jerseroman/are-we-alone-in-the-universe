@@ -684,12 +684,25 @@
         f_composition: 0.25
       }),
       note: 'Updated Kepler/Gaia occurrence priors for f_HZ and f_rocky; not an atmospheric-spectroscopy occurrence-rate measurement.'
+    }),
+    bryson_eta_direct: Object.freeze({
+      label: 'Bryson η⊕ direct occurrence',
+      model_type: 'bryson_2021_eta_earth_direct',
+      occurrence_mode: 'eta_earth_direct',
+      values: Object.freeze({
+        eta_earth_bryson: 0.60
+      }),
+      eta_earth_conservative_range: Object.freeze([0.37, 0.60]),
+      eta_earth_optimistic_range: Object.freeze([0.58, 0.88]),
+      eta_earth_definition: 'Average number of planets per star with radius 0.5–1.5 R_Earth in the habitable zone around stars with Teff 4800–6300 K, following Bryson et al. 2021.',
+      replaced_factorized_terms: Object.freeze(['N_p_star', 'f_composition', 'f_orbit']),
+      note: 'Bryson et al. 2021 η⊕ combined rocky habitable-zone occurrence rate applied directly; it replaces the factorized product N_p_star × f_composition × f_orbit and is an astronomy-side occurrence estimate only.'
     })
   });
 
   const SCIENTIFIC_PARAMETER_REGISTRY = Object.freeze({
     version: '1.0.0',
-    calculatorVersion: '2.16',
+    calculatorVersion: '2.17',
     parameterOrder: SCIENTIFIC_PARAMETER_ORDER,
     parameters: SCIENTIFIC_PARAMETERS,
     presets: SCIENTIFIC_PRESETS,
@@ -714,3 +727,5 @@
     };
   }
 })(typeof window !== 'undefined' ? window : globalThis);
+
+

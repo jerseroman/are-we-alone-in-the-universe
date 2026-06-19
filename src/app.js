@@ -136,61 +136,267 @@ function toggleAllIntervals() {
 }
 window.toggleAllIntervals = toggleAllIntervals;
 
+function getVisibleIntervalMap() {
+  const out = {};
+  document.querySelectorAll('.interval-row[id^="interval-"]').forEach(row => {
+    out[row.id.replace(/^interval-/, '')] = row.classList.contains('visible');
+  });
+  return out;
+}
+window.getVisibleIntervalMap = getVisibleIntervalMap;
+
 const PRESET_BOUNDS_NOTE =
   'Selecting a named scenario resets visible min/max fields; default Monte Carlo uses scenario-local uncertainty centered on that preset. Modified scenarios use visible custom bounds.';
+
+function buildGalaxyOverridePresetNote() {
+  if (!isGalaxySettingsEnabled) return '';
+  const source = typeof getNGHZSource === 'function' ? getNGHZSource() : 'custom_galaxy_x';
+  const effective = typeof getEffectiveNGHZ === 'function' ? getEffectiveNGHZ() : null;
+  const value = effective && Number.isFinite(Number(effective.value)) ? fmtN(Number(effective.value)) : 'custom';
+  return `<span style="display:block;margin-top:6px;font-size:10px;color:var(--orange);">Galaxy override active: N_GHZ source ${escapeHtml(source)}, effective N_GHZ ${escapeHtml(value)}. The scientific preset remains the origin, but the galaxy scale is custom.</span>`;
+}
 
 function syncPresetUi() {
   const scenario = getScenarioState();
   document.querySelectorAll('.preset-btn[data-preset]').forEach(btn => {
-    const activeKey = scenario.isModified ? scenario.originPreset : activePreset;
-    setPressedState(btn, btn.dataset.preset === activeKey);
+    const isCleanPresetUi = scenario.isPreset && !scenario.isModified && !isGalaxySettingsEnabled;
+    setPressedState(btn, isCleanPresetUi && btn.dataset.preset === activePreset);
   });
 
   const desc = byId('preset-description');
   if (!desc) return;
+  const galaxyOverrideNote = buildGalaxyOverridePresetNote();
 
   if (scenario.isModified && PRESETS[scenario.originPreset]) {
     desc.innerHTML =
       `<strong>${scenario.label}.</strong> ` +
       `<em>${getModifiedPresetWarningText()} The central values may still resemble the loaded preset, but this is no longer the unchanged preset scenario.</em>` +
+      galaxyOverrideNote +
       `<span style="display:block;margin-top:6px;font-size:10px;color:var(--text-dim);">${PRESET_BOUNDS_NOTE}</span>`;
   } else if (PRESETS[activePreset]) {
     const preset = PRESETS[activePreset];
     desc.innerHTML =
       `<strong>${preset.label}.</strong> ` +
       `<em>${preset.source}. ${preset.description}</em>` +
+      galaxyOverrideNote +
       `<span style="display:block;margin-top:6px;font-size:10px;color:var(--text-dim);">${PRESET_BOUNDS_NOTE}</span>`;
   } else {
     desc.innerHTML =
       '<strong>Custom values active.</strong> ' +
       '<em>Manual input changes override the named scenario presets until you load one of the scenario cards again.</em>' +
+      galaxyOverrideNote +
       `<span style="display:block;margin-top:6px;font-size:10px;color:var(--text-dim);">${PRESET_BOUNDS_NOTE}</span>`;
   }
 }
 
+// Mark the factorized occurrence controls as bypassed while Bryson η⊕ direct mode is active.
+// In direct mode these three cards are made visually + functionally inert: greyed/dashed card,
+// disabled inputs, disabled ± interval buttons, a strong top badge, and aria-disabled metadata —
+// so they cannot be mistaken for live calculation inputs.
+function syncEtaReplacedControls() {
+  const replaced = getActiveOccurrenceMode() === 'eta_earth_direct';
+  const bypassTitle = 'Bypassed by η⊕ direct mode — diagnostic only, not used in the active calculation.';
+  ['N_p_star', 'f_composition', 'f_orbit'].forEach(id => {
+    const card = byId('card-' + id);
+    if (card) {
+      card.classList.toggle('bypassed-by-eta', replaced);
+      card.classList.toggle('eta-replaced', replaced); // backward-compat alias
+      card.setAttribute('aria-disabled', replaced ? 'true' : 'false');
+    }
+    // Disable / re-enable the numeric inputs (mean + min/max) so they are non-editable in direct mode.
+    [id, id + '_min', id + '_max'].forEach(fieldId => {
+      const input = byId(fieldId);
+      if (!input) return;
+      input.disabled = replaced;
+      input.readOnly = replaced;
+      input.setAttribute('aria-disabled', replaced ? 'true' : 'false');
+      if (replaced) input.setAttribute('title', bypassTitle);
+      else input.removeAttribute('title');
+    });
+    // Disable the ± interval toggle for the bypassed card.
+    const toggleBtn = card ? card.querySelector('.interval-toggle') : null;
+    if (toggleBtn) {
+      toggleBtn.disabled = replaced;
+      toggleBtn.setAttribute('aria-disabled', replaced ? 'true' : 'false');
+      if (replaced) toggleBtn.setAttribute('title', bypassTitle);
+      else toggleBtn.removeAttribute('title');
+    }
+  });
+  renderOccurrenceModeBanner();
+}
+
+// Single owner for the occurrence-mode banner above the parameter cards. It is rendered purely from
+// the current source of truth (astronomyOverrideMode + getActiveOccurrenceMode) and ALWAYS removes any
+// previous banner first, so it can never become a sticky DOM artifact. Preferred UX: factorized
+// overlays render NO banner (the upper Active calculation state box already shows the active term);
+// only Bryson η⊕ direct renders a strong, direct-mode-specific warning banner.
+function renderOccurrenceModeBanner() {
+  // 1. Always clear the previous banner before deciding the current state.
+  const existing = byId('occurrence-mode-banner');
+  if (existing) existing.remove();
+
+  // 2. No overlay / direct mode active -> no banner at all.
+  const mode = astronomyOverrideMode;
+  if (!mode) return;
+
+  const occurrenceMode = (typeof getActiveOccurrenceMode === 'function')
+    ? getActiveOccurrenceMode()
+    : 'factorized';
+
+  // 3. Factorized overlays (Conservative Kepler-era / Updated Kepler/Gaia): no full-width banner.
+  if (occurrenceMode === 'factorized') return;
+
+  // 4. Bryson η⊕ direct: render the strong, direct-mode banner above the (bypassed) occurrence cards.
+  if (occurrenceMode === 'eta_earth_direct') {
+    const anchor = byId('card-N_p_star');
+    const grid = anchor ? anchor.parentNode : null;
+    if (!grid) return;
+    const eta = Number(getActiveEtaEarthBryson()).toFixed(2);
+    const banner = document.createElement('div');
+    banner.id = 'occurrence-mode-banner';
+    banner.className = 'occurrence-mode-banner is-direct';
+    banner.setAttribute('role', 'status');
+    banner.setAttribute('aria-live', 'polite');
+    banner.textContent =
+      `Direct η⊕ occurrence replacement active / η⊕ = ${eta} replaces N_p_star × f_rocky × f_HZ.`;
+    grid.insertBefore(banner, anchor);
+  }
+}
+
+function fmtActiveStateNumber(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 'n/a';
+  if (n === 0) return '0';
+  if (Math.abs(n) >= 1000) return fmtN(n);
+  if (Math.abs(n) < 0.001) return n.toExponential(3);
+  return Number(n.toPrecision(4)).toString();
+}
+
+// Map internal N_GHZ source enums to human-readable UI labels (display only; the enum is unchanged).
+function formatNGHZSourceLabel(source) {
+  switch (source) {
+    case 'manual_raw_N_GHZ': return 'Visible N_GHZ field';
+    case 'simple_galaxy_scaling': return 'Galaxy Settings · simple scaling';
+    case 'radial_ghz_integrator': return 'Radial GHZ integrator';
+    default: return source ? String(source).replace(/_/g, ' ') : 'Scenario value';
+  }
+}
+
+// Map internal Monte Carlo basis enums to readable UI text. When the resolved basis differs only
+// because an occurrence override is active, say that explicitly instead of leaking the raw enum.
+function formatMonteCarloBasisDisplay(requested, resolved, occurrenceOverrideMode) {
+  const labelFor = monteCarloBasisPlainLabel;
+  if (requested === resolved) return `<strong>${escapeHtml(labelFor(resolved))}</strong>`;
+  if (resolved === MONTE_CARLO_BASIS_MODES.modifiedPresetLocal && occurrenceOverrideMode) {
+    const tail = occurrenceOverrideMode === 'bryson_eta_direct'
+      ? 'preset-local with Bryson η⊕ direct override'
+      : 'preset-local with occurrence override';
+    return `${escapeHtml(labelFor(requested))} → <strong>${escapeHtml(tail)}</strong>`;
+  }
+  return `${escapeHtml(labelFor(requested))} → <strong>${escapeHtml(labelFor(resolved))}</strong>`;
+}
+
+function renderActiveCalculationStateBox() {
+  const body = byId('active-calculation-state-body');
+  if (!body || typeof buildResolvedModelState !== 'function') return;
+
+  const state = buildResolvedModelState();
+  const direct = state.occurrenceMode === 'eta_earth_direct';
+  const occurrenceLabel = direct
+    ? `Bryson direct eta = <strong>${fmtActiveStateNumber(state.etaEarth_used)}</strong>`
+    : state.occurrenceOverlayMode
+      ? `Factorized with <strong>${escapeHtml(state.occurrenceOverlayMode)}</strong> rocky/HZ overlay`
+      : '<strong>Scenario factorized</strong>';
+  const factorStatus = direct
+    ? 'N_p_star, f_rocky, and f_HZ are visible diagnostics; bypassed in the active occurrence term.'
+    : `N_p_star × f_rocky × f_HZ = <strong>${fmtActiveStateNumber(state.occurrenceTerm_used)}</strong>`;
+  const mcBasis = formatMonteCarloBasisDisplay(
+    state.monteCarlo.requestedBasisMode,
+    state.monteCarlo.resolvedBasisMode,
+    state.occurrenceOverlayMode
+  );
+
+  // The active occurrence term is the single mathematical source of truth. Spell out which one it is
+  // so a user can never confuse Bryson η⊕ direct mode with a factorized rocky/HZ overlay.
+  const activeOccurrenceTerm = direct
+    ? `η⊕ direct = <strong>${fmtActiveStateNumber(state.occurrenceTerm_used)}</strong>`
+    : `N_p_star × f_rocky × f_HZ = <strong>${fmtActiveStateNumber(state.occurrenceTerm_used)}</strong>`;
+
+  const rows = [
+    ['Base scenario', `${escapeHtml(state.baseScenarioLabel)}${state.scenarioModified ? ' · modified' : ''}`],
+    ['Occurrence mode', occurrenceLabel],
+    ['N_GHZ used', `<strong>${fmtActiveStateNumber(state.N_GHZ_used)}</strong> · ${escapeHtml(formatNGHZSourceLabel(state.N_GHZ_source))}`],
+    ['Occurrence controls', factorStatus],
+    ['Active occurrence term', activeOccurrenceTerm]
+  ];
+
+  // In direct mode also surface the bypassed factorized product, clearly labelled diagnostic only,
+  // so the user can see exactly what η⊕ replaced (e.g. 1.6 × 0.25 × 0.21 = 0.084).
+  if (direct) {
+    rows.push([
+      'Bypassed diagnostic factorized product',
+      `N_p_star × f_rocky × f_HZ = <strong>${fmtActiveStateNumber(state.factorizedOccurrenceTerm_visible)}</strong> · diagnostic only, not used`
+    ]);
+  }
+
+  rows.push(['Monte Carlo basis', mcBasis]);
+
+  body.innerHTML = rows.map(([label, value]) => (
+    `<div class="active-state-item">` +
+      `<span class="active-state-label">${escapeHtml(label)}</span>` +
+      `<span class="active-state-value">${value}</span>` +
+    `</div>`
+  )).join('');
+}
+
 function syncBayesianUi() {
-  setPressedState(byId('bayes-pre'), bayesianMode === 'pre');
-  setPressedState(byId('bayes-post'), bayesianMode === 'post');
+  // Only one astronomy-source button is active, and only while an override is actually applied.
+  setPressedState(byId('bayes-pre'), astronomyOverrideMode === 'pre');
+  setPressedState(byId('bayes-post'), astronomyOverrideMode === 'post');
+  setPressedState(byId('bayes-eta'), astronomyOverrideMode === 'bryson_eta_direct');
+
+  syncEtaReplacedControls();
 
   const note = byId('bayes-note');
-  if (note && BAYES[bayesianMode]) {
-    const scenario = getScenarioState();
-    const modeLead =
-      bayesianMode === 'pre'
-        ? '<strong>f_HZ / f_rocky source active - Conservative Kepler-era.</strong> '
-        : '<strong>f_HZ / f_rocky source active - Updated Kepler/Gaia.</strong> ';
-    const autoLead =
-      scenario.isModified
-        ? `This source mode is attached to ${scenario.label}; manual edits mean the run is no longer the unchanged preset. `
-        : activePreset && activePreset !== 'custom'
-        ? 'This source mode was selected with the current scientific scenario; it is separate from the four scenario cards. '
-        : 'Manual source override active. ';
+  if (!note) return;
+
+  // No override: neutral message; the scenario astronomy values are in use.
+  if (!astronomyOverrideMode) {
     note.innerHTML =
-      modeLead +
-      autoLead +
-      `${BAYES[bayesianMode].note}` +
+      `<strong>Scenario astronomy values active.</strong> No occurrence overlay applied. ` +
+      `The scenario card supplies its own N_GHZ, host-star, planets-per-star, rocky, and habitable-zone values. ` +
+      `Click an occurrence overlay above to adjust the rocky/HZ occurrence fractions only, or Bryson η⊕ direct for a single combined occurrence term.` +
+      `<span style="display:block;margin-top:4px;">${ASTRONOMY_EXPORT_CAVEAT}</span>` +
       `<span style="display:block;margin-top:4px;">${PRESET_BOUNDS_NOTE}</span>`;
+    renderActiveCalculationStateBox();
+    return;
   }
+
+  const scenario = getScenarioState();
+  const model = getAstronomyPriorModel();
+  const isEtaDirect = getActiveOccurrenceMode() === 'eta_earth_direct';
+  const isOverlay = Array.isArray(model.overlay_fields);
+  const modeLead = `<strong>${model.shortLabel} active.</strong> `;
+  const autoLead = isOverlay
+    ? 'Rocky/HZ occurrence overlay active; it adjusts only the rocky fraction (f_rocky) and habitable-zone fraction (f_HZ) inside the currently selected scenario. It does not replace the scenario GHZ scale, host-star fraction, stellar-age filter, or planets-per-star value. '
+    : scenario.isModified
+      ? `Bryson η⊕ direct occurrence mode is attached to ${scenario.label}; the run is now a hybrid of the scenario and this direct occurrence term. `
+      : 'Bryson η⊕ direct occurrence mode active; it is separate from the four scenario cards. ';
+
+  const occurrenceLine = isEtaDirect
+    ? `<span style="display:block;margin-top:4px;">Occurrence term: <strong>direct η⊕</strong> = ${getActiveEtaEarthBryson().toPrecision(3)} (replaces the factorized product N_p × f_rocky × f_HZ).</span>`
+    : isOverlay
+      ? `<span style="display:block;margin-top:4px;">Occurrence term: <strong>rocky/HZ occurrence overlay</strong> over scenario N_p — f_rocky × f_HZ overlaid; full occurrence N_p × f_rocky × f_HZ = ${getAstronomyOccurrenceProxyFromValues().toPrecision(3)}.</span>`
+      : `<span style="display:block;margin-top:4px;">Occurrence term: <strong>factorized</strong> N_p × f_rocky × f_HZ = ${getAstronomyOccurrenceProxyFromValues().toPrecision(3)}; host-age weighted proxy = ${getAstronomyHostWeightedProxyFromValues().toPrecision(3)}.</span>`;
+
+  note.innerHTML =
+    modeLead +
+    autoLead +
+    `${model.note}` +
+    occurrenceLine +
+    `<span style="display:block;margin-top:4px;">${ASTRONOMY_EXPORT_CAVEAT}</span>` +
+    `<span style="display:block;margin-top:4px;">${PRESET_BOUNDS_NOTE}</span>`;
+  renderActiveCalculationStateBox();
 }
 
 function renderInputValidationWarnings(warnings = []) {
@@ -222,14 +428,18 @@ function _clampBaseId(controlId) {
   return controlId.replace(/_(min|max)$/, '');
 }
 
-function showClampWarning(baseId) {
+function showClampWarning(baseId, message = 'Allowed range is 0 to 1. Value was set to the nearest valid value.') {
   const card = byId(`card-${baseId}`);
   if (!card || typeof card.querySelectorAll !== 'function') return;
-  if (card.querySelectorAll('.input-clamp-warning').length) return;
+  const existing = card.querySelectorAll('.input-clamp-warning');
+  if (existing.length) {
+    existing.forEach(el => { el.textContent = message; });
+    return;
+  }
   const el = document.createElement('div');
   el.className = 'input-clamp-warning';
   if (typeof el.setAttribute === 'function') el.setAttribute('role', 'status');
-  el.textContent = 'Maximum allowed value is 1. Value was set to 1.';
+  el.textContent = message;
   card.appendChild(el);
 }
 
@@ -256,13 +466,22 @@ function applyProbabilityClamp(controlId) {
   const raw = el.value;
   const val = parseFloat(raw);
   // Do not clamp half-typed input; validation handles it later.
-  if (!Number.isFinite(val) || val <= 1) {
+  if (!Number.isFinite(val)) {
     if (Number.isFinite(val)) clearClampWarning(baseId);
+    return false;
+  }
+  if (val < 0) {
+    el.value = '0';
+    showClampWarning(baseId, 'Minimum allowed value is 0. Value was set to 0.');
+    return true;
+  }
+  if (val <= 1) {
+    clearClampWarning(baseId);
     return false;
   }
 
   el.value = '1';
-  showClampWarning(baseId);
+  showClampWarning(baseId, 'Maximum allowed value is 1. Value was set to 1.');
   return true;
 }
 
@@ -670,9 +889,7 @@ function buildConsoleDetectionTrace(planetCount) {
   const T_gal_yr = 13.5e9;
   const geom = getGHZGeometryLy();
   const manualEarthDist = getGalaxyEarthDistance();
-  const isExternalReference =
-    (galaxyName !== 'Milky Way (MW)' && galaxyName !== 'Custom Galaxy X') ||
-    (galaxyName === 'Custom Galaxy X' && manualEarthDist > 0);
+  const isExternalReference = galaxyName !== 'Milky Way (MW)' && galaxyName !== 'Custom Galaxy X';
   const earthDist = isExternalReference
     ? (manualEarthDist > 0 ? manualEarthDist : galaxyDistances[galaxyName])
     : null;
@@ -781,6 +998,23 @@ function renderCalculationConsole() {
     { key: 'f_complex_life', symbol: 'f_complex_life', latex: 'f_{\\mathrm{life}}', label: 'Complex-life prior' },
     { key: 'f_x', symbol: 'f_x', latex: 'f_x', label: 'Wildcard factor' }
   ];
+  // In Bryson η⊕ direct mode the three occurrence factors collapse into a single direct term so
+  // the displayed equation matches the value computed by computePlanetsBase.
+  const consoleOccurrenceMode = getActiveOccurrenceMode();
+  const consoleEtaEarth = getActiveEtaEarthBryson();
+  if (consoleOccurrenceMode === 'eta_earth_direct') fullInp._eta_earth_bryson = consoleEtaEarth;
+  const displayFactors = consoleOccurrenceMode === 'eta_earth_direct'
+    ? baseFactors.reduce((acc, f) => {
+        if (f.key === 'N_p_star') {
+          acc.push({ key: '_eta_earth_bryson', symbol: 'eta_earth', latex: '\\eta_{\\oplus}', label: 'Bryson η⊕ direct occurrence' });
+        } else if (f.key === 'f_composition' || f.key === 'f_orbit') {
+          // replaced by the direct η⊕ occurrence term
+        } else {
+          acc.push(f);
+        }
+        return acc;
+      }, [])
+    : baseFactors;
   const advancedFactors = [
     { key: '_f_atm_ret', symbol: 'f_atm_ret', latex: 'f_{\\mathrm{atm}}', label: 'Atmospheric retention', enabled: ADV.enabled && ADV.modules.atmRet.enabled },
     { key: '_f_longterm', symbol: 'f_longterm', latex: 'f_{\\mathrm{long}}', label: 'Long-term geodynamics', enabled: ADV.enabled && ADV.modules.longterm.enabled },
@@ -808,11 +1042,28 @@ function renderCalculationConsole() {
     lines.push(renderConsoleFormulaBlock(formulaLines, note));
 
   pushSection('Status');
+  const astronomyPriorForConsole = getAstronomyPriorModel();
   pushLine(
-    `Scenario=${getScenarioExportLabel()} | Prior=${bayesianMode} | Advanced=${ADV.enabled ? 'on' : 'off'} | Basis=${simulationCompleted ? 'Monte Carlo q50 median' : 'deterministic preview'}`
+    `Scenario=${getScenarioExportLabel()} | Occurrence model=${astronomyPriorForConsole.shortLabel} | Advanced=${ADV.enabled ? 'on' : 'off'} | Basis=${simulationCompleted ? 'Monte Carlo q50 median' : 'deterministic preview'}`
   );
+  const consoleOverlayActive = Array.isArray(astronomyPriorForConsole.overlay_fields);
   pushLine(
-    `Galaxy=${galaxyName} | Detection L=${fmtConsoleValue(Math.max(1, rawNumber('detection-L', 30000)))} yr | f_tx=${fmtConsoleValue(clamp01(rawNumber('detection-f_tx', 0.01)))}`
+    consoleOccurrenceMode === 'eta_earth_direct'
+      ? `Occurrence term: Bryson η⊕ direct occurrence = ${fmtConsoleValue(consoleEtaEarth)} (Bryson et al. 2021; replaces the factorized product N_p × f_rocky × f_HZ).`
+      : consoleOverlayActive
+        ? `Occurrence term: pre/post rocky-HZ occurrence overlay = factorized N_p × f_rocky × f_HZ with overlaid f_rocky/f_HZ (scenario N_GHZ, f_sun_type, f_sun_age, and N_p_star preserved).`
+        : `Occurrence term: scenario factorized occurrence = N_p × f_rocky × f_HZ.`,
+    'calc-console-muted'
+  );
+  const _effNGHZ = getEffectiveNGHZ();
+  const _ngHZSource = getNGHZSource();
+  const _ngHZSourceLabel = _ngHZSource === 'radial_ghz_integrator'
+    ? `Radial integrator (effective=${fmtConsoleValue(_effNGHZ.value)})`
+    : _ngHZSource === 'simple_galaxy_scaling'
+      ? `Simple: ${fmtConsoleValue(_effNGHZ.metadata && _effNGHZ.metadata.totalStars)} stars × ${_effNGHZ.metadata ? (_effNGHZ.metadata.ghzFrac * 100).toFixed(2) + '%' : '?'} = ${fmtConsoleValue(_effNGHZ.value)}`
+      : `Manual (raw=${fmtConsoleValue(_effNGHZ.value)})`;
+  pushLine(
+    `Galaxy=${galaxyName} | N_GHZ=${_ngHZSourceLabel} | Detection L=${fmtConsoleValue(Math.max(1, rawNumber('detection-L', 30000)))} yr | f_tx=${fmtConsoleValue(clamp01(rawNumber('detection-f_tx', 0.01)))}`
   );
   pushLine(
     simulationCompleted
@@ -824,13 +1075,13 @@ function renderCalculationConsole() {
 
   pushSection('Effective Equation');
   pushLine('Symbolic base model:', 'calc-console-muted');
-  pushFormula(buildLatexProductEquation('N_{\\mathrm{base}}', baseFactors.map(f => f.latex)));
+  pushFormula(buildLatexProductEquation('N_{\\mathrm{base}}', displayFactors.map(f => f.latex)));
   if (activeAdvanced.length) {
     pushLine('Final model after active advanced multipliers:', 'calc-console-muted');
     pushFormula(
       buildLatexProductEquation(
         'N_{\\mathrm{final}}',
-        baseFactors.map(f => f.latex).concat(activeAdvanced.map(f => f.latex))
+        displayFactors.map(f => f.latex).concat(activeAdvanced.map(f => f.latex))
       ),
       'Base terms already include any advanced replacements such as radial GHZ, host-channel aggregation, radius-valley composition, or spin/obliquity rewrites.'
     );
@@ -1025,9 +1276,11 @@ function renderCalculationConsole() {
   pushFormula(
     buildLatexProductEquation(
       'N_{\\mathrm{base}}',
-      baseFactors.map(entry => fmtLatexNumber(fullInp[entry.key]))
+      displayFactors.map(entry => fmtLatexNumber(fullInp[entry.key]))
     ).concat([`&= ${fmtLatexNumber(baseResult)}`]),
-    `= ${fmtConsoleValue(baseResult)}`
+    consoleOccurrenceMode === 'eta_earth_direct'
+      ? `= ${fmtConsoleValue(baseResult)} ; direct η⊕ occurrence = ${fmtConsoleValue(consoleEtaEarth)} replaces N_p × f_rocky × f_HZ`
+      : `= ${fmtConsoleValue(baseResult)}`
   );
   if (activeAdvanced.length) {
     pushLine('Advanced stage:', 'calc-console-muted');
@@ -1211,11 +1464,14 @@ function renderSimulationMethodSummary() {
   }
 
   if (simulationEnvelope) {
+    const fixedAdvanced = simulationEnvelope.coverage && simulationEnvelope.coverage.fixedActiveAdvancedControls
+      ? simulationEnvelope.coverage.fixedActiveAdvancedControls
+      : [];
     envelopeLine.style.display = 'block';
     envelopeLine.innerHTML =
       `<span class="result-label">ROBUST ENVELOPE ·</span> ` +
       `[${fmtN(simulationEnvelope.low)}, ${fmtN(simulationEnvelope.high)}] ` +
-      `<span style="font-size:10px;color:var(--text-dim)">(parameterwise min/max bounds check)</span>`;
+      `<span style="font-size:10px;color:var(--text-dim)">(sampled-parameter min/max bounds check${fixedAdvanced.length ? '; fixed active controls: ' + fixedAdvanced.join(', ') : ''})</span>`;
   } else {
     envelopeLine.textContent = '';
     envelopeLine.style.display = 'none';
@@ -1272,6 +1528,20 @@ function applyUncertaintyProfile(name) {
   invalidateResults(false, false);
 }
 
+function resetSimulationProfileForPreset() {
+  const profile = UNCERTAINTY_PROFILES.baseline;
+  if (!profile) return;
+
+  if (byId('uncertainty-profile')) byId('uncertainty-profile').value = 'baseline';
+  if (byId('sampling_uncertainty')) byId('sampling_uncertainty').value = String(profile.uncertainty);
+  if (byId('distribution')) byId('distribution').value = profile.distribution;
+  if (byId('simulation-engine')) byId('simulation-engine').value = profile.engine;
+  if (byId('correlation-model')) byId('correlation-model').value = profile.correlation;
+  if (byId('robust-bounds')) byId('robust-bounds').checked = profile.robustBounds;
+  if (byId('mc-basis-mode')) byId('mc-basis-mode').value = profile.mcMode || 'auto';
+  clampSamplingUncertaintyInput();
+}
+
 function clampIterationsInput() {
   const el = byId('iterations');
   if (!el) return;
@@ -1282,7 +1552,7 @@ function clampIterationsInput() {
     return;
   }
 
-  el.value = String(clamp(value, 1000, 20000));
+  el.value = String(clamp(value, MONTE_CARLO_ITERATIONS_MIN, MONTE_CARLO_ITERATIONS_MAX));
 }
 
 function clampSamplingUncertaintyInput() {
@@ -1301,12 +1571,14 @@ function clampSamplingUncertaintyInput() {
 function captureGalaxySettingsBaseline() {
   return {
     galaxyName,
-    preset: (byId('galaxy-preset') || {}).value || 'mw',
+    scalingMode: galaxyScalingMode,
     diameter: (byId('galaxy-diameter') || {}).value || '100000',
     thickness: (byId('galaxy-thickness') || {}).value || '1000',
     earthDistance: (byId('galaxy-earth-distance') || {}).value || '0',
-    N_GHZ: (byId('N_GHZ') || {}).value || '10000000000',
+    N_GHZ: (byId('N_GHZ') || {}).value || String(MW_DEFAULT_N_GHZ),
     totalStars: (byId('adv_N_total_stars') || {}).value || '',
+    galaxyTotalStars: (byId('galaxy-total-stars') || {}).value || '',
+    galaxyGhzFraction: (byId('galaxy-ghz-fraction') || {}).value || '',
     modelRadial: !!((byId('model-radial') || {}).checked),
     model2d: !!((byId('model-2d') || {}).checked),
     model3dDisk: !!((byId('model-3d-disk') || {}).checked),
@@ -1314,26 +1586,29 @@ function captureGalaxySettingsBaseline() {
   };
 }
 
-function applyGalaxyPresetSelection(key) {
-  const preset = GALAXY_PRESET_MAP[key];
-  if (!preset) return null;
+function applyGalaxyPresetSelection() {
+  // Named presets removed; Galaxy X is the only scaling mode.
+  galaxyName = 'Custom Galaxy X';
+  if (byId('galaxy-preset')) byId('galaxy-preset').value = 'custom';
+  return GALAXY_PRESET_MAP.custom;
+}
 
-  galaxyName = preset.name;
-
-  if (byId('galaxy-preset')) byId('galaxy-preset').value = key;
-  if (Number.isFinite(preset.d) && byId('galaxy-diameter')) byId('galaxy-diameter').value = preset.d;
-  if (Number.isFinite(preset.t) && byId('galaxy-thickness')) byId('galaxy-thickness').value = preset.t;
-  if (Number.isFinite(preset.n) && byId('adv_N_total_stars')) byId('adv_N_total_stars').value = preset.n;
-  if (byId('galaxy-earth-distance') && preset.earthDist !== undefined) {
-    byId('galaxy-earth-distance').value = preset.earthDist ?? 0;
-  }
-
-  return preset;
+function applyGalaxyScalingModeUI(mode) {
+  galaxyScalingMode = mode || 'manual';
+  const simpleEl = byId('galaxy-simple-opts');
+  const radialEl = byId('galaxy-radial-note');
+  if (simpleEl) simpleEl.style.display = mode === 'simple' ? 'grid' : 'none';
+  if (radialEl) radialEl.style.display = mode === 'radial' ? 'block' : 'none';
+  const radio = typeof document.querySelector === 'function'
+    ? document.querySelector(`#galaxy-scaling-${mode}`)
+    : null;
+  if (radio) radio.checked = true;
 }
 
 function restoreGalaxySettingsBaseline(state) {
   if (!state) {
-    applyGalaxyPresetSelection('mw');
+    galaxyName = 'Milky Way (MW)';
+    applyGalaxyScalingModeUI('manual');
     if (byId('model-radial')) byId('model-radial').checked = true;
     if (byId('model-2d')) byId('model-2d').checked = true;
     if (byId('model-3d-disk')) byId('model-3d-disk').checked = true;
@@ -1343,16 +1618,35 @@ function restoreGalaxySettingsBaseline(state) {
 
   galaxyName = state.galaxyName || 'Milky Way (MW)';
 
-  if (byId('galaxy-preset')) byId('galaxy-preset').value = state.preset || 'mw';
   if (byId('galaxy-diameter')) byId('galaxy-diameter').value = state.diameter || '100000';
   if (byId('galaxy-thickness')) byId('galaxy-thickness').value = state.thickness || '1000';
   if (byId('galaxy-earth-distance')) byId('galaxy-earth-distance').value = state.earthDistance || '0';
-  if (byId('N_GHZ')) byId('N_GHZ').value = state.N_GHZ || '10000000000';
+  if (byId('N_GHZ')) byId('N_GHZ').value = state.N_GHZ || String(MW_DEFAULT_N_GHZ);
   if (byId('adv_N_total_stars')) byId('adv_N_total_stars').value = state.totalStars || '';
+  if (byId('galaxy-total-stars') && state.galaxyTotalStars) byId('galaxy-total-stars').value = state.galaxyTotalStars;
+  if (byId('galaxy-ghz-fraction') && state.galaxyGhzFraction) byId('galaxy-ghz-fraction').value = state.galaxyGhzFraction;
+  applyGalaxyScalingModeUI(state.scalingMode || 'manual');
   if (byId('model-radial')) byId('model-radial').checked = state.modelRadial !== false;
   if (byId('model-2d')) byId('model-2d').checked = state.model2d !== false;
   if (byId('model-3d-disk')) byId('model-3d-disk').checked = state.model3dDisk !== false;
   if (byId('model-3d-sphere')) byId('model-3d-sphere').checked = state.model3dSphere !== false;
+}
+
+function resetGalaxySettingsForPresetSwitch() {
+  isGalaxySettingsEnabled = false;
+  galaxySettingsBaseline = null;
+  galaxyGhzFractionTouched = false;
+  galaxyName = 'Milky Way (MW)';
+  applyGalaxyScalingModeUI('manual');
+
+  const toggle = byId('enable-galaxy-settings');
+  if (toggle) toggle.classList.toggle('enabled', false);
+  const options = byId('galaxy-options');
+  if (options) options.style.display = 'none';
+  const totalStars = byId('galaxy-total-stars');
+  if (totalStars) totalStars.value = String(MW_TOTAL_STARS);
+  const ghzFraction = byId('galaxy-ghz-fraction');
+  if (ghzFraction) ghzFraction.value = String(MW_DEFAULT_GHZ_FRACTION);
 }
 
 const ADVANCED_DEFAULT_CONTROL_IDS = [
@@ -1445,6 +1739,8 @@ function loadPreset(name) {
   if (!p) return;
 
   setScenarioPreset(name);
+  resetGalaxySettingsForPresetSwitch();
+  resetSimulationProfileForPreset();
 
   applyPresetParameterState(p);
 
@@ -1452,8 +1748,10 @@ function loadPreset(name) {
   resetAdvancedStateToDefaults();
   syncPresetUi();
 
-  if (name === 'kepler' || name === 'optimist') setBayesian('post', false);
-  else setBayesian('pre', false);
+  // Loading a scenario preset is NOT an occurrence overlay. Clear any active overlay so no overlay
+  // button is marked active and the scenario's own astronomy values are used. fromPresetLoad keeps
+  // the just-applied preset values instead of restoring an old baseline over them.
+  clearAstronomyOverride({ fromPresetLoad: true });
 
   // Preset load starts clean; old clamp warnings do not carry over.
   clearAllClampWarnings([...CLAMP_PROBABILITY_FIELDS, ...[...CLAMP_PROBABILITY_FIELDS].map(id => id + '_min'), ...[...CLAMP_PROBABILITY_FIELDS].map(id => id + '_max')]);
@@ -1464,21 +1762,140 @@ function loadPreset(name) {
 }
 window.loadPreset = loadPreset;
 
-function setBayesian(mode, applyToFields = true) {
-  bayesianMode = mode;
-  syncBayesianUi();
+// Snapshot of the scenario's factorized astronomy fields (value + bounds) captured while no
+// occurrence overlay is active. It is the source of truth that every overlay/Bryson transition
+// starts from, so Bryson η⊕ direct mode can never leak stale factorized values into pre/post.
+let scenarioFactorizedBaseline = null;
+const OCCURRENCE_MANUAL_EDIT_IDS = Object.freeze(['N_p_star', 'f_composition', 'f_orbit']);
 
-  if (applyToFields) {
-    byId('f_orbit').value = BAYES[mode].f_orbit;
-    byId('f_composition').value = BAYES[mode].f_composition;
-    markScenarioModified();
-    if (typeof reconcileScenarioStateWithVisiblePreset === 'function') {
-      reconcileScenarioStateWithVisiblePreset();
-    }
-    invalidateResults(false);
+function captureScenarioFactorizedBaseline() {
+  const snap = {};
+  ASTRONOMY_PRIOR_FIELD_IDS.forEach(id => {
+    snap[id] = {
+      value: rawNumber(id, null),
+      min: rawNumber(id + '_min', null),
+      max: rawNumber(id + '_max', null)
+    };
+  });
+  scenarioFactorizedBaseline = snap;
+}
+
+// Clean scenario baseline values for the factorized fields (N_GHZ, f_sun_type, f_sun_age,
+// N_p_star, f_composition, f_orbit). Prefers the captured clean snapshot; falls back to the
+// active preset's values.
+function getScenarioBaselineValues() {
+  const out = {};
+  if (scenarioFactorizedBaseline) {
+    ASTRONOMY_PRIOR_FIELD_IDS.forEach(id => { out[id] = scenarioFactorizedBaseline[id].value; });
+    return out;
   }
+  const preset = PRESETS[activePreset];
+  ASTRONOMY_PRIOR_FIELD_IDS.forEach(id => {
+    out[id] = preset && preset[id] !== undefined ? preset[id] : rawNumber(id, null);
+  });
+  return out;
+}
+
+function restoreScenarioFactorizedBaseline() {
+  if (!scenarioFactorizedBaseline) return;
+  ASTRONOMY_PRIOR_FIELD_IDS.forEach(id => {
+    const b = scenarioFactorizedBaseline[id];
+    if (!b) return;
+    setNumericControlValue(id, b.value);
+    setNumericControlBounds(id, { min: b.min, max: b.max });
+  });
+}
+
+function restoreScenarioFactorizedBaselineFields(ids, editedId = '') {
+  if (!scenarioFactorizedBaseline || !Array.isArray(ids)) return;
+  ids.forEach(id => {
+    if (id === editedId) return;
+    const b = scenarioFactorizedBaseline[id];
+    if (!b) return;
+    setNumericControlValue(id, b.value);
+    setNumericControlBounds(id, { min: b.min, max: b.max });
+  });
+}
+
+// Single clean mode-transition entry point. Every overlay/Bryson switch restores the scenario
+// baseline first, then applies only what the target mode adds.
+function applyOccurrenceMode(mode) {
+  // Always start from the clean scenario baseline so no stale values leak between modes.
+  restoreScenarioFactorizedBaseline();
+
+  const model = BAYES[mode];
+  if (!model) return; // mode === null: baseline restore is the whole job.
+
+  if (model.occurrence_mode === 'eta_earth_direct') {
+    // Bryson η⊕ direct: occurrence is the direct η⊕ term. Do NOT write N_p_star, f_composition,
+    // or f_orbit into the visible inputs; they are bypassed and stay at the scenario baseline.
+    return;
+  }
+
+  // pre/post occurrence overlay: apply only its overlay_fields on top of the restored baseline.
+  applyAstronomyPriorModel(mode);
+}
+
+// Clear the occurrence overlay and return to the clean scenario baseline.
+// User-facing clear: restore the captured scenario baseline so any overlay/Bryson field changes
+// are reverted before clearing. From loadPreset (fromPresetLoad: true): the preset has already
+// applied fresh values, so the old baseline must be dropped, not restored over the new preset.
+function clearAstronomyOverride(options = {}) {
+  const fromPresetLoad = !!options.fromPresetLoad;
+  if (!fromPresetLoad && scenarioFactorizedBaseline) {
+    restoreScenarioFactorizedBaseline();
+  }
+  astronomyOverrideMode = null;
+  etaEarthBrysonValue = ETA_EARTH_BRYSON_DEFAULT;
+  scenarioFactorizedBaseline = null;
+  syncBayesianUi();
+}
+window.clearAstronomyOverride = clearAstronomyOverride;
+
+function clearOccurrenceOverlayForManualEdit(controlId = '') {
+  if (!astronomyOverrideMode) return;
+  const baseId = _clampBaseId(String(controlId || ''));
+  if (!OCCURRENCE_MANUAL_EDIT_IDS.includes(baseId)) return;
+
+  const model = BAYES[astronomyOverrideMode];
+  restoreScenarioFactorizedBaselineFields(model && model.overlay_fields, baseId);
+
+  astronomyOverrideMode = null;
+  etaEarthBrysonValue = ETA_EARTH_BRYSON_DEFAULT;
+  scenarioFactorizedBaseline = null;
+  syncBayesianUi();
+}
+
+// Apply an occurrence overlay (pre/post) or Bryson η⊕ direct mode. Only this user action marks a
+// button active. The first transition out of the no-overlay state captures the scenario baseline.
+function setBayesian(mode) {
+  if (!BAYES[mode]) return;
+
+  // Capture the clean scenario baseline the first time we leave the no-overlay state, so later
+  // overlay/Bryson switches never inherit stale factorized values.
+  if (astronomyOverrideMode === null) captureScenarioFactorizedBaseline();
+
+  astronomyOverrideMode = mode;
+
+  if (BAYES[mode].occurrence_mode === 'eta_earth_direct') {
+    etaEarthBrysonValue = Number.isFinite(Number(BAYES[mode].eta_earth_bryson))
+      ? Number(BAYES[mode].eta_earth_bryson)
+      : ETA_EARTH_BRYSON_DEFAULT;
+  } else {
+    etaEarthBrysonValue = ETA_EARTH_BRYSON_DEFAULT;
+  }
+
+  applyOccurrenceMode(mode);
+  markScenarioModified();
+  if (typeof reconcileScenarioStateWithVisiblePreset === 'function') {
+    reconcileScenarioStateWithVisiblePreset();
+  }
+  invalidateResults(false);
+  syncBayesianUi();
 }
 window.setBayesian = setBayesian;
+window.setAstronomyOverride = setBayesian;
+window.switchOccurrenceMode = setBayesian;
 
 function setScale(s) {
   currentScale = s;
@@ -1493,7 +1910,7 @@ function detectionPresetMatches(preset) {
   if (!preset) return false;
   const currentL = rawNumber('detection-L', preset.L);
   const currentFTx = rawNumber('detection-f_tx', preset.f_tx);
-  return Math.abs(currentL - preset.L) < 0.5 && Math.abs(currentFTx - preset.f_tx) < 1e-12;
+  return nearlyEqual(currentL, preset.L, 1e-9, 0.5) && nearlyEqual(currentFTx, preset.f_tx);
 }
 
 function syncDetectionPresetUi() {
@@ -1728,6 +2145,9 @@ function saveHistoryEntry() {
     const mcArithmeticMeanDisplay = isCurrentMc ? mcDisplay(mcArithmeticMean) : mcPlaceholder;
     const mcQ025Display = isCurrentMc ? mcDisplay(mcQ025) : mcPlaceholder;
     const mcQ975Display = isCurrentMc ? mcDisplay(mcQ975) : mcPlaceholder;
+    const deterministicForHistory = hasDeterministicCalculation && Number.isFinite(deterministicPlanets)
+      ? deterministicPlanets
+      : (Number.isFinite(lastMonteCarloRunMetadata?.deterministic) ? lastMonteCarloRunMetadata.deterministic : null);
     store.items.push({
       date: new Date().toLocaleString('en-US'),
       selectedPreset: activePreset || 'custom',
@@ -1741,7 +2161,7 @@ function saveHistoryEntry() {
       simulationCompleted,
       mcState,
       staleState: mcState,
-      deterministic: deterministicPlanets,
+      deterministic: deterministicForHistory,
       // Old history rows still read these names.
       mcMedianQ50: mcMedianQ50Display,
       mcArithmeticMean: mcArithmeticMeanDisplay,
@@ -1943,7 +2363,7 @@ function renderFermiSection(section) {
 
 function getInterpretationBasis(mode = fermiMode) {
   const requestedMode = mode === 'dt' ? 'dt' : 'mc';
-  const hasDeterministic = Number.isFinite(deterministicPlanets);
+  const hasDeterministic = hasDeterministicCalculation && Number.isFinite(deterministicPlanets);
   const resolvedMode = requestedMode === 'dt' && hasDeterministic ? 'dt' : 'mc';
   const count = resolvedMode === 'dt' ? deterministicPlanets : mcMedianQ50;
 
@@ -1993,11 +2413,10 @@ function getDetectionPanelBasis() {
 }
 
 function getCurrentEffectiveModelStars() {
-  if (ADV.enabled && ADV.modules.radialGHZ.enabled && typeof computeRadialGHZDetails === 'function') {
-    const details = computeRadialGHZDetails();
-    if (details && Number.isFinite(details.N_GHZ) && details.N_GHZ > 0) {
-      return details.N_GHZ;
-    }
+  if (typeof getEffectiveNGHZ === 'function') {
+    const effective = getEffectiveNGHZ();
+    const value = effective ? Number(effective.value) : NaN;
+    if (Number.isFinite(value) && value > 0) return value;
   }
 
   return Math.max(1, rawNumber('N_GHZ', 1e10));
@@ -2055,16 +2474,21 @@ function buildInterpretationHtml(mode = fermiMode) {
   const currentMode = basis.mode;
   const basisCount = basis.count;
   const basisLabel = basis.label;
-  const itr = clamp(parseInt(byId('iterations').value || '2000', 10), 1000, 20000);
+  const itr = clamp(
+    parseInt(byId('iterations').value || '2000', 10),
+    MONTE_CARLO_ITERATIONS_MIN,
+    MONTE_CARLO_ITERATIONS_MAX
+  );
   const modalLabel =
     mostFrequent < 1 ? mostFrequent.toExponential(2) : Math.round(mostFrequent).toLocaleString();
   const simulationOptions = getSimulationOptions();
   const simulationSummary = describeSimulationOptions(simulationOptions);
 
-  const bayesLabel =
-    bayesianMode === 'post'
-      ? '(updated Kepler/Gaia observational prior)'
-      : '(conservative Kepler-era observational prior)';
+  const bayesLabel = !astronomyOverrideMode
+    ? `(scenario astronomy values; no occurrence overlay)`
+    : getActiveOccurrenceMode() === 'eta_earth_direct'
+      ? `(${getAstronomyPriorModel().shortLabel} occurrence mode)`
+      : `(${getAstronomyPriorModel().shortLabel} occurrence overlay)`;
 
   const pAtLeastOne = 1 - Math.exp(-Math.max(0, basisCount));
   const health = computeModelHealthSummary();
@@ -2132,11 +2556,15 @@ function buildInterpretationHtml(mode = fermiMode) {
   });
 
   if (simulationEnvelope) {
+    const fixedAdvanced = simulationEnvelope.coverage && simulationEnvelope.coverage.fixedActiveAdvancedControls
+      ? simulationEnvelope.coverage.fixedActiveAdvancedControls
+      : [];
     sections.push({
       label: 'Bounds check',
       text:
         `Optional robust interval envelope: [<span class="bold-number">${fmtN(simulationEnvelope.low)}</span>, ` +
-        `<span class="bold-number">${fmtN(simulationEnvelope.high)}</span>]. This is a direct parameterwise min/max bounds check, not the empirical Monte Carlo sampled model interval.`
+        `<span class="bold-number">${fmtN(simulationEnvelope.high)}</span>]. This is a sampled-parameter min/max bounds check, not the empirical Monte Carlo sampled model interval. ` +
+        (fixedAdvanced.length ? `Active advanced controls fixed in this envelope: ${fixedAdvanced.join(', ')}.` : '')
     });
   }
 
@@ -2441,6 +2869,20 @@ function renderHistory() {
     });
 }
 
+// Auto-fill the GHZ fraction with the MW reference ONLY when the user has not
+// manually edited it, or when the field is currently blank/invalid. This prevents
+// mode switches and re-enables from clobbering a user-entered fraction.
+function maybeInitGhzFraction() {
+  const el = byId('galaxy-ghz-fraction');
+  if (!el) return;
+  const current = parseFloat(el.value);
+  const blankOrInvalid = String(el.value).trim() === '' || !Number.isFinite(current);
+  if (blankOrInvalid || !galaxyGhzFractionTouched) {
+    const rawNGHZ = pf('N_GHZ', MW_DEFAULT_N_GHZ);
+    el.value = clamp(rawNGHZ / MW_TOTAL_STARS, 0, 1).toFixed(4);
+  }
+}
+
 function initBaseEvents() {
   byId('H2O-toggle').addEventListener('click', () => {
     isH2OEnabled = !isH2OEnabled;
@@ -2469,6 +2911,9 @@ function initBaseEvents() {
   byId('enable-galaxy-settings').addEventListener('click', () => {
     if (!isGalaxySettingsEnabled) {
       galaxySettingsBaseline = captureGalaxySettingsBaseline();
+      // On first enable: anchor GHZ fraction to MW reference (only if untouched/blank).
+      maybeInitGhzFraction();
+      galaxyName = 'Custom Galaxy X';
     }
 
     isGalaxySettingsEnabled = !isGalaxySettingsEnabled;
@@ -2478,22 +2923,36 @@ function initBaseEvents() {
     if (!isGalaxySettingsEnabled) {
       restoreGalaxySettingsBaseline(galaxySettingsBaseline);
       galaxySettingsBaseline = null;
+      // Fresh enable should re-initialize the fraction from MW reference again.
+      galaxyGhzFractionTouched = false;
     }
 
     invalidateResultsOnly();
   });
 
-  byId('galaxy-preset').addEventListener('change', function () {
-    const v = applyGalaxyPresetSelection(this.value);
-    if (!v) return;
-
-    invalidateResultsOnly();
+  ['galaxy-diameter', 'galaxy-thickness', 'galaxy-earth-distance'].forEach(id => {
+    byId(id).addEventListener('input', () => invalidateResultsOnly());
   });
 
-  ['galaxy-diameter', 'galaxy-thickness', 'galaxy-earth-distance'].forEach(id => {
-    byId(id).addEventListener('input', () => {
-      byId('galaxy-preset').value = 'custom';
-      galaxyName = 'Custom Galaxy X';
+  const galaxyTotalStarsEl = byId('galaxy-total-stars');
+  if (galaxyTotalStarsEl) galaxyTotalStarsEl.addEventListener('input', () => invalidateResultsOnly());
+
+  const galaxyGhzFractionEl = byId('galaxy-ghz-fraction');
+  if (galaxyGhzFractionEl) {
+    galaxyGhzFractionEl.addEventListener('input', () => {
+      galaxyGhzFractionTouched = true;
+      invalidateResultsOnly();
+    });
+  }
+
+  document.querySelectorAll('input[name="galaxy-scaling-mode"]').forEach(radio => {
+    radio.addEventListener('change', function () {
+      applyGalaxyScalingModeUI(this.value);
+      // When switching to simple, anchor GHZ fraction to MW reference, but never
+      // overwrite a value the user has manually edited.
+      if (this.value === 'simple') {
+        maybeInitGhzFraction();
+      }
       invalidateResultsOnly();
     });
   });
@@ -2657,10 +3116,14 @@ function initBaseEvents() {
       el.id !== 'model-3d-sphere' &&
       el.id !== 'galaxy-diameter' &&
       el.id !== 'galaxy-thickness' &&
-      el.id !== 'galaxy-earth-distance'
+      el.id !== 'galaxy-earth-distance' &&
+      el.id !== 'galaxy-total-stars' &&
+      el.id !== 'galaxy-ghz-fraction' &&
+      el.name !== 'galaxy-scaling-mode' &&
+      !String(el.id || '').startsWith('adv_')
     ) {
-      el.addEventListener('input', () => { applyProbabilityClamp(el.id); invalidateScenarioResults(); });
-      el.addEventListener('change', () => { applyProbabilityClamp(el.id); invalidateScenarioResults(); });
+      el.addEventListener('input', () => { clearOccurrenceOverlayForManualEdit(el.id); applyProbabilityClamp(el.id); invalidateScenarioResults(); });
+      el.addEventListener('change', () => { clearOccurrenceOverlayForManualEdit(el.id); applyProbabilityClamp(el.id); invalidateScenarioResults(); });
     } else {
       el.addEventListener('input', () => invalidateDisplayOrDistanceOnly(false));
       el.addEventListener('change', () => invalidateDisplayOrDistanceOnly(false));
@@ -2688,6 +3151,27 @@ window.addEventListener('load', () => {
   updateShareButtons();
   loadPreset('kepler');
 });
+
+function setTheme(theme) {
+  const isLight = theme === 'light';
+  document.documentElement.classList.toggle('light', isLight);
+  const optWhite = document.getElementById('theme-opt-white');
+  const optBlack = document.getElementById('theme-opt-black');
+  const line = document.getElementById('theme-switch-line');
+  if (optWhite) optWhite.classList.toggle('active', isLight);
+  if (optBlack) optBlack.classList.toggle('active', !isLight);
+  if (line) line.classList.toggle('is-right', !isLight);
+  const logo = document.getElementById('site-logo');
+  if (logo) {
+    if (isLight) {
+      if (!logo.dataset.darkSrc) logo.dataset.darkSrc = logo.src;
+      logo.src = 'https://github.com/jerseroman/are-we-alone-in-the-universe/blob/main/assets/images/LogoWhSh.webp?raw=true';
+    } else {
+      if (logo.dataset.darkSrc) logo.src = logo.dataset.darkSrc;
+    }
+  }
+}
+window.addEventListener('load', function() { setTheme('light'); });
 
 function renderSobolPanel(result) {
   const panel = byId('sobol-panel');
@@ -2872,7 +3356,12 @@ function renderDetectionPanel() {
   }
 
   const gaugePct = Math.min(100, r.p_detect_pct).toFixed(2);
-  const gaugeColor = r.p_detect_pct > 50 ? 'var(--green)' : r.p_detect_pct > 2 ? 'var(--yellow)' : 'var(--red)';
+  const detectionLinkColor = 'var(--detection-link)';
+  const detectionPositiveColor = 'var(--detection-positive)';
+  const detectionCautionColor = 'var(--detection-caution)';
+  const detectionWarningColor = 'var(--detection-warning)';
+  const detectionCardStyle = 'background:var(--detection-card-bg);border:1px solid var(--detection-card-border);border-radius:6px;padding:10px 12px;';
+  const gaugeColor = r.p_detect_pct > 50 ? detectionPositiveColor : r.p_detect_pct > 2 ? detectionCautionColor : detectionWarningColor;
   const pDetStr = fmtPct(r.p_detect_pct);
 
   
@@ -2923,23 +3412,23 @@ function renderDetectionPanel() {
   resultsEl.innerHTML =
     basisCopy +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-bottom:12px;">' +
-      '<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 12px;">' +
+      '<div style="' + detectionCardStyle + '">' +
         '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:4px;">Step 0 · Civilisation prior</div>' +
         '<div style="font-size:11px;font-weight:700;color:var(--text-bright);">f_tx = ' + r.f_tx.toFixed(4).replace(/\.?0+$/, '') + '</div>' +
         '<div style="font-size:9.5px;color:var(--text-dim);margin-top:3px;">Only this share of modelled Earth-like candidates is assumed to ever produce a detectable transmitter.</div>' +
-        '<div style="font-size:10px;color:var(--accent);font-weight:700;margin-top:5px;">' + fmtHuman(r.N_tx_total) + ' transmitter-bearing worlds in the modelled system</div>' +
+        '<div style="font-size:10px;color:' + detectionLinkColor + ';font-weight:700;margin-top:5px;">' + fmtHuman(r.N_tx_total) + ' transmitter-bearing worlds in the modelled system</div>' +
       '</div>' +
-      '<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 12px;">' +
+      '<div style="' + detectionCardStyle + '">' +
         '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:4px;">Step 1 · Distance barrier</div>' +
         '<div style="font-size:11px;font-weight:700;color:var(--text-bright);">' + distanceBarrierValue + '</div>' +
         '<div style="font-size:9.5px;color:var(--text-dim);margin-top:3px;">' + distanceBarrierCopy + '</div>' +
-        '<div style="font-size:10px;color:var(--accent);font-weight:700;margin-top:5px;">' + withinRangeCopy + '</div>' +
+        '<div style="font-size:10px;color:' + detectionLinkColor + ';font-weight:700;margin-top:5px;">' + withinRangeCopy + '</div>' +
       '</div>' +
-      '<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 12px;">' +
+      '<div style="' + detectionCardStyle + '">' +
         '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:4px;">Step 2 · Timing barrier</div>' +
         '<div style="font-size:11px;font-weight:700;color:var(--text-bright);">' + fmtPct(r.p_temporal_pct) + '</div>' +
         '<div style="font-size:9.5px;color:var(--text-dim);margin-top:3px;">Temporal-overlap probability for a transmitter-bearing world <strong>right now</strong> 〰 L ÷ galaxy age. This model-derived timing factor does not include f_tx, which separately represents whether a planet ever produces a detectable transmitter.</div>' +
-        '<div style="font-size:10px;color:var(--accent3);font-weight:700;margin-top:5px;">Both barriers multiply together →</div>' +
+        '<div style="font-size:10px;color:' + detectionPositiveColor + ';font-weight:700;margin-top:5px;">Both barriers multiply together →</div>' +
       '</div>' +
     '</div>' +
     (function(){
@@ -2972,15 +3461,15 @@ function renderDetectionPanel() {
         distLabel = formatLy(d);
         if (r.nearest_beyond_horizon) {
           distTitle = 'Equivalent Poisson scale beyond horizon';
-          distLabel = formatLy(d) + ' <span style="font-size:10px;font-weight:400;color:var(--red);">(horizon: ' + formatLy(r.d_horizon) + ')</span>';
+          distLabel = formatLy(d) + ' <span style="font-size:10px;font-weight:400;color:' + detectionWarningColor + ';">(horizon: ' + formatLy(r.d_horizon) + ')</span>';
           distSub = 'This is the equivalent Poisson nearest-detectable distance scale, not a literal source. Because it exceeds the current detection horizon, fewer than one active detectable transmitter is expected on average inside the current horizon. It is also not the light-travel time used by the waiting-time estimate.';
         } else {
           distSub = 'The nearest-detectable transmitter distance scale is about ' + formatLy(d) + ' within the current detection horizon of ' + formatLy(r.d_horizon) + '.';
         }
       }
-      return '<div style="background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--accent3);border-radius:6px;padding:10px 12px;margin-bottom:8px;">' +
+      return '<div style="' + detectionCardStyle + 'border-left:3px solid ' + detectionPositiveColor + ';margin-bottom:8px;">' +
         '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:4px;">' + distTitle + '</div>' +
-        '<div style="font-size:15px;font-weight:800;color:' + (r.nearest_beyond_horizon ? 'var(--red)' : 'var(--accent3)') + ';">' + distLabel + '</div>' +
+        '<div style="font-size:15px;font-weight:800;color:' + (r.nearest_beyond_horizon ? detectionWarningColor : detectionPositiveColor) + ';">' + distLabel + '</div>' +
         '<div style="font-size:9.5px;color:var(--text-dim);margin-top:3px;">' + distSub + '</div>' +
         subPoissonWarning +
         '<div style="font-size:8.5px;color:var(--text-dim);margin-top:4px;opacity:.7;">' + (r.is_external_reference
@@ -2988,7 +3477,7 @@ function renderDetectionPanel() {
           : 'd̄ = Γ(3/2) / (ρ<sub>det</sub>·π)<sup>½</sup>, ρ<sub>det</sub> = N̂<sub>det</sub> / A<sub>horizon</sub> (spatial density within the observer-centred detection area)') + '</div>' +
       '</div>';
     })() +
-    '<div style="background:var(--bg);border:1px solid var(--border);border-left:3px solid ' + gaugeColor + ';border-radius:6px;padding:10px 12px;margin-bottom:10px;">' +
+    '<div style="' + detectionCardStyle + 'border-left:3px solid ' + gaugeColor + ';margin-bottom:10px;">' +
       '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:4px;">Combined result · Poisson mean of detectable transmitters now</div>' +
       '<div style="font-size:16px;font-weight:800;color:' + gaugeColor + ';">' + fmtHuman(r.N_det) + '</div>' +
       '<div style="font-size:9.5px;color:var(--text-dim);margin-top:2px;">' + combinedResultCopy + '</div>' +
@@ -3012,6 +3501,6 @@ function renderDetectionPanel() {
     '</div>' +
     '<div style="font-size:8.5px;color:var(--text-dim);margin-top:6px;opacity:.65;line-height:1.6;">' +
       formulaCopy +
-      '<span style="color:var(--yellow);opacity:.9;">⚠ f<sub>tx</sub> is user-supplied. This panel is now explicit about the civilisation prior instead of silently assuming that every Earth-like planet eventually transmits.</span>' +
+      '<span style="color:' + detectionCautionColor + ';opacity:.9;">⚠ f<sub>tx</sub> is user-supplied. This panel is now explicit about the civilisation prior instead of silently assuming that every Earth-like planet eventually transmits.</span>' +
     '</div>';
 }

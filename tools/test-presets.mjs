@@ -98,6 +98,10 @@ class FakeElement {
     return this.attributes[name] || null;
   }
 
+  removeAttribute(name) {
+    delete this.attributes[name];
+  }
+
   addEventListener() {}
 }
 
@@ -124,7 +128,11 @@ function createHarness() {
   for (const id of [
     'bayes-pre',
     'bayes-post',
+    'bayes-eta',
     'bayes-note',
+    'eta-replaced-N_p_star',
+    'eta-replaced-f_composition',
+    'eta-replaced-f_orbit',
     'preset-description',
     'complex-life-toggle',
     'x-toggle'
@@ -169,9 +177,17 @@ function createHarness() {
         BAYES,
         loadPreset,
         setBayesian,
+        clearAstronomyOverride,
         getActivePreset: () => activePreset,
         getScenarioState,
-        getBayesianMode: () => bayesianMode,
+        getAstronomyOverrideMode: () => astronomyOverrideMode,
+        getActiveOccurrenceMode,
+        getActiveEtaEarthBryson,
+        getAstronomyPriorExportSnapshot,
+        resolveOccurrenceTerm,
+        getInputs,
+        applyAdvancedModules,
+        computePlanetsAdvanced,
         normalizeHistoryStore,
         readHistoryStore,
         writeHistoryStore
@@ -256,15 +272,23 @@ if (harness.getActivePreset() === 'kepler') {
 } else {
   fail(`loadPreset("kepler") did not select kepler; activePreset=${harness.getActivePreset()}.`);
 }
-if (harness.getBayesianMode() === 'post') {
-  pass('loadPreset("kepler") selects the Updated Kepler/Gaia observational prior.');
+if (harness.getAstronomyOverrideMode() === null && harness.getActiveOccurrenceMode() === 'factorized') {
+  pass('loadPreset("kepler") uses scenario astronomy values with no occurrence overlay.');
 } else {
-  fail(`loadPreset("kepler") did not select post prior; bayesianMode=${harness.getBayesianMode()}.`);
+  fail(`loadPreset("kepler") left an occurrence overlay active; override=${harness.getAstronomyOverrideMode()}, occurrence=${harness.getActiveOccurrenceMode()}.`);
 }
-if (/scenario_label:\s*typeof getScenarioExportLabel/.test(shareSource) && /scenario_state:\s*typeof getScenarioState/.test(shareSource) && /bayesianMode/.test(shareSource)) {
-  pass('Share/export labels include scenario state, scenario label, and bayesianMode.');
+
+const keplerDefaultDeterministic = harness.computePlanetsAdvanced(harness.applyAdvancedModules(harness.getInputs()));
+if (almostEqual(keplerDefaultDeterministic, 35363.79, 1e-10)) {
+  pass('Kepler/Gaia default deterministic output remains approximately 35,363.79.');
 } else {
-  fail('Share/export labels do not include scenario state, scenario label, and bayesianMode.');
+  fail(`Kepler/Gaia default deterministic output changed: ${keplerDefaultDeterministic}.`);
+}
+
+if (/scenario_label:\s*typeof getScenarioExportLabel/.test(shareSource) && /scenario_state:\s*typeof getScenarioState/.test(shareSource) && /astronomy_prior_model/.test(shareSource)) {
+  pass('Share/export labels include scenario state, scenario label, and occurrence model metadata.');
+} else {
+  fail('Share/export labels do not include scenario state, scenario label, and occurrence model metadata.');
 }
 
 if (arrayEqual(runtimePresetKeys, expectedPresetKeys)) {
@@ -324,8 +348,23 @@ if (!failures) {
   pass('loadPreset(name) resets visible custom min/max fields to default preset bounds.');
 }
 
-for (const mode of Object.keys(harness.BAYES).sort()) {
+writeRegistryDefaults(harness.elements);
+harness.loadPreset('optimist');
+const highEndAloneDeterministic = harness.computePlanetsAdvanced(harness.applyAdvancedModules(harness.getInputs()));
+if (almostEqual(highEndAloneDeterministic, 30086210.7, 1e-10)) {
+  pass('High-End scenario deterministic output remains approximately 30,086,210.7.');
+} else {
+  fail(`High-End scenario deterministic output changed: ${highEndAloneDeterministic}.`);
+}
+
+const highEndOverlayExpectations = {
+  pre: 14736103.2,
+  post: 21490150.5
+};
+
+for (const mode of ['pre', 'post']) {
   writeRegistryDefaults(harness.elements);
+  harness.loadPreset('optimist');
   const boundsBefore = readValues(harness.elements, boundIds);
   const centralBefore = readValues(harness.elements, centralIds);
 
@@ -333,28 +372,120 @@ for (const mode of Object.keys(harness.BAYES).sort()) {
 
   const boundsAfter = readValues(harness.elements, boundIds);
   const centralAfter = readValues(harness.elements, centralIds);
-  compareSnapshots(`setBayesian('${mode}') changed a Monte Carlo bound`, boundsBefore, boundsAfter);
+  const model = harness.BAYES[mode];
 
-  const expectedOrbit = harness.BAYES[mode].f_orbit;
-  const expectedComposition = harness.BAYES[mode].f_composition;
+  if (harness.getAstronomyOverrideMode() === mode && harness.getActiveOccurrenceMode() === 'factorized') {
+    pass(`setBayesian('${mode}') activates a factorized rocky/HZ occurrence overlay.`);
+  } else {
+    fail(`setBayesian('${mode}') did not activate the expected overlay; override=${harness.getAstronomyOverrideMode()}, occurrence=${harness.getActiveOccurrenceMode()}.`);
+  }
 
-  if (!almostEqual(Number(centralAfter.f_orbit), expectedOrbit)) {
+  if (!almostEqual(Number(centralAfter.f_orbit), model.fields.f_orbit)) {
     fail(`setBayesian('${mode}') did not set f_orbit central value.`);
   }
-  if (!almostEqual(Number(centralAfter.f_composition), expectedComposition)) {
+  if (!almostEqual(Number(centralAfter.f_composition), model.fields.f_composition)) {
     fail(`setBayesian('${mode}') did not set f_composition central value.`);
+  }
+
+  const highEndOverlayDeterministic = harness.computePlanetsAdvanced(harness.applyAdvancedModules(harness.getInputs()));
+  if (almostEqual(highEndOverlayDeterministic, highEndOverlayExpectations[mode], 1e-10)) {
+    pass(`High-End + ${model.label} output remains approximately ${highEndOverlayExpectations[mode]}.`);
+  } else {
+    fail(`High-End + ${model.label} output changed: ${highEndOverlayDeterministic}.`);
   }
 
   for (const key of centralIds) {
     if (key === 'f_orbit' || key === 'f_composition') continue;
-    if (centralBefore[key] !== centralAfter[key]) {
+    if (!almostEqual(Number(centralBefore[key]), Number(centralAfter[key]))) {
       fail(`setBayesian('${mode}') unexpectedly changed central ${key}.`);
     }
   }
+
+  for (const key of boundIds) {
+    if (key.startsWith('f_orbit_') || key.startsWith('f_composition_')) continue;
+    if (!almostEqual(Number(boundsBefore[key]), Number(boundsAfter[key]))) {
+      fail(`setBayesian('${mode}') unexpectedly changed bound ${key}.`);
+    }
+  }
+
+  const snap = harness.getAstronomyPriorExportSnapshot();
+  if (
+    snap.occurrence_overlay_mode === mode &&
+    snap.astronomy_model_type === 'rocky_hz_occurrence_overlay' &&
+    Array.isArray(snap.occurrence_overlay_fields) &&
+    arrayEqual(snap.occurrence_overlay_fields, ['f_composition', 'f_orbit'])
+  ) {
+    pass(`setBayesian('${mode}') export describes a rocky/HZ occurrence overlay.`);
+  } else {
+    fail(`setBayesian('${mode}') export metadata is wrong: ${JSON.stringify(snap)}.`);
+  }
+
+  harness.clearAstronomyOverride();
+  const centralAfterClear = readValues(harness.elements, centralIds);
+  for (const key of centralIds) {
+    if (!almostEqual(Number(centralAfterClear[key]), Number(centralBefore[key]))) {
+      fail(`clearAstronomyOverride() did not restore High-End ${key} after '${mode}' overlay.`);
+    }
+  }
+  if (harness.getAstronomyOverrideMode() === null && harness.getActiveOccurrenceMode() === 'factorized') {
+    pass(`clearAstronomyOverride() restores the selected scenario baseline after '${mode}' overlay.`);
+  } else {
+    fail(`clearAstronomyOverride() left an active mode after '${mode}': override=${harness.getAstronomyOverrideMode()}, occurrence=${harness.getActiveOccurrenceMode()}.`);
+  }
 }
 
-if (!failures) {
-  pass('setBayesian(mode) changes only intended central values and leaves current min/max fields unchanged.');
+writeRegistryDefaults(harness.elements);
+harness.loadPreset('kepler');
+const keplerBeforeBryson = readValues(harness.elements, centralIds);
+harness.setBayesian('bryson_eta_direct');
+const brysonAfter = readValues(harness.elements, centralIds);
+
+for (const key of centralIds) {
+  if (!almostEqual(Number(keplerBeforeBryson[key]), Number(brysonAfter[key]))) {
+    fail(`Bryson direct unexpectedly changed visible factorized central ${key}.`);
+  }
+}
+if (
+  harness.getAstronomyOverrideMode() === 'bryson_eta_direct' &&
+  harness.getActiveOccurrenceMode() === 'eta_earth_direct' &&
+  harness.getActiveEtaEarthBryson() === 0.60 &&
+  harness.resolveOccurrenceTerm({ N_p_star: 100, f_composition: 100, f_orbit: 100 }) === 0.60
+) {
+  pass('Bryson η⊕ direct mode uses eta_earth_bryson=0.60 and bypasses factorized occurrence fields.');
+} else {
+  fail('Bryson η⊕ direct mode did not resolve to eta_earth_bryson=0.60.');
+}
+
+const keplerBrysonDirectDeterministic = harness.computePlanetsAdvanced(harness.applyAdvancedModules(harness.getInputs()));
+if (almostEqual(keplerBrysonDirectDeterministic, 252598.5, 1e-10)) {
+  pass('Bryson η⊕ direct on Kepler/Gaia remains approximately 252,598.5.');
+} else {
+  fail(`Bryson η⊕ direct on Kepler/Gaia changed: ${keplerBrysonDirectDeterministic}.`);
+}
+
+const brysonSnap = harness.getAstronomyPriorExportSnapshot();
+if (
+  brysonSnap.astronomy_model_type === 'bryson_eta_earth_direct' &&
+  brysonSnap.occurrence_term_used === 'eta_earth_bryson_direct' &&
+  brysonSnap.eta_earth_bryson === 0.60 &&
+  Array.isArray(brysonSnap.replaced_factorized_terms)
+) {
+  pass('Bryson η⊕ direct export metadata identifies the direct occurrence term and replaced fields.');
+} else {
+  fail(`Bryson η⊕ direct export metadata is wrong: ${JSON.stringify(brysonSnap)}.`);
+}
+
+harness.setBayesian('post');
+const postAfterBryson = readValues(harness.elements, centralIds);
+if (
+  almostEqual(Number(postAfterBryson.N_p_star), Number(keplerBeforeBryson.N_p_star)) &&
+  almostEqual(Number(postAfterBryson.f_composition), harness.BAYES.post.fields.f_composition) &&
+  almostEqual(Number(postAfterBryson.f_orbit), harness.BAYES.post.fields.f_orbit) &&
+  harness.getAstronomyPriorExportSnapshot().eta_earth_bryson === undefined
+) {
+  pass('Bryson direct state does not leak stale values into the Updated Kepler/Gaia overlay.');
+} else {
+  fail(`Bryson direct stale-state transition failed: ${JSON.stringify(postAfterBryson)}.`);
 }
 
 const keplerOrbit = SCIENTIFIC_PARAMETER_REGISTRY.presets.kepler.values.f_orbit;

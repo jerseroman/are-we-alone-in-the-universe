@@ -67,11 +67,11 @@ The calculator uses compact calibration badges beside displayed defaults:
 
 `LC` is the only class that should be interpreted as direct literature/reference calibration.
 
-## Galaxy Preset Source Note
+## Galaxy Settings Source Note
 
-Galaxy presets are model inputs. Star counts, disk geometry, thickness, and external-galaxy distances are approximate configurable priors unless a specific source table is selected and cited for that preset.
+Galaxy Settings are user-defined model inputs. Star counts, disk geometry, thickness, and distance values are approximate configurable priors unless a specific source table is selected and cited for a future named-galaxy preset.
 
-Future recalibration note: the M31 and Centaurus A preset star counts should be reviewed against one consistent stellar-mass or star-count source table before being presented as calibrated galaxy defaults.
+Future recalibration note: if named-galaxy presets are reintroduced, their star counts and geometry should be reviewed against one consistent stellar-mass or star-count source table before being presented as calibrated defaults.
 
 ## Exploratory Status
 

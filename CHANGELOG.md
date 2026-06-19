@@ -1,5 +1,41 @@
 # Changelog
 
+## Unreleased
+
+## v2.17 - 2026-06-18
+
+### Release Framing
+
+- Updated active application, package, citation, Zenodo, export, README, cache-buster, footer, paper, audit, standalone HTML, and test metadata to v2.17.
+- Added `RELEASE_NOTES_v2.17.md` for GitHub release preparation.
+
+### Light / White Theme
+
+- Added a White/Black color theme with a paper-white (grayscale-only) light mode, set as the default, toggled by a sliding "White / Black" switch in the project-links row.
+- Added `html.light` theme variables and overrides (backgrounds, borders, tooltips, badges, icons, scrollbars, sensitivity bars) plus a logo swap for light mode.
+- Softened light-mode panel borders, gave parameter cards a warm cream tint distinct from the surrounding panels, lightened the near-black decorative left-accent stripes, and darkened the otherwise-invisible Fermi list arrows.
+- Made the sensitivity (Sobol) legend swatches theme-aware (monochrome in light mode) instead of hard-coded blue/green.
+
+### Galaxy Settings — Custom Galaxy X Scaling
+
+- Removed the named galaxy presets (Andromeda M31, Bode's M81, Centaurus A NGC 5128); galaxy selection now resolves to a single user-defined **Custom Galaxy X** scaling scenario. Milky Way values are retained only as internal reference constants (`MW_TOTAL_STARS`, `MW_DEFAULT_N_GHZ`, `MW_DEFAULT_GHZ_FRACTION`).
+- Added `getNGHZSource()` / `getEffectiveNGHZ()` as the single source of truth for the effective GHZ star count, with three modes: `manual_raw_N_GHZ`, `simple_galaxy_scaling` (`total_stars × GHZ_fraction`), and `radial_ghz_integrator` (which overrides the others).
+- Added `resolveInputsForCalculation()` so the deterministic calculation, `getCurrentDeterministicPlanets()`, and the Monte Carlo deterministic-at-run figure all use the same resolved N_GHZ as sampling — fixing preset-local bounds bypassing the effective value.
+- Added "Total stars in galaxy" and "GHZ fraction" inputs and an N_GHZ scaling-mode selector; diameter, thickness, and distance remain geometry/distance-only and never change the candidate count. A manually edited GHZ fraction is no longer overwritten on mode switches.
+- Extended JSON and Monte Carlo exports with `galaxy_model_type`, `galaxy_preset_evidence_level`, `N_GHZ_source`, `raw_N_GHZ`, `effective_N_GHZ`, `galaxy_total_stars`, `galaxy_GHZ_fraction`, and `galaxy_scaling_mode`.
+
+### SETI / Fermi And Historical Context Text
+
+- Replaced the duplicated historical-context wording ("…points roughly to roughly 900 million years ago: roughly 900 million years ago…") with a single clean sentence via `buildHistoricalContextText()` ("In historical terms, this corresponds to …").
+- Reworded the SETI signal sentence to a light-travel framing ("…its signal would have had to leave its source about X years ago…") instead of implying continuous transmission.
+- Closed the previously unclosed star-reference parenthesis in all three distance branches and made the model-interpretation sentence punctuation robust via `ensureSentenceEnd()`.
+
+### Tests
+
+- Added browser-console dev helpers `runGalaxySettingsTests()` and `runHistoricalContextTests()` for Galaxy X and historical-context regression checks.
+- Updated the string regression to the corrected historical wording and the state-transition regression to the Custom Galaxy X model; added export-harness shims for the new resolver dependencies.
+- Updated static-site verification so console logging is allowed only inside the two development helper test functions.
+
 ## v2.16 - 2026-06-14
 
 ### Release Framing

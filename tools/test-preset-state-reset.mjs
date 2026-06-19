@@ -83,9 +83,17 @@ class FakeElement {
     return this.attributes[name] || null;
   }
 
+  removeAttribute(name) {
+    delete this.attributes[name];
+  }
+
   appendChild(child) {
     this.children.push(child);
     return child;
+  }
+
+  querySelector() {
+    return null;
   }
 
   remove() {}
@@ -118,7 +126,11 @@ function createHarness() {
   [
     'bayes-pre',
     'bayes-post',
+    'bayes-eta',
     'bayes-note',
+    'eta-replaced-N_p_star',
+    'eta-replaced-f_composition',
+    'eta-replaced-f_orbit',
     'preset-description',
     'complex-life-toggle',
     'x-toggle',

@@ -88,6 +88,10 @@ class FakeElement {
     return this.attributes[name] || null;
   }
 
+  removeAttribute(name) {
+    delete this.attributes[name];
+  }
+
   appendChild(child) {
     this.children.push(child);
     return child;
@@ -116,6 +120,10 @@ class FakeElement {
 
   closest() {
     return null;
+  }
+
+  querySelector(sel) {
+    return this.querySelectorAll(sel)[0] || null;
   }
 
   querySelectorAll(sel) {
@@ -153,7 +161,11 @@ function createHarness() {
   [
     'bayes-pre',
     'bayes-post',
+    'bayes-eta',
     'bayes-note',
+    'eta-replaced-N_p_star',
+    'eta-replaced-f_composition',
+    'eta-replaced-f_orbit',
     'preset-description',
     'complex-life-toggle',
     'x-toggle',
@@ -345,6 +357,8 @@ function createHarness() {
         buildShareSummary,
         saveHistoryEntry,
         getScenarioState,
+        getAstronomyOverrideMode: () => typeof astronomyOverrideMode !== 'undefined' ? astronomyOverrideMode : null,
+        getActiveOccurrenceMode: () => typeof getActiveOccurrenceMode === 'function' ? getActiveOccurrenceMode() : null,
         getMonteCarloState,
         getMonteCarloBoundsDescriptor,
         getParamSamplingState,
@@ -582,12 +596,11 @@ function runCoreStateTransitionTests() {
     harness.loadPreset('kepler');
     const cleanNghz = harness.getValue('N_GHZ');
 
-    harness.applyGalaxyPresetSelection('mw');
-    const mwNghz = harness.getValue('N_GHZ');
-    const mwTotal = harness.getValue('adv_N_total_stars');
-    harness.applyGalaxyPresetSelection('m31');
-    const m31Nghz = harness.getValue('N_GHZ');
-    const m31Total = harness.getValue('adv_N_total_stars');
+    // Named galaxy presets (MW/M31/M81/NGC5128) were removed. Galaxy selection now
+    // resolves to the single user-defined "Custom Galaxy X" scaling scenario and must
+    // never overwrite the raw N_GHZ input field, nor block Monte Carlo.
+    harness.applyGalaxyPresetSelection();
+    const afterSelectNghz = harness.getValue('N_GHZ');
     harness.calculateDeterministic();
     const summary = harness.monteCarloCalculate({
       samples: 120,
@@ -600,16 +613,13 @@ function runCoreStateTransitionTests() {
 
     if (
       cleanNghz === '10000000000' &&
-      mwNghz === cleanNghz &&
-      m31Nghz === cleanNghz &&
-      mwTotal === '100000000000' &&
-      m31Total === '55000000000' &&
+      afterSelectNghz === cleanNghz &&
       summary &&
       !blockedNghz
     ) {
-      pass('Galaxy presets update geometry/total-star metadata without overwriting N_GHZ or blocking Monte Carlo.');
+      pass('Galaxy X selection leaves raw N_GHZ untouched and does not block Monte Carlo.');
     } else {
-      fail(`Galaxy preset N_GHZ/MC regression: clean=${cleanNghz}, MW=${mwNghz}, M31=${m31Nghz}, totalMW=${mwTotal}, totalM31=${m31Total}, summary=${!!summary}, blockedNghz=${blockedNghz}.`);
+      fail(`Galaxy X N_GHZ/MC regression: clean=${cleanNghz}, afterSelect=${afterSelectNghz}, summary=${!!summary}, blockedNghz=${blockedNghz}.`);
     }
   }
 
@@ -659,6 +669,14 @@ function runCoreStateTransitionTests() {
     consensus.setBayesian('pre');
     const consensusPreState = consensus.getScenarioState();
 
+    const bryson = createHarness();
+    bryson.loadPreset('kepler');
+    const keplerNpBeforeBryson = bryson.getValue('N_p_star');
+    bryson.setBayesian('bryson_eta_direct');
+    const brysonDirectMode = bryson.getActiveOccurrenceMode();
+    bryson.setBayesian('post');
+    const brysonPostNp = bryson.getValue('N_p_star');
+
     if (
       preState.state === 'modified' &&
       postState.state === 'preset' &&
@@ -667,22 +685,29 @@ function runCoreStateTransitionTests() {
       harness.getValue('f_composition') === '0.25' &&
       consensusPostState.state === 'modified' &&
       consensusPreState.state === 'preset' &&
-      consensusPreState.activePreset === 'consensus'
+      consensusPreState.activePreset === 'consensus' &&
+      brysonDirectMode === 'eta_earth_direct' &&
+      brysonPostNp === keplerNpBeforeBryson &&
+      bryson.getValue('f_orbit') === '0.21' &&
+      bryson.getValue('f_composition') === '0.25'
     ) {
-      pass('Bayesian pre/post toggle reconciles back to clean matching presets.');
+      pass('Occurrence overlays reconcile back to clean matching presets and Bryson direct does not leak stale factorized values.');
     } else {
-      fail(`Bayesian reconciliation regression: kepler pre=${JSON.stringify(preState)}, kepler post=${JSON.stringify(postState)}, consensus post=${JSON.stringify(consensusPostState)}, consensus pre=${JSON.stringify(consensusPreState)}.`);
+      fail(`Occurrence overlay reconciliation regression: kepler pre=${JSON.stringify(preState)}, kepler post=${JSON.stringify(postState)}, consensus post=${JSON.stringify(consensusPostState)}, consensus pre=${JSON.stringify(consensusPreState)}, brysonMode=${brysonDirectMode}, brysonNp=${brysonPostNp}/${keplerNpBeforeBryson}.`);
     }
   }
 
   {
     const harness = createHarness();
     harness.loadPreset('kepler');
-    // Keep the scenario clean while making visible bounds invalid for a
-    // preset-owned field. presetLocal should ignore those visible bounds;
-    // explicit customInput must validate against them and block.
+    // Make a preset-owned field visibly dirty with invalid bounds. presetLocal
+    // must no longer ignore that DOM state; it resolves to modifiedPresetLocal
+    // and blocks on the same visible-bound error as customInput.
     harness.elements.get('f_sun_type_min').value = '0.5';
     harness.elements.get('f_sun_type_max').value = '0.6';
+
+    const presetDescriptor = harness.getMonteCarloBoundsDescriptor({ mcMode: 'presetLocal' });
+    const presetErrors = harness.getMonteCarloBoundsBlockingErrors(presetDescriptor);
 
     const customSummary = harness.monteCarloCalculate({
       mcMode: 'customInput',
@@ -703,12 +728,13 @@ function runCoreStateTransitionTests() {
 
     if (
       customSummary === null &&
-      presetSummary &&
-      presetSummary.boundsMode === 'presetLocal'
+      presetDescriptor.mode === 'modifiedPresetLocal' &&
+      presetErrors.some(error => error.id === 'f_sun_type' && error.kind === 'central-outside') &&
+      presetSummary === null
     ) {
-      pass('Programmatic monteCarloCalculate mcMode uses the same bounds basis for validation and simulation.');
+      pass('Programmatic presetLocal resolves dirty DOM state to modifiedPresetLocal and blocks invalid visible bounds.');
     } else {
-      fail(`Programmatic mcMode basis regression: customSummary=${!!customSummary}, presetMode=${presetSummary && presetSummary.boundsMode}.`);
+      fail(`Programmatic mcMode basis regression: customSummary=${!!customSummary}, presetDescriptor=${JSON.stringify(presetDescriptor)}, presetErrors=${JSON.stringify(presetErrors)}, presetMode=${presetSummary && presetSummary.boundsMode}.`);
     }
   }
 
@@ -740,15 +766,14 @@ function runCoreStateTransitionTests() {
     });
 
     if (
-      presetDescriptor.mode === 'presetLocal' &&
-      presetErrors.length === 0 &&
-      presetSummary &&
-      presetSummary.boundsMode === 'presetLocal' &&
+      presetDescriptor.mode === 'modifiedPresetLocal' &&
+      presetErrors.some(error => error.id === 'N_GHZ' && error.kind === 'central-outside') &&
+      presetSummary === null &&
       customDescriptor.mode === 'customInput' &&
       customErrors.some(error => error.id === 'N_GHZ' && error.kind === 'central-outside') &&
       customSummary === null
     ) {
-      pass('Explicit presetLocal remains strict after modified visible N_GHZ; explicit customInput still blocks invalid visible bounds.');
+      pass('Explicit presetLocal resolves modified visible N_GHZ to modifiedPresetLocal and blocks invalid visible bounds.');
     } else {
       fail(
         `Strict presetLocal regression: presetDescriptor=${JSON.stringify(presetDescriptor)}, ` +

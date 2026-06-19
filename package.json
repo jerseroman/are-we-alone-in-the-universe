@@ -1,6 +1,6 @@
 {
   "name": "are-we-alone-in-the-universe",
-  "version": "2.16.0",
+  "version": "2.17.0",
   "description": "Static browser-based Earth-like planet calculator for transparent astrobiological scenario modelling.",
   "private": true,
   "repository": {
@@ -11,6 +11,7 @@
   "scripts": {
     "verify": "node tools/verify-static-site.mjs",
     "build:standalone": "node tools/generate-standalone-html.mjs",
+    "test:canonical-sync": "node tools/test-canonical-sync.mjs",
     "check:syntax": "node tools/check-syntax.mjs",
     "test:numerics": "node tools/test-numerics.mjs",
     "test:strings": "node tools/test-strings.mjs",
@@ -29,6 +30,6 @@
     "test:biogeo-sources": "node tools/test-bio-geophysical-sources.mjs",
     "test:absolute": "node tools/test-absolute-deep-audit.mjs",
     "test:deep": "npm run test:state-transition:deep",
-    "test:all": "npm run verify && npm run check:syntax && npm run test:numerics && npm run test:strings && npm run test:standalone-export && npm run test:presets && npm run test:montecarlo && npm run test:pessimist-mc && npm run test:scenario-coherence && npm run test:universe-scale && npm run test:state-transition:core && npm run test:preset-state-reset && npm run test:calibration && npm run test:source-links && npm run test:biogeo-sources"
+    "test:all": "npm run verify && npm run test:canonical-sync && npm run check:syntax && npm run test:numerics && npm run test:strings && npm run test:standalone-export && npm run test:presets && npm run test:montecarlo && npm run test:pessimist-mc && npm run test:scenario-coherence && npm run test:universe-scale && npm run test:state-transition:core && npm run test:preset-state-reset && npm run test:calibration && npm run test:source-links && npm run test:biogeo-sources"
   }
 }

@@ -41,6 +41,28 @@ const productionFiles = [
   'package.json'
 ].filter((file, index, arr) => arr.indexOf(file) === index && fs.existsSync(path.join(root, file)));
 
+const consoleLogAllowlist = {
+  'src/share.js': ['runGalaxySettingsTests', 'runHistoricalContextTests', 'runAllOccurrenceTests']
+};
+
+function consoleLogAllowedLines(rel, text) {
+  const fns = consoleLogAllowlist[rel];
+  if (!fns) return null;
+  const lines = text.split(/\r?\n/);
+  const sigRe = new RegExp('^\\s*function\\s+(?:' + fns.join('|') + ')\\b');
+  const allowed = new Set();
+  for (let i = 0; i < lines.length; i++) {
+    if (!sigRe.test(lines[i])) continue;
+    let j = i;
+    for (; j < lines.length; j++) {
+      allowed.add(j);
+      if (j > i && /^\}\s*$/.test(lines[j])) break;
+    }
+    i = j;
+  }
+  return allowed;
+}
+
 const audit = {
   currentSection: null,
   assertions: 0,
@@ -311,11 +333,32 @@ class FakeElement {
     return Object.prototype.hasOwnProperty.call(this.attributes, name) ? this.attributes[name] : null;
   }
 
+  removeAttribute(name) {
+    delete this.attributes[name];
+    if (name === 'class') this.className = '';
+    if (name === 'id') this.id = '';
+    if (name.startsWith('data-')) delete this.dataset[toDatasetKey(name)];
+    if (name === 'href') this.href = '';
+    if (name === 'rel') this.rel = '';
+    if (name === 'target') this.target = '';
+    if (name === 'download') this.download = '';
+    if (name === 'aria-pressed') this.ariaPressed = undefined;
+  }
+
   appendChild(child) {
     if (child) {
       child.parentNode = this;
       this.children.push(child);
     }
+    return child;
+  }
+
+  insertBefore(child, reference) {
+    if (!child) return child;
+    child.parentNode = this;
+    const index = this.children.indexOf(reference);
+    if (index === -1) this.children.push(child);
+    else this.children.splice(index, 0, child);
     return child;
   }
 
@@ -892,6 +935,8 @@ function buildHarnessHelpers(document, context, errors, warnings, unhandled) {
           galaxyName: typeof galaxyName !== 'undefined' ? galaxyName : null,
           lastResultsLength: typeof lastResults !== 'undefined' && Array.isArray(lastResults) ? lastResults.length : null,
           monteCarloBoundsMode: typeof monteCarloBoundsMode !== 'undefined' ? monteCarloBoundsMode : null,
+          astronomyOverrideMode: typeof astronomyOverrideMode !== 'undefined' ? astronomyOverrideMode : null,
+          occurrenceMode: typeof getActiveOccurrenceMode === 'function' ? getActiveOccurrenceMode() : null,
           monteCarloBoundsLabel: typeof monteCarloBoundsLabel !== 'undefined' ? monteCarloBoundsLabel : null,
           chartStale: {
             monteCarloChart: (document.getElementById('monteCarloChart') || { dataset: {} }).dataset.stale,
@@ -916,10 +961,18 @@ function buildHarnessHelpers(document, context, errors, warnings, unhandled) {
         return el && el.dataset ? el.dataset[key] : undefined;
       },
       galaxyPresetKeys() {
-        return typeof GALAXY_PRESET_MAP !== 'undefined' ? Object.keys(GALAXY_PRESET_MAP) : [];
+        const map =
+          typeof GALAXY_PRESET_MAP_GLOBAL !== 'undefined' ? GALAXY_PRESET_MAP_GLOBAL :
+          typeof GALAXY_PRESET_MAP !== 'undefined' ? GALAXY_PRESET_MAP :
+          null;
+        return map ? Object.keys(map) : [];
       },
       galaxyPresetMap() {
-        return typeof GALAXY_PRESET_MAP !== 'undefined' ? JSON.parse(JSON.stringify(GALAXY_PRESET_MAP)) : {};
+        const map =
+          typeof GALAXY_PRESET_MAP_GLOBAL !== 'undefined' ? GALAXY_PRESET_MAP_GLOBAL :
+          typeof GALAXY_PRESET_MAP !== 'undefined' ? GALAXY_PRESET_MAP :
+          null;
+        return map ? JSON.parse(JSON.stringify(map)) : {};
       },
       baseSampleIds() {
         return typeof BASE_SAMPLE_IDS !== 'undefined' ? BASE_SAMPLE_IDS.slice() : [];
@@ -1085,7 +1138,8 @@ await section('Static Integrity', () => {
     'distribution',
     'simulation-engine',
     'bayes-pre',
-    'bayes-post'
+    'bayes-post',
+    'bayes-eta'
   ];
   for (const id of criticalIds) assert(ids.includes(id), `Critical id exists: ${id}`, { id });
 
@@ -1101,7 +1155,14 @@ await section('Static Integrity', () => {
     .filter(rel => /\.(js|css|html)$/.test(rel))
     .flatMap(rel => {
       const text = fs.readFileSync(path.join(root, rel), 'utf8');
-      return [...text.matchAll(new RegExp(`\\b${consoleLogMarker.replace('.', '\\.')}\\s*\\(`, 'g'))].map(match => ({ file: rel, index: match.index }));
+      const allowed = consoleLogAllowedLines(rel, text);
+      return [...text.matchAll(new RegExp(`\\b${consoleLogMarker.replace('.', '\\.')}\\s*\\(`, 'g'))]
+        .map(match => ({
+          file: rel,
+          index: match.index,
+          line: text.slice(0, match.index).split(/\r?\n/).length - 1
+        }))
+        .filter(match => !(allowed && allowed.has(match.line)));
     });
   assert(prodConsoleLogs.length === 0, 'No accidental production logging calls in src files', { prodConsoleLogs });
 
@@ -1143,7 +1204,11 @@ await section('Static Integrity', () => {
         })
     )
   ];
-  const missingCriticalReferences = referencedIds.filter(id => !ids.includes(id) && !/^card-|^interval-/.test(id));
+  const generatedOrOptionalIds = new Set([
+    'occurrence-mode-banner',
+    'active-occurrence-term-card'
+  ]);
+  const missingCriticalReferences = referencedIds.filter(id => !ids.includes(id) && !/^card-|^interval-/.test(id) && !generatedOrOptionalIds.has(id));
   assert(missingCriticalReferences.length === 0, 'Every literal critical JS id reference exists or is generated/optional', {
     missingCriticalReferences
   });
@@ -1324,7 +1389,8 @@ await section('MC Basis', () => {
 
   for (const mode of ['globalEnvelope', 'presetLocal', 'customInput']) {
     const descriptor = h.getMonteCarloBoundsDescriptor(h.getMonteCarloOptions({ mcMode: mode }));
-    assert(descriptor.mode === mode || (mode === 'presetLocal' && descriptor.mode === 'presetLocal'), `Explicit ${mode} basis is honored`, descriptor);
+    const expectedMode = mode === 'presetLocal' ? 'modifiedPresetLocal' : mode;
+    assert(descriptor.mode === expectedMode, `Explicit ${mode} basis resolves to ${expectedMode}`, descriptor);
   }
 
   h.loadPreset('kepler');
@@ -1342,9 +1408,9 @@ await section('MC Basis', () => {
   const presetDescriptor = h.getMonteCarloBoundsDescriptor(presetOptions);
   const presetErrors = h.getMonteCarloBoundsBlockingErrors(presetDescriptor);
   const presetSummary = h.runMonteCarlo({ samples: 32, seed: 202613, mcMode: 'presetLocal' });
-  assert(presetDescriptor.mode === 'presetLocal', 'Programmatic presetLocal descriptor is presetLocal', presetDescriptor);
-  assert(presetErrors.length === 0, 'Programmatic presetLocal validation ignores stale visible custom bounds', presetErrors);
-  assert(presetSummary && presetSummary.boundsMode === presetDescriptor.mode, 'Programmatic presetLocal simulation uses same basis as gate', {
+  assert(presetDescriptor.mode === 'modifiedPresetLocal', 'Programmatic presetLocal descriptor resolves dirty preset to modifiedPresetLocal', presetDescriptor);
+  assert(presetErrors.some(error => error.id === 'N_GHZ' && error.kind === 'central-outside'), 'Programmatic presetLocal validation blocks invalid modified visible bounds', presetErrors);
+  assert(presetSummary === null, 'Programmatic presetLocal simulation is blocked by the same modifiedPresetLocal gate', {
     summary: presetSummary && presetSummary.boundsMode,
     descriptor: presetDescriptor.mode
   });
@@ -1484,7 +1550,7 @@ await section('MC-only Controls', () => {
   }
 });
 
-await section('Bayesian Toggle', () => {
+await section('Occurrence Overlay Controls', () => {
   for (const presetKey of ['kepler']) {
     const h = createHarness();
     h.loadPreset(presetKey);
@@ -1493,15 +1559,15 @@ await section('Bayesian Toggle', () => {
     const baselineInputs = h.snapshotAllScientificInputs();
     assert(h.snapshotScenarioState().state === 'preset', `${presetKey}: starts clean`, h.snapshotScenarioState());
     h.click('bayes-pre');
-    assert(h.getValue('f_orbit') === '0.18' && h.getValue('f_composition') === '0.2', `${presetKey}: Bayesian pre changes values`, {
+    assert(h.getValue('f_orbit') === '0.18' && h.getValue('f_composition') === '0.2', `${presetKey}: Conservative overlay changes only rocky/HZ values`, {
       f_orbit: h.getValue('f_orbit'),
       f_composition: h.getValue('f_composition')
     });
     h.click('bayes-post');
-    assertDeepEqual(h.snapshotAllScientificInputs(), baselineInputs, `${presetKey}: Bayesian post restores visible preset defaults`);
-    assert(h.snapshotScenarioState().state === 'preset', `${presetKey}: Bayesian post reconciles badge to clean preset`, h.snapshotScenarioState());
+    assertDeepEqual(h.snapshotAllScientificInputs(), baselineInputs, `${presetKey}: Updated overlay restores visible preset defaults`);
+    assert(h.snapshotScenarioState().state === 'preset', `${presetKey}: Updated overlay reconciles badge to clean preset`, h.snapshotScenarioState());
     h.runDeterministic();
-    assertRelApproxEqual(h.getRuntimeSnapshot().deterministicPlanets, baselineDet, 1e-15, `${presetKey}: Bayesian post restores deterministic baseline`);
+    assertRelApproxEqual(h.getRuntimeSnapshot().deterministicPlanets, baselineDet, 1e-15, `${presetKey}: Updated overlay restores deterministic baseline`);
   }
 
   {
@@ -1512,12 +1578,12 @@ await section('Bayesian Toggle', () => {
     const baselineInputs = h.snapshotAllScientificInputs();
     assert(h.snapshotScenarioState().state === 'preset', 'consensus: starts clean', h.snapshotScenarioState());
     h.click('bayes-post');
-    assert(h.snapshotScenarioState().state !== 'preset', 'consensus: Bayesian post can mark modified');
+    assert(h.snapshotScenarioState().state !== 'preset', 'consensus: Updated overlay can mark modified');
     h.click('bayes-pre');
-    assertDeepEqual(h.snapshotAllScientificInputs(), baselineInputs, 'consensus: Bayesian pre restores visible preset defaults');
-    assert(h.snapshotScenarioState().state === 'preset', 'consensus: Bayesian pre reconciles badge to clean preset', h.snapshotScenarioState());
+    assertDeepEqual(h.snapshotAllScientificInputs(), baselineInputs, 'consensus: Conservative overlay restores visible preset defaults');
+    assert(h.snapshotScenarioState().state === 'preset', 'consensus: Conservative overlay reconciles badge to clean preset', h.snapshotScenarioState());
     h.runDeterministic();
-    assertRelApproxEqual(h.getRuntimeSnapshot().deterministicPlanets, baselineDet, 1e-15, 'consensus: Bayesian pre restores deterministic baseline');
+    assertRelApproxEqual(h.getRuntimeSnapshot().deterministicPlanets, baselineDet, 1e-15, 'consensus: Conservative overlay restores deterministic baseline');
   }
 
   const h = createHarness();
@@ -1527,52 +1593,51 @@ await section('Bayesian Toggle', () => {
     h.click('bayes-post');
   }
   assert(h.snapshotScenarioState().state === 'preset', 'Repeated pre/post toggling leaves Kepler clean', h.snapshotScenarioState());
+
+  {
+    const hh = createHarness();
+    hh.loadPreset('kepler');
+    const baselineInputs = hh.snapshotAllScientificInputs();
+    hh.click('bayes-eta');
+    assertDeepEqual(hh.snapshotAllScientificInputs(), baselineInputs, 'Bryson η⊕ direct does not overwrite visible factorized occurrence fields');
+    const directSnap = hh.getRuntimeSnapshot();
+    assert(directSnap.astronomyOverrideMode === 'bryson_eta_direct' && directSnap.occurrenceMode === 'eta_earth_direct', 'Bryson η⊕ direct sets direct occurrence mode', directSnap);
+    hh.click('bayes-post');
+    const postInputs = hh.snapshotAllScientificInputs();
+    assert(postInputs.N_p_star === baselineInputs.N_p_star, 'Bryson -> Updated overlay preserves scenario N_p_star baseline', {
+      before: baselineInputs.N_p_star,
+      after: postInputs.N_p_star
+    });
+    assert(postInputs.f_composition === '0.25' && postInputs.f_orbit === '0.21', 'Bryson -> Updated overlay restores rocky/HZ overlay values', {
+      f_composition: postInputs.f_composition,
+      f_orbit: postInputs.f_orbit
+    });
+  }
 });
 
 await section('Galaxy Presets', () => {
   const h = createHarness();
   const map = h.galaxyPresetMap();
-  const keys = Object.keys(map).filter(key => key !== 'custom');
-  assert(keys.length >= 4, 'Galaxy preset map exposes known presets', { keys });
-  for (const key of keys) {
-    const hh = createHarness();
-    hh.loadPreset('kepler');
-    const nGhzBefore = hh.getValue('N_GHZ');
-    const preset = hh.applyGalaxyPresetSelection(key);
-    assert(!!preset, `${key}: galaxy preset applied`);
-    assert(String(hh.getValue('galaxy-diameter')) === String(preset.d), `${key}: diameter updated`, {
-      expected: preset.d,
-      actual: hh.getValue('galaxy-diameter')
-    });
-    assert(String(hh.getValue('galaxy-thickness')) === String(preset.t), `${key}: thickness updated`, {
-      expected: preset.t,
-      actual: hh.getValue('galaxy-thickness')
-    });
-    assert(String(hh.getValue('galaxy-earth-distance')) === String(preset.earthDist ?? 0), `${key}: earth distance updated`, {
-      expected: preset.earthDist,
-      actual: hh.getValue('galaxy-earth-distance')
-    });
-    assert(hh.getValue('N_GHZ') === nGhzBefore, `${key}: N_GHZ not overwritten by total galaxy star count`, {
-      before: nGhzBefore,
-      after: hh.getValue('N_GHZ'),
-      totalStars: preset.n
-    });
-    if (key === 'mw') assert(hh.getValue('N_GHZ') !== '100000000000', 'Milky Way does not set N_GHZ to 1e11');
-    if (key === 'm31') assert(hh.getValue('N_GHZ') !== '55000000000', 'M31 does not set N_GHZ to 5.5e10');
-    const central = hh.getNumber('N_GHZ');
-    assert(central >= hh.getNumber('N_GHZ_min') && central <= hh.getNumber('N_GHZ_max'), `${key}: N_GHZ remains within its GHZ bounds`);
-    hh.runDeterministic();
-    const summary = runSeededMc(hh, { samples: 48, seed: 202616 });
-    const errors = hh.getMonteCarloBoundsBlockingErrors(hh.getMonteCarloBoundsDescriptor(hh.getMonteCarloOptions({ mcMode: 'auto' })));
-    assert(summary && summary.n > 0, `${key}: MC runs after galaxy preset selection`, summary && { n: summary.n, boundsMode: summary.boundsMode });
-    assert(!errors.some(error => error.id === 'N_GHZ' && error.kind === 'central-outside'), `${key}: no central-outside-bounds error from galaxy preset`, errors);
-    if (preset.n !== undefined && hh.byId('adv_N_total_stars')) {
-      assert(String(hh.getValue('adv_N_total_stars')) === String(preset.n), `${key}: total stars stored in advanced total stars field`, {
-        expected: preset.n,
-        actual: hh.getValue('adv_N_total_stars')
-      });
-    }
-  }
+  const keys = Object.keys(map);
+  assert(keys.length === 1 && keys[0] === 'custom', 'Galaxy preset map exposes the current Custom Galaxy X mode only', { keys });
+
+  const hh = createHarness();
+  hh.loadPreset('kepler');
+  const nGhzBefore = hh.getValue('N_GHZ');
+  const preset = hh.applyGalaxyPresetSelection('custom');
+  assert(!!preset && preset.name === 'Custom Galaxy X', 'Custom Galaxy X mode applies', preset);
+  assert(hh.getRuntimeSnapshot().galaxyName === 'Custom Galaxy X', 'Custom Galaxy X updates runtime galaxy name', hh.getRuntimeSnapshot());
+  assert(hh.getValue('N_GHZ') === nGhzBefore, 'Custom Galaxy X does not overwrite N_GHZ', {
+    before: nGhzBefore,
+    after: hh.getValue('N_GHZ')
+  });
+  const central = hh.getNumber('N_GHZ');
+  assert(central >= hh.getNumber('N_GHZ_min') && central <= hh.getNumber('N_GHZ_max'), 'Custom Galaxy X leaves N_GHZ within its GHZ bounds');
+  hh.runDeterministic();
+  const summary = runSeededMc(hh, { samples: 48, seed: 202616 });
+  const errors = hh.getMonteCarloBoundsBlockingErrors(hh.getMonteCarloBoundsDescriptor(hh.getMonteCarloOptions({ mcMode: 'auto' })));
+  assert(summary && summary.n > 0, 'MC runs after Custom Galaxy X selection', summary && { n: summary.n, boundsMode: summary.boundsMode });
+  assert(!errors.some(error => error.id === 'N_GHZ' && error.kind === 'central-outside'), 'No central-outside-bounds error from Custom Galaxy X selection', errors);
 });
 
 await section('Advanced Modules', () => {
@@ -1700,7 +1765,7 @@ await section('Export Share History', () => {
   const mc = runSeededMc(h, { samples: 64, seed: 202618, mcMode: 'presetLocal' });
   h.calculateDistanceToNearestPlanet();
   const json = h.buildJSONExportSnapshot();
-  assert(json && json.version === '2.16', 'JSON export contains version', json);
+  assert(json && json.version === '2.17', 'JSON export contains version', json);
   assert(json.preset === 'kepler', 'JSON export contains active preset', json);
   assert(json.scenario_state && json.scenario_state.state === 'preset', 'JSON export contains clean scenario state', json.scenario_state);
   assertRelApproxEqual(json.results.deterministic, h.getRuntimeSnapshot().deterministicPlanets, 1e-15, 'JSON deterministic equals current UI state');
@@ -1843,7 +1908,7 @@ await section('Cache Invalidation', () => {
     ['central value', h => { h.setInputValue('N_GHZ', '9000000000'); h.dispatchInput('N_GHZ'); }],
     ['min', h => { h.setInputValue('N_GHZ_min', '4000000000'); h.dispatchInput('N_GHZ_min'); }],
     ['max', h => { h.setInputValue('N_GHZ_max', '30000000000'); h.dispatchInput('N_GHZ_max'); }],
-    ['Bayesian toggle', h => { h.click('bayes-pre'); }],
+    ['Occurrence overlay toggle', h => { h.click('bayes-pre'); }],
     ['galaxy preset', h => { h.applyGalaxyPresetSelection('m31'); h.invalidateDisplayOrDistanceOnly(false); }],
     ['advanced module', h => { h.setAdvancedModule('atmRet', true); h.invalidateScenarioResults(false); }],
     ['MC basis mode', h => { h.setInputValue('mc-basis-mode', 'globalEnvelope'); h.dispatchChange('mc-basis-mode'); }],

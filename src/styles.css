@@ -21,6 +21,215 @@
       --red-warm-dim: rgba(212,92,67,0.12);
       --yellow: #d4a843;
       --yellow-dim: rgba(212,168,67,0.10);
+      --detection-link: var(--accent);
+      --detection-positive: var(--accent3);
+      --detection-caution: var(--yellow);
+      --detection-warning: var(--red);
+      --detection-card-bg: var(--bg);
+      --detection-card-border: var(--border);
+    }
+    html.light {
+      --bg: #f2ede3;
+      --panel: #faf8f2;
+      --panel-alt: #ede8de;
+      --border: rgba(0,0,0,0.055);
+      --border-mid: rgba(0,0,0,0.10);
+      --accent: #1a1a1a;
+      --accent-dim: rgba(0,0,0,0.07);
+      --accent3: #444444;
+      --accent3-dim: rgba(0,0,0,0.06);
+      --text: #3c3630;
+      --text-dim: #888078;
+      --text-bright: #0a0806;
+      --yellow: #555555;
+      --yellow-dim: rgba(0,0,0,0.06);
+      --orange: #444444;
+      --orange-dim: rgba(0,0,0,0.05);
+      --green: #222222;
+      --green-dim: rgba(0,0,0,0.05);
+      --red: #333333;
+      --red-dim: rgba(0,0,0,0.06);
+      --red-warm: #444444;
+      --red-warm-dim: rgba(0,0,0,0.06);
+      --detection-link: #2f5f86;
+      --detection-positive: #5b947e;
+      --detection-caution: #d4a843;
+      --detection-warning: #c65f50;
+      --detection-card-bg: #f4efe5;
+      --detection-card-border: rgba(0,0,0,0.09);
+    }
+    html.light { scrollbar-color: #b8b0a4 transparent; }
+    html.light ::-webkit-scrollbar-thumb { background: #b8b0a4; }
+    html.light .preset-btn:hover { background: #dcd7ce; color: var(--text-bright); }
+    html.light .preset-section { background: linear-gradient(180deg, rgba(0,0,0,0.01), rgba(0,0,0,0.025)); }
+    html.light .preset-section:has(#bayes-note) {
+      border-color: rgba(91,156,246,0.18);
+      background:
+        linear-gradient(90deg, rgba(91,156,246,0.055), rgba(78,204,163,0.035) 48%, rgba(250,248,242,0) 100%),
+        linear-gradient(180deg, rgba(255,255,255,0.24), rgba(0,0,0,0.014));
+      box-shadow: inset 3px 0 0 rgba(91,156,246,0.22);
+    }
+    html.light .preset-section:has(#bayes-note) .preset-section-title span {
+      color: rgba(91,156,246,0.82);
+    }
+    html.light .preset-section-title.dashed-divider { border-bottom-color: rgba(0,0,0,0.09); }
+    html.light .bayes-row { border-top-color: rgba(91,156,246,0.13); }
+    html.light .top-link-btn { background: rgba(0,0,0,0.04); color: #5a5248; border-color: rgba(0,0,0,0.14); }
+    html.light .top-link-btn:hover { background: rgba(0,0,0,0.08); color: #2a2420; border-color: rgba(0,0,0,0.25); }
+    html.light #theme-toggle-btn { border-color: rgba(0,0,0,0.22); color: #0a0806; font-weight: 900; }
+    html.light .header-logo-wrap img { filter: none; }
+    html.light .tooltip .tooltiptext {
+      background: #faf8f2;
+      border-color: rgba(0,0,0,0.14);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    }
+    html.light .calibration-badge::after {
+      background: #faf8f2;
+      border-color: rgba(0,0,0,0.14);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    }
+    html.light #copy-tooltip {
+      background: #faf8f2;
+      border-color: rgba(0,0,0,0.14);
+    }
+    html.light .input-card label,
+    html.light .adv-field label { color: var(--text-bright); }
+    html.light .card-icons img { filter: brightness(0); opacity: 0.38; }
+    html.light .card-icons img:hover { filter: brightness(0); opacity: 0.72; }
+    html.light .sobol-intro { border-bottom-color: rgba(0,0,0,0.07); }
+    html.light .sobol-bar-track {
+      background: #eee8dc;
+      border-color: rgba(0,0,0,0.075);
+    }
+    html.light .sobol-bar-S { background: #2f5f86; }
+    html.light .sobol-bar-T { background: #5b947e; }
+    html.light .det-gauge-track {
+      background: #eee8dc;
+      border-color: rgba(0,0,0,0.075);
+    }
+    html.light .desc-panel h2 {
+      color: #3c3630;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    html.light .desc-panel p a,
+    html.light .lit-range,
+    html.light .source-link,
+    html.light .read-more-btn {
+      color: #2f5f86;
+    }
+    html.light .desc-panel p a {
+      border-bottom-color: rgba(47,95,134,0.24);
+    }
+    html.light .desc-panel p a:hover,
+    html.light .source-link:hover,
+    html.light .source-link:focus-visible,
+    html.light .read-more-btn:hover {
+      color: #1f4f75;
+      opacity: 1;
+    }
+    /* Warm cream tint for the parameter cards only (not the surrounding panels) */
+    html.light .input-card,
+    html.light .adv-module-card { background: #f7f3ea; }
+    /* Soften decorative left-accent stripes so they are not near-black in light mode */
+    html.light .input-card.physical,
+    html.light .input-card.biological,
+    html.light .input-card.hypothetical,
+    html.light .preset-btn.kepler,
+    html.light .preset-btn.consensus,
+    html.light .preset-btn.optimist,
+    html.light .preset-btn.pessimist,
+    html.light .core-equations-panel,
+    html.light .result-summary-box,
+    html.light .result-reality-check,
+    html.light .status-box,
+    html.light .alerts-box,
+    html.light .sens-driver.positive,
+    html.light .sens-driver.negative {
+      border-left-color: rgba(0,0,0,0.28);
+    }
+    .theme-switch {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      border: none;
+      background: transparent;
+      padding: 0;
+      gap: 0;
+      min-height: 30px;
+    }
+    .theme-switch-line {
+      position: absolute;
+      bottom: 2px;
+      left: 0;
+      width: 50%;
+      height: 1.5px;
+      background: #c5cad3;
+      transition: transform 0.24s cubic-bezier(.4,0,.2,1);
+      pointer-events: none;
+    }
+    .theme-switch-line.is-right {
+      transform: translateX(100%);
+    }
+    .theme-switch-opt {
+      position: relative;
+      font-family: 'Nunito', sans-serif;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.9px;
+      text-transform: uppercase;
+      color: rgba(143,152,168,0.38);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 6px 11px 9px;
+      transition: color 0.18s ease;
+      white-space: nowrap;
+      line-height: 1;
+      flex: 1;
+      text-align: center;
+    }
+    .theme-switch-opt.active { color: #c5cad3; }
+    .theme-switch-opt:not(.active):hover { color: rgba(143,152,168,0.7); }
+    html.light .theme-switch-line { background: #1a1510; }
+    html.light .theme-switch-opt { color: rgba(125,114,104,0.38); }
+    html.light .theme-switch-opt.active { color: #1a1510; }
+    html.light .theme-switch-opt:not(.active):hover { color: rgba(125,114,104,0.75); }
+    html.light .version-badge { background: rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.22); color: #1a1a1a; }
+    html.light .calibration-lc { color: #355f88; border-color: rgba(91,156,246,0.34); background: rgba(91,156,246,0.105); }
+    html.light .calibration-li { color: #3d745f; border-color: rgba(78,204,163,0.34); background: rgba(78,204,163,0.10); }
+    html.light .calibration-ms { color: #7c6330; border-color: rgba(212,168,67,0.36); background: rgba(212,168,67,0.12); }
+    html.light .calibration-mp { color: #874f42; border-color: rgba(212,92,67,0.30); background: rgba(212,92,67,0.095); }
+    html.light .input-card.validation-warning { border-color: rgba(0,0,0,0.25); box-shadow: 0 0 0 1px rgba(0,0,0,0.07); }
+    html.light .input-validation-warning { border-color: rgba(0,0,0,0.18); background: rgba(0,0,0,0.05); }
+    html.light .input-clamp-warning { border-color: rgba(0,0,0,0.16); background: rgba(0,0,0,0.04); }
+    html.light .bayes-btn {
+      background: rgba(255,255,255,0.28);
+      border-color: rgba(0,0,0,0.105);
+    }
+    html.light .bayes-btn:hover {
+      background: rgba(255,255,255,0.42);
+      border-color: rgba(91,156,246,0.24);
+      color: #3b332d;
+    }
+    html.light #bayes-pre.active {
+      color: #7c6330;
+      background: rgba(212,168,67,0.13);
+      border-color: rgba(212,168,67,0.38);
+      box-shadow: inset 0 0 0 1px rgba(212,168,67,0.10);
+    }
+    html.light #bayes-post.active {
+      color: #355f88;
+      background: rgba(91,156,246,0.12);
+      border-color: rgba(91,156,246,0.40);
+      box-shadow: inset 0 0 0 1px rgba(91,156,246,0.10);
+    }
+    html.light #bayes-eta.active {
+      color: #874f42;
+      background: rgba(212,92,67,0.105);
+      border-color: rgba(212,92,67,0.34);
+      box-shadow: inset 0 0 0 1px rgba(212,92,67,0.09);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html { scrollbar-width: thin; scrollbar-color: #2a2d35 transparent; }
@@ -49,6 +258,10 @@
     }
     .header h1 .accent { color: var(--accent); }
     .header h1 .accent2 { color: var(--accent3); }
+    html:not(.light) .header h1 .accent,
+    html:not(.light) .header h1 .accent2 {
+      color: #fff;
+    }
     .header-sub { font-size: 12px; color: var(--text-dim); font-weight: 500; margin-bottom: 4px; }
     .header-tagline { font-size: 13px; font-weight: 400; color: var(--text); letter-spacing: 4px; }
     .top-link-row {
@@ -118,7 +331,7 @@
 }
     .desc-panel h2 {
   font-size: 14px;
-  font-weight: 300;
+  font-weight: 800;
   color: var(--text-bright);
   margin-bottom: 12px;
   display: flex;
@@ -265,6 +478,15 @@
     .preset-section-title span {
       color: var(--accent);
     }
+    .occurrence-section-desc {
+      font-size: 11px;
+      color: var(--text-dim);
+      line-height: 1.5;
+      margin: 0 0 9px;
+    }
+    .occurrence-section-desc strong {
+      color: var(--text-bright);
+    }
     .preset-helper {
       font-size: 10px;
       font-weight: 700;
@@ -272,6 +494,12 @@
       text-transform: uppercase;
       color: var(--text-dim);
       margin-bottom: 12px;
+    }
+    .preset-helper.preset-helper-note {
+      font-style: italic;
+      letter-spacing: 0.35px;
+      line-height: 1.55;
+      text-transform: none;
     }
     .preset-grid {
       display: grid;
@@ -315,6 +543,54 @@
     .preset-btn.consensus strong { color: var(--yellow); }
     .preset-btn.optimist strong  { color: var(--accent); }
     .preset-btn.pessimist strong { color: var(--red-warm); }
+    html.light .preset-btn.kepler {
+      border-left-color: rgba(86,201,122,0.58);
+      background: linear-gradient(180deg, rgba(86,201,122,0.055), rgba(247,243,234,0.72));
+    }
+    html.light .preset-btn.consensus {
+      border-left-color: rgba(212,168,67,0.58);
+      background: linear-gradient(180deg, rgba(212,168,67,0.060), rgba(247,243,234,0.72));
+    }
+    html.light .preset-btn.optimist {
+      border-left-color: rgba(91,156,246,0.55);
+      background: linear-gradient(180deg, rgba(91,156,246,0.055), rgba(247,243,234,0.72));
+    }
+    html.light .preset-btn.pessimist {
+      border-left-color: rgba(212,92,67,0.52);
+      background: linear-gradient(180deg, rgba(212,92,67,0.048), rgba(247,243,234,0.72));
+    }
+    html.light .preset-btn.kepler strong { color: #3f7654; }
+    html.light .preset-btn.consensus strong { color: #7c6330; }
+    html.light .preset-btn.optimist strong { color: #355f88; }
+    html.light .preset-btn.pessimist strong { color: #874f42; }
+    html.light .preset-btn.kepler:hover,
+    html.light .preset-btn.kepler.active {
+      border-color: rgba(86,201,122,0.42);
+      border-left-color: rgba(86,201,122,0.78);
+      background: linear-gradient(180deg, rgba(86,201,122,0.105), rgba(247,243,234,0.84));
+      box-shadow: inset 0 0 0 1px rgba(86,201,122,0.08);
+    }
+    html.light .preset-btn.consensus:hover,
+    html.light .preset-btn.consensus.active {
+      border-color: rgba(212,168,67,0.42);
+      border-left-color: rgba(212,168,67,0.78);
+      background: linear-gradient(180deg, rgba(212,168,67,0.11), rgba(247,243,234,0.84));
+      box-shadow: inset 0 0 0 1px rgba(212,168,67,0.08);
+    }
+    html.light .preset-btn.optimist:hover,
+    html.light .preset-btn.optimist.active {
+      border-color: rgba(91,156,246,0.40);
+      border-left-color: rgba(91,156,246,0.76);
+      background: linear-gradient(180deg, rgba(91,156,246,0.10), rgba(247,243,234,0.84));
+      box-shadow: inset 0 0 0 1px rgba(91,156,246,0.08);
+    }
+    html.light .preset-btn.pessimist:hover,
+    html.light .preset-btn.pessimist.active {
+      border-color: rgba(212,92,67,0.36);
+      border-left-color: rgba(212,92,67,0.72);
+      background: linear-gradient(180deg, rgba(212,92,67,0.09), rgba(247,243,234,0.84));
+      box-shadow: inset 0 0 0 1px rgba(212,92,67,0.07);
+    }
     .preset-description {
       font-size: 11px;
       line-height: 1.6;
@@ -337,8 +613,56 @@
       align-items: flex-start;
     }
     .bayes-note {
-      flex: 1;
-      min-width: 220px;
+      flex: 1 0 100%;
+      min-width: 0;
+      margin-top: 8px;
+    }
+    .active-calculation-state {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: rgba(255,255,255,0.025);
+    }
+    .active-state-title {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.1px;
+      text-transform: uppercase;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+    }
+    .active-state-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 8px 12px;
+    }
+    .active-state-item {
+      min-width: 0;
+    }
+    .active-state-label {
+      display: block;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .active-state-value {
+      display: block;
+      margin-top: 2px;
+      font-size: 11px;
+      line-height: 1.45;
+      color: var(--text);
+      overflow-wrap: anywhere;
+    }
+    .active-state-value strong {
+      color: var(--text-bright);
+      font-weight: 800;
+    }
+    html.light .active-calculation-state {
+      background: rgba(255,255,255,0.52);
+      border-color: rgba(119,106,82,0.22);
     }
     .epoch-label {
       font-size: 10px;
@@ -394,7 +718,7 @@
       box-shadow: 0 0 0 1px rgba(212,168,67,0.14);
     }
     .input-card label, .adv-field label {
-      display:block; font-size:9.5px; font-weight:800; letter-spacing:.8px; text-transform:uppercase; color:var(--text-dim); margin-bottom:6px;
+      display:block; font-size:9.5px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--text-dim); margin-bottom:6px;
     }
     .adv-field label {
       display: flex;
@@ -911,6 +1235,9 @@
       line-height:1.6;
       font-weight:700;
     }
+    html.light .fermi-fact-item::before {
+      color:rgba(0,0,0,0.45);
+    }
     .fermi-fact-item + .fermi-fact-item {
       margin-top:11px;
     }
@@ -1267,6 +1594,127 @@
   color: var(--text-dim);
   margin-top: 5px;
   line-height: 1.4;
+}
+
+/* Shown on N_p_star / f_composition / f_orbit while Bryson η⊕ direct mode bypasses them.
+   The short, strong label "BYPASSED BY η⊕ NOT USED"; the long explanation lives in title/tooltip. */
+.eta-replaced-note {
+  display: none;
+  margin-top: 7px;
+  padding: 4px 7px;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  background: rgba(91,156,246,0.12);
+  color: var(--accent);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  line-height: 1.35;
+  cursor: help;
+}
+.input-card.bypassed-by-eta .eta-replaced-note {
+  /* Short, readable "BYPASSED" label so the user knows the field is not used. Neutral high-contrast
+     colours (not faint accent-blue) so it stays legible on the greyed card. */
+  display: block;
+  border-color: var(--text-dim);
+  background: transparent;
+  color: var(--text-bright);
+}
+
+/* Strong top badge stamped across the top of each bypassed card. */
+.eta-top-badge {
+  display: none;
+  margin: -11px -12px 9px;
+  padding: 4px 12px;
+  background: var(--accent);
+  color: #06101f;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  text-align: center;
+  border-radius: 7px 7px 0 0;
+}
+.input-card.bypassed-by-eta .eta-top-badge {
+  /* Hidden: the grey banner above already announces the η⊕ bypass, so no per-card stamp is needed. */
+  display: none;
+}
+
+/* Whole-card bypass treatment: greyed, dashed, non-editable looking, no hover/focus emphasis. */
+.input-card.bypassed-by-eta {
+  opacity: 0.5;
+  border-style: dashed;
+  border-color: var(--accent);
+  filter: grayscale(0.5);
+  background:
+    repeating-linear-gradient(135deg, transparent, transparent 8px, rgba(91,156,246,0.05) 8px, rgba(91,156,246,0.05) 16px),
+    var(--panel);
+}
+.input-card.bypassed-by-eta:hover {
+  /* Do not let hover make a bypassed card look active/editable. */
+  border-color: var(--accent);
+  opacity: 0.5;
+}
+.input-card.bypassed-by-eta label {
+  color: var(--text-dim);
+}
+/* Diagnostic-only cards: hide the calibration (LI), info and link icons, plus the secondary
+   descriptive text (input note + literature range + source links). Only the label, the greyed value,
+   and the "BYPASSED BY η⊕ NOT USED" badge remain. */
+.input-card.bypassed-by-eta .card-icons,
+.input-card.bypassed-by-eta .input-note,
+.input-card.bypassed-by-eta .lit-range,
+.input-card.bypassed-by-eta .source-links {
+  display: none !important;
+}
+.input-card.bypassed-by-eta .param-inputs {
+  opacity: 0.85;
+}
+.input-card.bypassed-by-eta input {
+  background: rgba(120,120,120,0.18) !important;
+  color: var(--text-dim) !important;
+  border-color: var(--border) !important;
+  border-style: dashed !important;
+  pointer-events: none;
+  cursor: not-allowed;
+  font-style: italic;
+}
+.input-card.bypassed-by-eta input:focus {
+  border-color: var(--border) !important;
+}
+.input-card.bypassed-by-eta .interval-toggle {
+  pointer-events: none;
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+/* Backward-compat alias for older markup/styles. */
+.input-card.eta-replaced {
+  border-color: var(--accent);
+}
+
+/* Occurrence-mode banner — injected only for Bryson η⊕ direct mode, directly above the occurrence
+   cards. Rendered/removed exclusively by renderOccurrenceModeBanner(); never static markup. */
+.occurrence-mode-banner {
+  grid-column: 1 / -1;
+  border-radius: 6px;
+  border: 1px solid #8c8c8c;
+  background: #8c8c8c;
+  padding: 8px 12px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #f1efe8; /* off-white / dirty white */
+}
+.occurrence-mode-banner strong {
+  color: #ffffff;
+  font-weight: 800;
+}
+.occurrence-mode-banner.is-direct {
+  /* Grey card-style banner, matching the bypassed occurrence cards below it. */
+  border-color: #8c8c8c;
+  background: #8c8c8c;
+  color: #f1efe8;
 }
 
 .lit-range {
@@ -1842,3 +2290,7 @@
   .sobol-bar-meta,
   .sens-bar-meta { width: 56px; }
 }
+
+  
+
+  

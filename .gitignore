@@ -16,6 +16,11 @@ dist/
 build/
 .cache/
 audit-output/
+test-results/
+generated-*.html
+standalone-*.html
+comparison-*.html
+local-artifacts/
 
 # Internal audit artifacts (not part of the public release)
 docs/audits/

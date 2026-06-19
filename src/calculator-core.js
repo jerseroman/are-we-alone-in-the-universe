@@ -113,7 +113,7 @@ function fmtExistencePct(prob, plain = false) {
 globalThis.fmtExistencePct = fmtExistencePct;
 
 function percentile(sorted, p) {
-  if (!sorted.length) return 0;
+  if (!sorted.length) return NaN;
   const idx = (sorted.length - 1) * p;
   const lo = Math.floor(idx);
   const hi = Math.ceil(idx);
@@ -123,9 +123,17 @@ function percentile(sorted, p) {
 }
 
 function mean(arr) {
-  if (!arr.length) return 0;
+  if (!arr.length) return NaN;
   return arr.reduce((a, b) => a + b, 0) / arr.length;
 }
+
+function nearlyEqual(a, b, rel = 1e-9, abs = 1e-12) {
+  const x = Number(a);
+  const y = Number(b);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
+  return Math.abs(x - y) <= Math.max(abs, rel * Math.max(Math.abs(x), Math.abs(y)));
+}
+globalThis.nearlyEqual = nearlyEqual;
 
 function stdev(arr, m = null) {
   if (arr.length < 2) return 0;
@@ -276,6 +284,8 @@ const MONTE_CARLO_PRNG_DESCRIPTION = 'Mulberry32 32-bit deterministic PRNG';
 const MONTE_CARLO_SEED_MIN = 0;
 const MONTE_CARLO_SEED_MAX = 0xffffffff;
 const MONTE_CARLO_SEED_WARNING_MESSAGE = 'Enter a valid numeric Monte Carlo seed.';
+const MONTE_CARLO_ITERATIONS_MIN = 1000;
+const MONTE_CARLO_ITERATIONS_MAX = 200000;
 
 let distanceCalculated = false;
 
@@ -289,11 +299,64 @@ let isCHNOPSEnabled = true;
 
 let isGalaxySettingsEnabled = false;
 
+let galaxyScalingMode = 'manual'; // 'manual' | 'simple' | 'radial'
+
+// True once the user has manually edited galaxy-ghz-fraction. While true, mode
+// switches / re-enables must not silently overwrite their value.
+let galaxyGhzFractionTouched = false;
+
 let galaxyName = 'Milky Way (MW)';
 
 let galaxySettingsBaseline = null;
 
-let bayesianMode = 'post';
+// Occurrence overlay / direct-mode state, separate from the scenario preset.
+// null  -> no occurrence overlay (scenario astronomy values are used)
+// 'pre' -> Conservative Kepler-era rocky/HZ occurrence overlay
+// 'post'-> Updated Kepler/Gaia rocky/HZ occurrence overlay
+// 'bryson_eta_direct' -> Bryson et al. 2021 η⊕ direct combined rocky-HZ occurrence mode
+let astronomyOverrideMode = null;
+
+// 0.60 is the direct stronger conservative-HZ central calibration from Bryson et al. 2021.
+// Future version note: eta_earth_bryson may be sampled across the Bryson conservative or optimistic
+// η⊕ ranges ([0.37, 0.60] / [0.58, 0.88]) in Monte Carlo.
+const ETA_EARTH_BRYSON_DEFAULT = 0.60;
+let etaEarthBrysonValue = ETA_EARTH_BRYSON_DEFAULT;
+
+// Neutral "no overlay" descriptor so UI/console/export callers can stay branch-light.
+const SCENARIO_ASTRONOMY_NEUTRAL = Object.freeze({
+  key: null,
+  label: 'Scenario astronomy values',
+  shortLabel: 'Scenario astronomy values',
+  model_type: 'scenario_factorized',
+  scope: 'astronomy_only',
+  occurrence_mode: 'factorized',
+  note: 'Scenario astronomy values active. No occurrence overlay applied.'
+});
+
+// Occurrence-term mode is derived from the active occurrence overlay / direct mode.
+// 'factorized'       -> occurrence = N_p_star × f_composition × f_orbit
+// 'eta_earth_direct' -> occurrence = eta_earth_bryson (Bryson η⊕ direct)
+function getActiveOccurrenceMode() {
+  return astronomyOverrideMode === 'bryson_eta_direct' ? 'eta_earth_direct' : 'factorized';
+}
+
+function getActiveEtaEarthBryson() {
+  return Number.isFinite(Number(etaEarthBrysonValue)) ? Number(etaEarthBrysonValue) : ETA_EARTH_BRYSON_DEFAULT;
+}
+
+// The astronomy occurrence term used by every computation path (deterministic, Monte Carlo,
+// envelope). A per-input override (_occurrence_mode/_eta_earth_bryson) wins when present so the
+// calculation console and tests can evaluate an explicit mode without touching global state.
+function resolveOccurrenceTerm(inp) {
+  const mode = (inp && inp._occurrence_mode) || getActiveOccurrenceMode();
+  if (mode === 'eta_earth_direct') {
+    const eta = inp && Number.isFinite(Number(inp._eta_earth_bryson))
+      ? Number(inp._eta_earth_bryson)
+      : getActiveEtaEarthBryson();
+    return Number.isFinite(eta) ? eta : 0;
+  }
+  return (Number(inp.N_p_star) || 0) * (Number(inp.f_composition) || 0) * (Number(inp.f_orbit) || 0);
+}
 
 let fermiMode = 'mc';
 
@@ -366,6 +429,7 @@ const SENS_LABELS = {
   f_CHNOPS: 'CHNOPS availability',
   f_complex_life: 'Complex-life prior',
   f_x: 'Wildcard factor',
+  eta_earth_bryson: 'Bryson eta-Earth direct occurrence',
   _f_atm_ret: 'Atmospheric retention',
   _f_longterm: 'Long-term geodynamics',
   _f_xuv_quiet: 'Space weather',
@@ -376,19 +440,19 @@ const SENS_LABELS = {
 
 const galaxyDistances = {
   'Milky Way (MW)': 0,
-  'Andromeda (M31)': 2537000,
-  "Bode's (M81)": 12000000,
-  'Centaurus A (NGC 5128)': 13000000,
   'Custom Galaxy X': null
 };
 
+const MW_TOTAL_STARS = 200000000000;
+const MW_DEFAULT_N_GHZ = 10000000000;
+const MW_DEFAULT_GHZ_FRACTION = MW_DEFAULT_N_GHZ / MW_TOTAL_STARS; // 0.05
+
+// Named presets removed / Galaxy X is the single user-defined scaling mode.
+// MW values above are kept as internal reference constants only.
 const GALAXY_PRESET_MAP = {
-  mw: { d: 100000, t: 1000, n: 100000000000, name: 'Milky Way (MW)', earthDist: 0 },
-  m31: { d: 220000, t: 1000, n: 55000000000, name: 'Andromeda (M31)', earthDist: 2537000 },
-  m81: { d: 96000, t: 2000, n: 20000000000, name: "Bode's (M81)", earthDist: 12000000 },
-  ngc5128: { d: 120000, t: 15000, n: 30000000000, name: 'Centaurus A (NGC 5128)', earthDist: 13000000 },
   custom: { name: 'Custom Galaxy X', earthDist: 0 }
 };
+globalThis.GALAXY_PRESET_MAP_GLOBAL = GALAXY_PRESET_MAP;
 
 const PROBABILITY_FIELDS = new Set([
   'f_sun_type',
@@ -405,6 +469,7 @@ const PROBABILITY_FIELDS = new Set([
   'f_CHNOPS',
   'f_complex_life',
   'f_x',
+  'eta_earth_bryson',
   'adv_f_atm_ret',
   'adv_f_vol_del',
   'adv_f_wat_ret',
@@ -445,6 +510,15 @@ const BASE_SAMPLE_IDS = [
   'f_complex_life',
   'f_x'
 ];
+
+const ASTRONOMY_PRIOR_FIELD_IDS = Object.freeze([
+  'N_GHZ',
+  'f_sun_type',
+  'f_sun_age',
+  'N_p_star',
+  'f_composition',
+  'f_orbit'
+]);
 
 const DEFAULT_PARAMETER_BOUNDS = Object.freeze({
   N_GHZ: Object.freeze({ min: 5000000000, max: 40000000000 }),
@@ -561,11 +635,12 @@ function recordBoundIntervalWarning(id, centralValue, min, max) {
   else boundIntervalWarnings.push(warning);
 }
 
-function recordBoundValidationWarning(id, originalValue, normalizedValue, reason) {
-  const existingIndex = boundValidationWarnings.findIndex(w => w.id === id && w.reason === reason);
+function recordBoundValidationWarning(id, originalValue, normalizedValue, reason, code = 'MONTE_CARLO_BOUNDS_NORMALIZED') {
+  const existingIndex = boundValidationWarnings.findIndex(w => w.id === id && w.reason === reason && w.code === code);
   const label = getValidationLabel(id.replace(/_(min|max)$/, ''));
   const warning = {
     id,
+    code,
     label,
     originalValue: formatValidationValue(originalValue),
     normalizedValue,
@@ -580,13 +655,14 @@ function recordBoundValidationWarning(id, originalValue, normalizedValue, reason
   else boundValidationWarnings.push(warning);
 }
 
-function recordInputValidationWarning(id, originalValue, normalizedValue, min, max) {
+function recordInputValidationWarning(id, originalValue, normalizedValue, min, max, code = 'INPUT_NORMALIZED_FOR_CALCULATION') {
   const existingIndex = inputValidationWarnings.findIndex(w => w.id === id);
   const label = getValidationLabel(id);
   const hasMax = Number.isFinite(max);
   const rangeText = hasMax ? `${min} to ${max}` : `${min} or greater`;
   const warning = {
     id,
+    code,
     label,
     originalValue: formatValidationValue(originalValue),
     normalizedValue,
@@ -602,9 +678,18 @@ function recordInputValidationWarning(id, originalValue, normalizedValue, min, m
   else inputValidationWarnings.push(warning);
 }
 
-function sanitizeNumberInput(id, fallback = 0, kind = 'number') {
+function normalizeNumberInputValue(id, fallback = 0, kind = 'number') {
   const el = byId(id);
-  if (!el) return fallback;
+  if (!el) {
+    return {
+      id,
+      originalValue: null,
+      normalized: fallback,
+      changed: false,
+      min: kind === 'positive' || kind === 'probability' ? 0 : -Infinity,
+      max: kind === 'probability' ? 1 : Infinity
+    };
+  }
 
   const originalValue = el.value;
   const trimmed = String(originalValue ?? '').trim();
@@ -639,12 +724,27 @@ function sanitizeNumberInput(id, fallback = 0, kind = 'number') {
     changed = true;
   }
 
-  if (changed) {
-    recordInputValidationWarning(id, originalValue, normalized, min, max);
-    el.value = String(normalized);
+  return { id, originalValue, normalized, changed, min, max };
+}
+
+function sanitizeNumberInput(id, fallback = 0, kind = 'number') {
+  const state = normalizeNumberInputValue(id, fallback, kind);
+  if (state.changed) {
+    recordInputValidationWarning(id, state.originalValue, state.normalized, state.min, state.max);
   }
 
-  return normalized;
+  return state.normalized;
+}
+
+function applySanitizedNumberInputToDom(id, fallback = 0, kind = 'number') {
+  const state = normalizeNumberInputValue(id, fallback, kind);
+  if (state.changed) {
+    recordInputValidationWarning(id, state.originalValue, state.normalized, state.min, state.max);
+    const el = byId(id);
+    if (el) el.value = String(state.normalized);
+  }
+
+  return state.normalized;
 }
 
 function sanitizeProbabilityInput(id, fallback = 0) {
@@ -725,6 +825,7 @@ const PRESET_LOCAL_PARAM_WIDTHS = Object.freeze({
   f_CHNOPS: 'medium',
   f_complex_life: 'broad',
   f_x: 'broad',
+  eta_earth_bryson: 'medium',
   adv_f_atm_ret: 'medium',
   adv_f_vol_del: 'medium',
   adv_f_wat_ret: 'medium',
@@ -916,9 +1017,7 @@ function numericControlMatches(id, expected) {
   if (!el) return true;
   const actual = Number(String(el.value ?? '').trim());
   const target = Number(expected);
-  if (!Number.isFinite(actual) || !Number.isFinite(target)) return false;
-  const tolerance = Math.max(1e-12, Math.abs(target) * 1e-12);
-  return Math.abs(actual - target) <= tolerance;
+  return nearlyEqual(actual, target);
 }
 
 function isAdvancedScenarioAtPresetDefault() {
@@ -1107,16 +1206,249 @@ function applyPresetParameterState(preset, ids = BASE_SAMPLE_IDS) {
 
 const BAYES = {
   pre: {
-    f_orbit: 0.18,
-    f_composition: 0.20,
-    note: 'Conservative Kepler-era literature values for f_HZ and f_rocky. Historical baseline (pre-Gaia stellar-radius corrections), retained for comparison, not recommended as the default.'
+    key: 'pre',
+    label: 'Conservative Kepler-era occurrence overlay',
+    shortLabel: 'Conservative Kepler-era',
+    model_type: 'rocky_hz_occurrence_overlay_kepler_era',
+    scope: 'occurrence_overlay',
+    // Occurrence-prior overlay: adjusts ONLY the rocky/HZ occurrence fractions and preserves the
+    // scenario's N_GHZ, f_sun_type, f_sun_age, and N_p_star.
+    overlay_fields: Object.freeze(['f_composition', 'f_orbit']),
+    preserved_fields: Object.freeze(['N_GHZ', 'f_sun_type', 'f_sun_age', 'N_p_star']),
+    hz_model: 'Kopparapu et al. 2013 liquid-water habitable-zone boundary framework',
+    occurrence_model: 'Conservative pre-Gaia Kepler-era rocky/HZ occurrence fractions',
+    fields: Object.freeze({
+      f_composition: 0.20,
+      f_orbit: 0.18
+    }),
+    bounds: Object.freeze({
+      f_composition: Object.freeze({ min: 0.15, max: 0.35 }),
+      f_orbit: Object.freeze({ min: 0.10, max: 0.21 })
+    }),
+    note: 'Conservative Kepler-era occurrence overlay. It adjusts only the rocky/HZ occurrence fractions (f_rocky and f_HZ) inside the currently selected scenario; it does not replace the scenario GHZ scale, host-star fraction, stellar-age filter, or planets-per-star value. Retained for comparison with older Kepler-era literature.'
   },
   post: {
-    f_orbit: 0.21,
-    f_composition: 0.25,
-    note: 'Default. Updated Kepler/Gaia occurrence priors for f_HZ and f_rocky, anchored in Bryson et al. 2021 using the Kepler DR25 planet-candidate catalog and Gaia-based stellar properties. Later Gaia releases further refine stellar radii but are not part of the original Bryson 2021 analysis. Not a direct atmospheric-spectroscopy occurrence-rate measurement.'
+    key: 'post',
+    label: 'Updated Kepler/Gaia occurrence overlay',
+    shortLabel: 'Updated Kepler/Gaia posterior proxy',
+    model_type: 'rocky_hz_occurrence_overlay_kepler_gaia',
+    scope: 'occurrence_overlay',
+    overlay_fields: Object.freeze(['f_composition', 'f_orbit']),
+    preserved_fields: Object.freeze(['N_GHZ', 'f_sun_type', 'f_sun_age', 'N_p_star']),
+    hz_model: 'Kopparapu et al. 2013/2014 habitable-zone boundary framework',
+    occurrence_model: 'Bryson et al. 2021 Kepler DR25 plus Gaia-based rocky habitable-zone occurrence fractions',
+    fields: Object.freeze({
+      f_composition: 0.25,
+      f_orbit: 0.21
+    }),
+    bounds: Object.freeze({
+      f_composition: Object.freeze({ min: 0.15, max: 0.35 }),
+      f_orbit: Object.freeze({ min: 0.10, max: 0.21 })
+    }),
+    note: 'Updated Kepler/Gaia occurrence overlay. It adjusts only the rocky/HZ occurrence fractions (f_rocky and f_HZ) inside the currently selected scenario; it does not replace the scenario GHZ scale, host-star fraction, stellar-age filter, or planets-per-star value. Anchored in Kepler/Gaia occurrence-rate literature; it is not a full posterior for life, intelligence, technology, or civilization lifetime.'
+  },
+  bryson_eta_direct: {
+    key: 'bryson_eta_direct',
+    label: 'Bryson η⊕ direct astronomy proxy',
+    shortLabel: 'Bryson η⊕ direct proxy',
+    model_type: 'bryson_2021_eta_earth_direct',
+    scope: 'astronomy_only',
+    occurrence_mode: 'eta_earth_direct',
+    hz_model: 'Kopparapu et al. 2013/2014 habitable-zone boundary framework',
+    occurrence_model: 'Bryson et al. 2021 η⊕ combined rocky habitable-zone occurrence rate applied directly; it replaces the factorized product N_p_star × f_composition × f_orbit.',
+    // Direct combined rocky-HZ occurrence term (planets per star). 0.60 is the stronger
+    // conservative-HZ central calibration from Bryson et al. 2021.
+    eta_earth_bryson: 0.60,
+    eta_earth_conservative_range: Object.freeze([0.37, 0.60]),
+    eta_earth_optimistic_range: Object.freeze([0.58, 0.88]),
+    eta_earth_definition: 'Average number of planets per star with radius 0.5–1.5 R_Earth in the habitable zone around stars with Teff 4800–6300 K, following Bryson et al. 2021.',
+    replaced_factorized_terms: Object.freeze(['N_p_star', 'f_composition', 'f_orbit']),
+    // Bryson η⊕ direct mode does NOT write any factorized fields into the visible inputs: the
+    // occurrence term is the direct η⊕ value, and N_p_star/f_composition/f_orbit are bypassed and
+    // left at the scenario baseline. The scenario's own N_GHZ, f_sun_type, and f_sun_age are kept.
+    note: 'This mode uses Bryson et al. 2021 η⊕ as a direct combined rocky-HZ occurrence term. Bryson η⊕ replaces only the rocky-HZ occurrence product N_p_star × f_rocky × f_HZ; the scenario\'s GHZ scale, host-star fraction, stellar-age filter, and planets-per-star value are left untouched. It should not be interpreted as an independent posterior for life, intelligence, technology, or civilization lifetime.'
   }
 };
+
+function getAstronomyPriorModel(mode = astronomyOverrideMode) {
+  if (!mode) return SCENARIO_ASTRONOMY_NEUTRAL;
+  return BAYES[mode] || SCENARIO_ASTRONOMY_NEUTRAL;
+}
+
+function getAstronomyOccurrenceProxyFromValues(values = null) {
+  const source = values || {};
+  const nPlanets = Number.isFinite(Number(source.N_p_star))
+    ? Number(source.N_p_star)
+    : rawNumber('N_p_star', 0);
+  const rocky = Number.isFinite(Number(source.f_composition))
+    ? Number(source.f_composition)
+    : rawNumber('f_composition', 0);
+  const hz = Number.isFinite(Number(source.f_orbit))
+    ? Number(source.f_orbit)
+    : rawNumber('f_orbit', 0);
+  return nPlanets * rocky * hz;
+}
+
+function getAstronomyHostWeightedProxyFromValues(values = null) {
+  const source = values || {};
+  const host = Number.isFinite(Number(source.f_sun_type))
+    ? Number(source.f_sun_type)
+    : rawNumber('f_sun_type', 0);
+  const age = Number.isFinite(Number(source.f_sun_age))
+    ? Number(source.f_sun_age)
+    : rawNumber('f_sun_age', 0);
+  return host * age * getAstronomyOccurrenceProxyFromValues(source);
+}
+
+function setNumericControlValue(id, value) {
+  const el = byId(id);
+  if (!el || !Number.isFinite(Number(value))) return;
+  el.value = String(value);
+}
+
+function setNumericControlBounds(id, bounds) {
+  if (!bounds) return;
+  const minEl = byId(id + '_min');
+  const maxEl = byId(id + '_max');
+  if (minEl && Number.isFinite(Number(bounds.min))) minEl.value = String(bounds.min);
+  if (maxEl && Number.isFinite(Number(bounds.max))) maxEl.value = String(bounds.max);
+}
+
+function applyAstronomyPriorModel(mode) {
+  const model = getAstronomyPriorModel(mode);
+  if (!model || !model.fields) return; // e.g. Bryson η⊕ direct carries no factorized fields.
+  // Occurrence-prior overlays (pre/post) touch ONLY their overlay_fields; the scenario's
+  // N_GHZ, f_sun_type, f_sun_age, and N_p_star values and bounds are preserved untouched.
+  const overlayOnly = Array.isArray(model.overlay_fields) ? model.overlay_fields : null;
+  ASTRONOMY_PRIOR_FIELD_IDS.forEach(id => {
+    if (overlayOnly && overlayOnly.indexOf(id) === -1) return;
+    if (Object.prototype.hasOwnProperty.call(model.fields, id)) {
+      setNumericControlValue(id, model.fields[id]);
+    }
+    setNumericControlBounds(id, model.bounds && model.bounds[id]);
+  });
+}
+
+const ASTRONOMY_EXPORT_CAVEAT =
+  'η⊕ is an astronomy-side occurrence estimate only. It does not estimate abiogenesis, complex life, intelligence, detectability, or civilization lifetime. Biological and civilization terms remain scenario or user assumptions.';
+
+function getAstronomyPriorExportSnapshot(mode = astronomyOverrideMode) {
+  const fields = {};
+  const bounds = {};
+
+  ASTRONOMY_PRIOR_FIELD_IDS.forEach(id => {
+    fields[id] = rawNumber(id, null);
+    bounds[id] = {
+      min: rawNumber(id + '_min', null),
+      max: rawNumber(id + '_max', null)
+    };
+  });
+
+  // No external override: report the scenario astronomy values truthfully (never "post").
+  if (!mode || !BAYES[mode]) {
+    const factorizedOccurrenceProxy = getAstronomyOccurrenceProxyFromValues(fields);
+    const snapshot = {
+      astronomy_override_mode: null,
+      occurrence_overlay_mode: null,
+      mode: null,
+      source_label: 'Scenario astronomy values',
+      label: 'Scenario astronomy values',
+      astronomy_model_type: 'scenario_factorized',
+      model_type: 'scenario_factorized',
+      occurrence_mode: 'factorized',
+      occurrence_term_used: 'N_p_star × f_composition × f_orbit',
+      active_occurrence_term: 'N_p_star * f_rocky * f_HZ',
+      scope: 'astronomy_only',
+      caveat: ASTRONOMY_EXPORT_CAVEAT,
+      eta_earth_factorized_proxy: factorizedOccurrenceProxy,
+      host_age_weighted_proxy: getAstronomyHostWeightedProxyFromValues(fields),
+      fields,
+      bounds
+    };
+
+    if (ADV.enabled && ADV.modules.radiusValley.enabled) {
+      const rockyPrior = clamp01(rawNumber('adv_P_rocky', fields.f_composition));
+      const finalFields = { ...fields, f_composition: rockyPrior, f_size: 1 };
+      snapshot.advanced_occurrence_replacement = {
+        module: 'radiusValley',
+        replaced_field: 'f_composition',
+        replacement_source: 'adv_P_rocky',
+        replacement_value: rockyPrior,
+        occurrence_term_pre_advanced: factorizedOccurrenceProxy,
+        occurrence_term_final_used: getAstronomyOccurrenceProxyFromValues(finalFields)
+      };
+    }
+
+    return snapshot;
+  }
+
+  const model = BAYES[mode];
+  const isEtaDirect = model.occurrence_mode === 'eta_earth_direct';
+  const isOverlay = Array.isArray(model.overlay_fields);
+  const factorizedOccurrenceProxy = getAstronomyOccurrenceProxyFromValues(fields);
+
+  const snapshot = {
+    astronomy_override_mode: mode,
+    // Occurrence-prior overlay mode is the pre/post identity; Bryson direct mode is not an overlay.
+    occurrence_overlay_mode: isOverlay ? mode : null,
+    mode,
+    source_label: model.label,
+    label: model.label,
+    astronomy_model_type: isEtaDirect
+      ? 'bryson_eta_earth_direct'
+      : (isOverlay ? 'rocky_hz_occurrence_overlay' : 'literature_factorized'),
+    model_type: model.model_type,
+    occurrence_mode: isEtaDirect ? 'eta_earth_direct' : 'factorized',
+    occurrence_term_used: isEtaDirect ? 'eta_earth_bryson_direct' : 'N_p_star × f_composition × f_orbit',
+    active_occurrence_term: isEtaDirect ? 'eta_earth_bryson' : 'N_p_star * f_rocky * f_HZ',
+    scope: model.scope,
+    hz_model: model.hz_model,
+    occurrence_model: model.occurrence_model,
+    caveat: ASTRONOMY_EXPORT_CAVEAT,
+    host_age_weighted_proxy: getAstronomyHostWeightedProxyFromValues(fields),
+    fields,
+    bounds
+  };
+
+  if (isEtaDirect) {
+    snapshot.eta_earth_bryson = getActiveEtaEarthBryson();
+    snapshot.eta_earth_conservative_range = model.eta_earth_conservative_range;
+    snapshot.eta_earth_optimistic_range = model.eta_earth_optimistic_range;
+    snapshot.eta_earth_definition = model.eta_earth_definition;
+    snapshot.replaced_factorized_terms = ['N_p_star', 'f_composition', 'f_orbit'];
+    // Literal aliases requested by the occurrence-mode spec so the active logic is unambiguous.
+    snapshot.replaced_terms = ['N_p_star', 'f_composition', 'f_orbit'];
+    snapshot.visible_terms_status = 'diagnostic_only';
+    // The factorized product is NOT used in Bryson η⊕ direct mode. Keep it only as a clearly
+    // labelled diagnostic so the export cannot be misread as the active occurrence term.
+    snapshot.bypassed_factorized_occurrence_proxy = getAstronomyOccurrenceProxyFromValues(fields);
+    snapshot.diagnostic_only = true;
+    snapshot.not_used_in_direct_eta_mode = true;
+  } else {
+    // Factorized mode: the proxy is the active occurrence term, so keep the original name.
+    snapshot.eta_earth_factorized_proxy = factorizedOccurrenceProxy;
+    if (isOverlay) {
+      // pre/post adjust only the rocky/HZ occurrence fractions; everything else stays scenario-side.
+      snapshot.occurrence_overlay_fields = model.overlay_fields.slice();
+      snapshot.scenario_fields_preserved = (model.preserved_fields || ['N_GHZ', 'f_sun_type', 'f_sun_age', 'N_p_star']).slice();
+    }
+  }
+
+  if (!isEtaDirect && ADV.enabled && ADV.modules.radiusValley.enabled) {
+    const rockyPrior = clamp01(rawNumber('adv_P_rocky', fields.f_composition));
+    const finalFields = { ...fields, f_composition: rockyPrior, f_size: 1 };
+    snapshot.advanced_occurrence_replacement = {
+      module: 'radiusValley',
+      replaced_field: 'f_composition',
+      replacement_source: 'adv_P_rocky',
+      replacement_value: rockyPrior,
+      occurrence_term_pre_advanced: factorizedOccurrenceProxy,
+      occurrence_term_final_used: getAstronomyOccurrenceProxyFromValues(finalFields)
+    };
+  }
+
+  return snapshot;
+}
 
 const ARD_DATA = [
   { mass: 0.1, co2: 0.028, n2: 0.042, hz_i: 0.025, hz_o: 0.048 },
@@ -1551,6 +1883,38 @@ function findNearestHistoricalAnchor(targetYear, anchors = HISTORICAL_SIGNAL_CON
   }, null);
 }
 
+function buildHistoricalContextText(periodLabel, summary) {
+  const label = String(periodLabel || '').trim();
+  let cleanSummary = String(summary || '').trim();
+
+  // Avoid duplicating the same time phrase: if the summary repeats the period
+  // label as a prefix (e.g. "roughly 900 million years ago, when ..."), drop it.
+  if (label && cleanSummary.toLowerCase().startsWith(label.toLowerCase())) {
+    cleanSummary = cleanSummary.slice(label.length).replace(/^[\s,:;–—-]+/, '').trim();
+  }
+
+  if (!label) {
+    return cleanSummary
+      ? `In historical terms, this corresponds to ${cleanSummary}`
+      : 'In historical terms, no contextual anchor is available for this lookback';
+  }
+
+  // "this corresponds to" never prepends "roughly", so a periodLabel that already
+  // begins with "roughly" can never produce "roughly to roughly".
+  return `In historical terms, this corresponds to ${label}${cleanSummary ? ', ' + cleanSummary : ''}`;
+}
+globalThis.buildHistoricalContextText = buildHistoricalContextText;
+
+// Guarantee a fragment ends with exactly one sentence-ending mark so it can be
+// safely concatenated before another sentence without producing "x. This..." gaps
+// or "x This..." run-ons.
+function ensureSentenceEnd(text) {
+  const t = String(text == null ? '' : text).trim();
+  if (!t) return t;
+  return /[.!?]$/.test(t) ? t : t + '.';
+}
+globalThis.ensureSentenceEnd = ensureSentenceEnd;
+
 function getHistoricalContextForLookback(yearsAgo, currentDecimalYear = getCurrentDecimalYear()) {
   const lookback = Number(yearsAgo);
   if (!Number.isFinite(lookback) || lookback < 0) return null;
@@ -1567,7 +1931,7 @@ function getHistoricalContextForLookback(yearsAgo, currentDecimalYear = getCurre
     targetYear,
     formattedTargetYear: formatHistoricalYear(targetYear),
     nearestAnchor: anchor,
-    text: `In historical terms, that points roughly to ${periodLabel}: ${summary}`
+    text: buildHistoricalContextText(periodLabel, summary)
   };
 }
 
@@ -1623,6 +1987,42 @@ function getConfigurationWarnings() {
     warnings.push({
       label: 'Monte Carlo blocked',
       text: getMonteCarloBlockingWarningText(mcBlockingErrors)
+    });
+  }
+
+  const simulationOptions = getSimulationOptions();
+  const requestedMcBasis = normalizeMonteCarloBasisMode(simulationOptions.mcMode);
+  const resolvedMcBasis = resolveMonteCarloBasisMode(simulationOptions);
+  if (requestedMcBasis === MONTE_CARLO_BASIS_MODES.presetLocal && resolvedMcBasis !== requestedMcBasis) {
+    warnings.push({
+      label: 'Monte Carlo basis resolved',
+      text:
+        `Preset-local Monte Carlo was requested, but the current state is not a clean named preset. ` +
+        `The run will use ${monteCarloBasisPlainLabel(resolvedMcBasis)} instead.`
+    });
+  }
+
+  if (getActiveOccurrenceMode() === 'eta_earth_direct') {
+    const eta = getActiveEtaEarthBryson();
+    warnings.push({
+      label: 'Bryson eta-Earth direct mode',
+      text:
+        `The active occurrence term is eta_earth_bryson = ${Number(eta).toPrecision(3)}. N_p_star, f_rocky, and f_HZ remain visible as diagnostics but are bypassed in deterministic, Monte Carlo, and sensitivity calculations.`
+    });
+  }
+
+  if (typeof detectionPresetMatches === 'function' && !detectionPresetMatches(DETECTION_PRESETS.optimistic)) {
+    warnings.push({
+      label: 'Detection assumptions preserved',
+      text:
+        'Scenario preset switches reset the model parameters and Monte Carlo basis, but detection horizon and transmitter-fraction assumptions are preserved until changed in the detection controls.'
+    });
+  }
+
+  if (lastMonteCarloRunMetadata && lastMonteCarloRunMetadata.error) {
+    warnings.push({
+      label: lastMonteCarloRunMetadata.error,
+      text: (lastMonteCarloRunMetadata.warnings || []).map(w => w.text || w.code).join(' ') || 'The last Monte Carlo run did not produce valid samples.'
     });
   }
 
@@ -1779,7 +2179,9 @@ function getConvergenceAlert(summary) {
   if (!summary || !summary.checkpoints.length) return null;
 
   const total = summary.checkpoints[summary.checkpoints.length - 1].n;
-  const suggestedIterations = total < 20000 ? Math.min(20000, Math.max(total + 1000, total * 2)) : null;
+  const suggestedIterations = total < MONTE_CARLO_ITERATIONS_MAX
+    ? Math.min(MONTE_CARLO_ITERATIONS_MAX, Math.max(total + 1000, total * 2))
+    : null;
 
   if (summary.stableAt === null) {
     return {
@@ -1804,10 +2206,47 @@ function getConvergenceAlert(summary) {
   return null;
 }
 
+function getNGHZSource() {
+  if (ADV.enabled && ADV.modules.radialGHZ.enabled) return 'radial_ghz_integrator';
+  if (isGalaxySettingsEnabled && galaxyScalingMode === 'radial') return 'radial_ghz_integrator';
+  if (isGalaxySettingsEnabled && galaxyScalingMode === 'simple') return 'simple_galaxy_scaling';
+  return 'manual_raw_N_GHZ';
+}
+
+function getEffectiveNGHZ() {
+  const rawValue = sanitizePositiveInput('N_GHZ');
+  const source = getNGHZSource();
+
+  if (source === 'radial_ghz_integrator') {
+    const details = computeRadialGHZDetails();
+    return {
+      value: details.N_GHZ,
+      source,
+      metadata: { innerKpc: details.innerKpc, outerKpc: details.outerKpc, N_total: details.N_total }
+    };
+  }
+
+  if (source === 'simple_galaxy_scaling') {
+    const totalStars = pf('galaxy-total-stars', MW_TOTAL_STARS);
+    if (!Number.isFinite(totalStars) || totalStars <= 0) {
+      return { value: rawValue, source: 'manual_raw_N_GHZ', metadata: { fallback: 'invalid-total-stars' } };
+    }
+    const defaultFrac = clamp(rawValue / MW_TOTAL_STARS, 0, 1);
+    const ghzFrac = clamp(pf('galaxy-ghz-fraction', defaultFrac), 0, 1);
+    return {
+      value: Math.max(0, Math.round(totalStars * ghzFrac)),
+      source,
+      metadata: { totalStars, ghzFrac, raw_N_GHZ: rawValue }
+    };
+  }
+
+  return { value: rawValue, source, metadata: null };
+}
+
 function getInputs() {
   beginInputValidationPass();
   return {
-    N_GHZ: sanitizePositiveInput('N_GHZ'),
+    N_GHZ: getEffectiveNGHZ().value,
     f_sun_type: sanitizeProbabilityInput('f_sun_type'),
     f_sun_age: sanitizeProbabilityInput('f_sun_age'),
     N_p_star: sanitizePositiveInput('N_p_star'),
@@ -1829,13 +2268,13 @@ function getInputs() {
 }
 
 function computePlanetsBase(inp) {
+  // The occurrence term is either the factorized product N_p × f_rocky × f_HZ or, in Bryson
+  // η⊕ direct mode, the single combined rocky-HZ occurrence rate eta_earth_bryson.
   return (
     inp.N_GHZ *
     inp.f_sun_type *
     inp.f_sun_age *
-    inp.N_p_star *
-    inp.f_composition *
-    inp.f_orbit *
+    resolveOccurrenceTerm(inp) *
     inp.f_stability *
     inp.f_magnetosphere *
     inp.f_lunar_stability *
@@ -2067,6 +2506,19 @@ function getPresetLocalSourcePreset() {
   return null;
 }
 
+// Plain-text readable label for a Monte Carlo basis enum (no markup), for warning copy etc.
+// Display-only; the internal enum values are unchanged.
+function monteCarloBasisPlainLabel(mode) {
+  switch (mode) {
+    case 'auto': return 'auto';
+    case MONTE_CARLO_BASIS_MODES.presetLocal: return 'preset-local';
+    case MONTE_CARLO_BASIS_MODES.modifiedPresetLocal: return 'modified preset-local';
+    case MONTE_CARLO_BASIS_MODES.customInput: return 'custom input';
+    case MONTE_CARLO_BASIS_MODES.globalEnvelope: return 'global envelope';
+    default: return mode ? String(mode).replace(/_/g, ' ') : '—';
+  }
+}
+
 function normalizeMonteCarloBasisMode(mode) {
   const value = String(mode || 'auto').trim();
   if (/^presetlocal$/i.test(value)) return MONTE_CARLO_BASIS_MODES.presetLocal;
@@ -2076,6 +2528,21 @@ function normalizeMonteCarloBasisMode(mode) {
   return 'auto';
 }
 
+function isCleanPresetLocalState(scenario = getScenarioState()) {
+  if (!scenario.isPreset) return false;
+  if (!activePreset || activePreset === 'custom' || !PRESETS[activePreset]) return false;
+  if (astronomyOverrideMode !== null) return false;
+  if (isGalaxySettingsEnabled) return false;
+  if (ADV.enabled || Object.values(ADV.modules).some(module => module.enabled)) return false;
+  return isVisibleStateEquivalentToPreset(activePreset);
+}
+
+function resolveModifiedOrCustomBasis() {
+  return getPresetLocalSourcePreset()
+    ? MONTE_CARLO_BASIS_MODES.modifiedPresetLocal
+    : MONTE_CARLO_BASIS_MODES.customInput;
+}
+
 function resolveMonteCarloBasisMode(options = getSimulationOptions()) {
   const requested = normalizeMonteCarloBasisMode(options.mcMode);
   const scenario = getScenarioState();
@@ -2083,12 +2550,17 @@ function resolveMonteCarloBasisMode(options = getSimulationOptions()) {
   // User-picked modes win.
   if (requested === MONTE_CARLO_BASIS_MODES.globalEnvelope) return requested;
   if (requested === MONTE_CARLO_BASIS_MODES.customInput) return requested;
-  if (requested === MONTE_CARLO_BASIS_MODES.modifiedPresetLocal) return requested;
-  if (requested === MONTE_CARLO_BASIS_MODES.presetLocal) return requested;
+  if (requested === MONTE_CARLO_BASIS_MODES.modifiedPresetLocal) return resolveModifiedOrCustomBasis();
+  if (requested === MONTE_CARLO_BASIS_MODES.presetLocal) {
+    return isCleanPresetLocalState(scenario)
+      ? requested
+      : resolveModifiedOrCustomBasis();
+  }
 
   // Auto mode keeps clean presets local; edited presets use edited fields only where changed; true custom uses custom input.
-  if (scenario.isPreset) return MONTE_CARLO_BASIS_MODES.presetLocal;
+  if (isCleanPresetLocalState(scenario)) return MONTE_CARLO_BASIS_MODES.presetLocal;
   if (scenario.isModified) return MONTE_CARLO_BASIS_MODES.modifiedPresetLocal;
+  if (getPresetLocalSourcePreset()) return MONTE_CARLO_BASIS_MODES.modifiedPresetLocal;
   return MONTE_CARLO_BASIS_MODES.customInput;
 }
 
@@ -2154,6 +2626,14 @@ function getMonteCarloSampledParameterIds(boundsDescriptor = getMonteCarloBounds
     'N_GHZ', 'f_sun_type', 'f_sun_age', 'N_p_star', 'f_composition', 'f_orbit',
     'f_stability', 'f_magnetosphere', 'f_lunar_stability', 'f_size', 'f_rotation', 'f_tilt'
   ];
+  const removeId = id => {
+    const idx = ids.indexOf(id);
+    if (idx !== -1) ids.splice(idx, 1);
+  };
+  if (getNGHZSource() !== 'manual_raw_N_GHZ') removeId('N_GHZ');
+  if (getActiveOccurrenceMode() === 'eta_earth_direct') {
+    ['N_p_star', 'f_composition', 'f_orbit'].forEach(removeId);
+  }
   if (parameterEnabledForBoundsDescriptor('f_H2O', boundsDescriptor)) ids.push('f_H2O');
   if (parameterEnabledForBoundsDescriptor('f_CHNOPS', boundsDescriptor)) ids.push('f_CHNOPS');
   if (parameterEnabledForBoundsDescriptor('f_complex_life', boundsDescriptor)) ids.push('f_complex_life');
@@ -2161,11 +2641,42 @@ function getMonteCarloSampledParameterIds(boundsDescriptor = getMonteCarloBounds
   if (ADV.enabled && typeof ADV_SOBOL_CONFIG !== 'undefined') {
     for (const id of ADV_SAMPLE_IDS) {
       const cfg = ADV_SOBOL_CONFIG[id];
+      if (id === 'adv_P_rocky' && getActiveOccurrenceMode() === 'eta_earth_direct') continue;
       if (cfg && ADV.modules[cfg.module] && ADV.modules[cfg.module].enabled) ids.push(id);
     }
   }
   return ids;
 }
+
+const ADV_ROBUST_FIXED_CONTROL_IDS_BY_MODULE = Object.freeze({
+  hostChannels: Object.freeze(['adv_f_G', 'adv_w_G_hz', 'adv_w_G_act', 'adv_f_K', 'adv_w_K_hz', 'adv_w_K_act', 'adv_f_M', 'adv_w_M_hz', 'adv_w_M_act', 'adv_w_M_lock']),
+  spinObliquity: Object.freeze(['adv_f_spin_G', 'adv_f_spin_K', 'adv_f_spin_M', 'adv_moon_boost']),
+  radialGHZ: Object.freeze(['adv_N_total_stars', 'adv_scale_length', 'adv_ghz_inner', 'adv_ghz_outer', 'adv_met_thresh', 'adv_radial_bins'])
+});
+
+function getRobustEnvelopeCoverageDescriptor(boundsDescriptor = getMonteCarloBoundsDescriptor()) {
+  const sampledParameterIds = getMonteCarloSampledParameterIds(boundsDescriptor);
+  const fixedActiveAdvancedControls = [];
+
+  if (isGalaxySettingsEnabled && getNGHZSource() === 'simple_galaxy_scaling') {
+    fixedActiveAdvancedControls.push('galaxy-total-stars', 'galaxy-ghz-fraction');
+  }
+
+  if (ADV.enabled) {
+    Object.entries(ADV_ROBUST_FIXED_CONTROL_IDS_BY_MODULE).forEach(([moduleId, controlIds]) => {
+      if (ADV.modules[moduleId] && ADV.modules[moduleId].enabled) {
+        fixedActiveAdvancedControls.push(...controlIds);
+      }
+    });
+  }
+
+  return {
+    scope: 'sampled_parameters_only',
+    sampledParameterIds,
+    fixedActiveAdvancedControls
+  };
+}
+globalThis.getRobustEnvelopeCoverageDescriptor = getRobustEnvelopeCoverageDescriptor;
 
 // Visible bounds matter only in custom/global modes, or on edited fields.
 // Clean preset fields keep their scenario-local bands.
@@ -2295,6 +2806,145 @@ function getInputsForBoundsDescriptor(boundsDescriptor = getMonteCarloBoundsDesc
   };
 }
 
+// Single source of truth for the inputs used by every deterministic calculation.
+// Preset-local behaviour is preserved for all non-N_GHZ parameters, but N_GHZ is
+// always replaced with the resolved effective value whenever the active source is
+// not manual (i.e. simple Galaxy X scaling or the radial GHZ integrator). This keeps
+// calculateDeterministic(), getCurrentDeterministicPlanets() and the Monte Carlo
+// deterministic-at-run figure consistent with how N_GHZ is actually sampled.
+function resolveInputsForCalculation(boundsDescriptor = null) {
+  const base = boundsDescriptor
+    ? getInputsForBoundsDescriptor(boundsDescriptor)
+    : getInputs();
+  const occurrenceMode = getActiveOccurrenceMode();
+  const resolved = {
+    ...base,
+    _occurrence_mode: occurrenceMode
+  };
+  if (occurrenceMode === 'eta_earth_direct') {
+    resolved._eta_earth_bryson = getActiveEtaEarthBryson();
+  }
+
+  if (getNGHZSource() !== 'manual_raw_N_GHZ') {
+    return { ...resolved, N_GHZ: getEffectiveNGHZ().value };
+  }
+  return resolved;
+}
+globalThis.resolveInputsForCalculation = resolveInputsForCalculation;
+
+function resolveNGHZForSimulationDraw(draw) {
+  const effective = getEffectiveNGHZ();
+  if (effective && effective.source !== 'manual_raw_N_GHZ') {
+    const value = Number(effective.value);
+    if (Number.isFinite(value)) return value;
+  }
+  return draw('N_GHZ');
+}
+
+function buildRawInputValueSnapshot(ids = BASE_SAMPLE_IDS) {
+  const snapshot = {};
+  ids.forEach(id => {
+    snapshot[id] = {
+      value: rawNumber(id, null),
+      min: rawNumber(id + '_min', null),
+      max: rawNumber(id + '_max', null)
+    };
+  });
+  return snapshot;
+}
+
+function buildResolvedModelState(options = {}) {
+  const scenario = getScenarioState();
+  const simulationOptions = options.simulationOptions || getSimulationOptions();
+  const boundsDescriptor = options.boundsDescriptor || getMonteCarloBoundsDescriptor(simulationOptions);
+  const requestedMcMode = normalizeMonteCarloBasisMode(simulationOptions.mcMode);
+  const resolvedMcMode = boundsDescriptor.mode || resolveMonteCarloBasisMode(simulationOptions);
+  const visibleInputs = getInputs();
+  const preAdvancedCalculationInputs = resolveInputsForCalculation(boundsDescriptor);
+  const finalCalculationInputs = applyAdvancedModules(preAdvancedCalculationInputs);
+  const effectiveNGHZ = getEffectiveNGHZ();
+  const occurrenceMode = getActiveOccurrenceMode();
+  const etaEarth = occurrenceMode === 'eta_earth_direct' ? getActiveEtaEarthBryson() : null;
+  const occurrenceInputs = {
+    ...preAdvancedCalculationInputs,
+    _occurrence_mode: occurrenceMode
+  };
+  if (etaEarth !== null) occurrenceInputs._eta_earth_bryson = etaEarth;
+  const occurrenceTermPreAdvanced = resolveOccurrenceTerm(occurrenceInputs);
+  const finalOccurrenceInputs = {
+    ...finalCalculationInputs,
+    _occurrence_mode: occurrenceMode
+  };
+  if (etaEarth !== null) finalOccurrenceInputs._eta_earth_bryson = etaEarth;
+  const occurrenceTermFinal = resolveOccurrenceTerm(finalOccurrenceInputs);
+  const factorizedOccurrenceTerm =
+    (Number(visibleInputs.N_p_star) || 0) *
+    (Number(visibleInputs.f_composition) || 0) *
+    (Number(visibleInputs.f_orbit) || 0);
+  const warnings = [];
+
+  if (requestedMcMode === MONTE_CARLO_BASIS_MODES.presetLocal && resolvedMcMode !== requestedMcMode) {
+    warnings.push({
+      code: 'MC_PRESET_LOCAL_DOWNGRADED',
+      text: 'Requested preset-local Monte Carlo was resolved to the modified/current-input basis because the visible scenario is not a clean named preset.'
+    });
+  }
+
+  if (occurrenceMode === 'eta_earth_direct') {
+    warnings.push({
+      code: 'OCCURRENCE_DIRECT_ETA_REPLACES_FACTORS',
+      text: 'Bryson eta-Earth direct mode replaces N_p_star, f_composition, and f_orbit in the active occurrence term.'
+    });
+  }
+
+  if (isGalaxySettingsEnabled) {
+    warnings.push({
+      code: 'GALAXY_SETTINGS_OVERRIDE_ACTIVE',
+      text: 'Custom Galaxy X settings are enabled; resolved N_GHZ may differ from the visible raw N_GHZ field.'
+    });
+  }
+
+  return {
+    version: '2.17',
+    baseScenarioId: scenario.originPreset || (scenario.isPreset ? activePreset : 'custom'),
+    baseScenarioLabel: scenario.label,
+    scenarioState: scenario.state,
+    scenarioModified: !!scenario.isModified,
+    rawInputValues: buildRawInputValueSnapshot(),
+    visibleInputValues: visibleInputs,
+    preAdvancedCalculationInputValues: preAdvancedCalculationInputs,
+    finalEffectiveCalculationInputValues: finalCalculationInputs,
+    calculationInputValues: finalCalculationInputs,
+    N_GHZ_used: effectiveNGHZ.value,
+    N_GHZ_source: effectiveNGHZ.source,
+    N_GHZ_metadata: effectiveNGHZ.metadata,
+    occurrenceMode,
+    occurrenceOverlayMode: astronomyOverrideMode,
+    occurrenceTerm_preAdvanced: occurrenceTermPreAdvanced,
+    occurrenceTerm_finalUsed: occurrenceTermFinal,
+    occurrenceTerm_used: occurrenceTermFinal,
+    etaEarth_used: etaEarth,
+    factorizedOccurrenceTerm_visible: factorizedOccurrenceTerm,
+    replacedTerms: occurrenceMode === 'eta_earth_direct'
+      ? ['N_p_star', 'f_composition', 'f_orbit']
+      : [],
+    galaxyOverrideActive: !!isGalaxySettingsEnabled,
+    galaxyScalingMode,
+    monteCarlo: {
+      requestedBasisMode: requestedMcMode,
+      resolvedBasisMode: resolvedMcMode,
+      boundsLabel: boundsDescriptor.label,
+      uncertaintyBasisLabel: boundsDescriptor.uncertaintyBasisLabel,
+      sourcePreset: boundsDescriptor.sourcePreset || null,
+      engine: simulationOptions.engine,
+      correlation: simulationOptions.correlation,
+      robustBounds: !!simulationOptions.robustBounds
+    },
+    warnings
+  };
+}
+globalThis.buildResolvedModelState = buildResolvedModelState;
+
 function normalizeSamplingControlValue(controlId, value, fallback, isProbability, isPositive) {
   const el = byId(controlId);
   const original = el ? el.value : value;
@@ -2320,15 +2970,64 @@ function normalizeSamplingControlValue(controlId, value, fallback, isProbability
 
   if (changed) {
     recordBoundValidationWarning(controlId, original, normalized, reason);
-    if (el) el.value = String(normalized);
   }
 
   return normalized;
 }
 
+function normalizeProbabilitySamplingState(meanVal, lo, hi) {
+  const fallback = Number.isFinite(meanVal) ? meanVal : 0;
+  const central = clamp01(fallback);
+  let lower = clamp01(Number.isFinite(lo) ? lo : central);
+  let upper = clamp01(Number.isFinite(hi) ? hi : central);
+
+  if (lower > upper) [lower, upper] = [upper, lower];
+
+  const fixed = nearlyEqual(lower, upper);
+  const fixedValue = fixed ? clamp(central, lower, upper) : null;
+  const boundaryWithWidth = !fixed && (nearlyEqual(central, 0) || nearlyEqual(central, 1));
+  const logitLo = lower <= 0 ? 1e-9 : clamp(lower, 1e-9, 1 - 1e-9);
+  const logitHi = upper >= 1 ? 1 - 1e-9 : clamp(upper, 1e-9, 1 - 1e-9);
+
+  return {
+    meanVal: central,
+    lo: lower,
+    hi: upper,
+    fixed,
+    fixedValue,
+    boundaryWithWidth,
+    logitLo,
+    logitHi,
+    canUseLogit: logitHi > logitLo
+  };
+}
+globalThis.normalizeProbabilitySamplingState = normalizeProbabilitySamplingState;
+
+function recordProbabilityBoundaryWithWidthWarning(id, meanVal, lo, hi) {
+  recordBoundValidationWarning(
+    id,
+    meanVal,
+    `${lo}..${hi}`,
+    'Central probability is exactly at a 0/1 boundary while the interval has width; sampling uses the declared interval, but this is a boundary-width probabilistic assumption rather than an ordinary interior logit-normal case.',
+    'PROBABILITY_BOUNDARY_WITH_WIDTH'
+  );
+}
+
 function getParamSamplingState(id, boundsDescriptor = getMonteCarloBoundsDescriptor()) {
   const isProbability = PROBABILITY_FIELDS.has(id);
   const isPositive = POSITIVE_FIELDS.has(id);
+  if (id === 'eta_earth_bryson') {
+    const eta = clamp01(getActiveEtaEarthBryson());
+    return {
+      meanVal: eta,
+      lo: eta,
+      hi: eta,
+      isProbability: true,
+      isPositive: false,
+      hasBounds: false,
+      basis: 'fixed-direct-eta'
+    };
+  }
   const presetLocalCentralValue = getPresetLocalCentralValue(id, boundsDescriptor);
 
   if (Number.isFinite(presetLocalCentralValue)) {
@@ -2380,8 +3079,6 @@ function getParamSamplingState(id, boundsDescriptor = getMonteCarloBoundsDescrip
       'Minimum was greater than maximum; the interval endpoints were swapped before sampling.'
     );
     [lo, hi] = [hi, lo];
-    minEl.value = String(lo);
-    maxEl.value = String(hi);
   }
 
   const configuredLo = lo;
@@ -2417,6 +3114,13 @@ function getParamSamplingState(id, boundsDescriptor = getMonteCarloBoundsDescrip
   }
 
   if (lo > hi) [lo, hi] = [hi, lo];
+
+  if (isProbability) {
+    const probabilityState = normalizeProbabilitySamplingState(meanVal, lo, hi);
+    if (probabilityState.boundaryWithWidth) {
+      recordProbabilityBoundaryWithWidthWarning(id, probabilityState.meanVal, probabilityState.lo, probabilityState.hi);
+    }
+  }
 
   return {
     meanVal,
@@ -2636,10 +3340,13 @@ function sampleLogNormalBounded(meanVal, lo, hi, rng = Math.random) {
 }
 
 function sampleLogitNormalBounded(meanVal, lo, hi, rng = Math.random) {
+  const state = normalizeProbabilitySamplingState(meanVal, lo, hi);
+  if (state.fixed) return state.fixedValue;
   // Same idea for logit-normal: after truncation, q50 should still sit at m.
-  const m = clamp(meanVal, Math.max(lo, 1e-9), Math.min(hi, 1 - 1e-9));
-  const lo2 = clamp(lo, 1e-9, 1 - 1e-9);
-  const hi2 = clamp(hi, 1e-9, 1 - 1e-9);
+  if (!state.canUseLogit) return clamp(state.meanVal, state.lo, state.hi);
+  const lo2 = state.logitLo;
+  const hi2 = state.logitHi;
+  const m = clamp(state.meanVal, lo2, hi2);
   const uncertaintyFraction = getSamplingUncertaintyFraction();
 
   const spread = Math.max((logit(hi2) - logit(lo2)) * uncertaintyFraction / 2, 1e-6);
@@ -2647,7 +3354,7 @@ function sampleLogitNormalBounded(meanVal, lo, hi, rng = Math.random) {
   const loZ = logit(lo2);
   const hiZ = logit(hi2);
 
-  return clamp(logistic(sampleMedianAnchoredTruncatedNormalZ(medianZ, loZ, hiZ, spread, rng())), lo2, hi2);
+  return clamp(logistic(sampleMedianAnchoredTruncatedNormalZ(medianZ, loZ, hiZ, spread, rng())), state.lo, state.hi);
 }
 
 function sampleNormalQuantile(meanVal, lo, hi, u) {
@@ -2677,9 +3384,12 @@ function sampleLogNormalQuantile(meanVal, lo, hi, u) {
 }
 
 function sampleLogitNormalQuantile(meanVal, lo, hi, u) {
-  const m = clamp(meanVal, Math.max(lo, 1e-9), Math.min(hi, 1 - 1e-9));
-  const lo2 = clamp(lo, 1e-9, 1 - 1e-9);
-  const hi2 = clamp(hi, 1e-9, 1 - 1e-9);
+  const state = normalizeProbabilitySamplingState(meanVal, lo, hi);
+  if (state.fixed) return state.fixedValue;
+  if (!state.canUseLogit) return clamp(state.meanVal, state.lo, state.hi);
+  const lo2 = state.logitLo;
+  const hi2 = state.logitHi;
+  const m = clamp(state.meanVal, lo2, hi2);
   const uncertaintyFraction = getSamplingUncertaintyFraction();
 
   const spread = Math.max((logit(hi2) - logit(lo2)) * uncertaintyFraction / 2, 1e-6);
@@ -2687,7 +3397,7 @@ function sampleLogitNormalQuantile(meanVal, lo, hi, u) {
   const loZ = logit(lo2);
   const hiZ = logit(hi2);
 
-  return clamp(logistic(sampleMedianAnchoredTruncatedNormalZ(medianZ, loZ, hiZ, spread, u)), lo2, hi2);
+  return clamp(logistic(sampleMedianAnchoredTruncatedNormalZ(medianZ, loZ, hiZ, spread, u)), state.lo, state.hi);
 }
 
 function sampleUniformCentered(meanVal, lo, hi, isProbability, isPositive, u) {
@@ -2831,14 +3541,16 @@ function applyBaseCorrelationModel(sampledInputs, meanInp, correlationModel = 'i
 function sampleBaseInputs(dist, sampler = null, correlationModel = 'independent', boundsDescriptor = getMonteCarloBoundsDescriptor()) {
   const meanInp = getInputsForBoundsDescriptor(boundsDescriptor);
   const draw = id => (sampler ? sampler.sample(id) : sampleParam(id, dist, Math.random, boundsDescriptor));
+  const occurrenceMode = getActiveOccurrenceMode();
+  const etaEarth = getActiveEtaEarthBryson();
 
   const s = {
-    N_GHZ: draw('N_GHZ'),
+    N_GHZ: resolveNGHZForSimulationDraw(draw),
     f_sun_type: draw('f_sun_type'),
     f_sun_age: draw('f_sun_age'),
-    N_p_star: draw('N_p_star'),
-    f_composition: draw('f_composition'),
-    f_orbit: draw('f_orbit'),
+    N_p_star: occurrenceMode === 'eta_earth_direct' ? meanInp.N_p_star : draw('N_p_star'),
+    f_composition: occurrenceMode === 'eta_earth_direct' ? meanInp.f_composition : draw('f_composition'),
+    f_orbit: occurrenceMode === 'eta_earth_direct' ? meanInp.f_orbit : draw('f_orbit'),
     f_stability: draw('f_stability'),
     f_magnetosphere: draw('f_magnetosphere'),
     f_size: draw('f_size'),
@@ -2850,8 +3562,10 @@ function sampleBaseInputs(dist, sampler = null, correlationModel = 'independent'
     f_complex_life: parameterEnabledForBoundsDescriptor('f_complex_life', boundsDescriptor)
       ? draw('f_complex_life')
       : 1,
-    f_x: parameterEnabledForBoundsDescriptor('f_x', boundsDescriptor) ? draw('f_x') : 1
+    f_x: parameterEnabledForBoundsDescriptor('f_x', boundsDescriptor) ? draw('f_x') : 1,
+    _occurrence_mode: occurrenceMode
   };
+  if (occurrenceMode === 'eta_earth_direct') s._eta_earth_bryson = etaEarth;
 
   return applyBaseCorrelationModel(s, meanInp, correlationModel);
 }
@@ -2877,7 +3591,9 @@ function sampleAdvanced(dist, sampler = null, boundsDescriptor = getMonteCarloBo
   if (ADV.modules.prebioticUV.enabled) s._f_uv = draw('adv_f_uv');
   if (ADV.modules.binary.enabled) s._f_binary = draw('adv_f_binary');
   if (ADV.modules.radiation.enabled) s._f_rad = draw('adv_f_rad');
-  if (ADV.modules.radiusValley.enabled) s.f_composition = draw('adv_P_rocky');
+  if (ADV.modules.radiusValley.enabled && getActiveOccurrenceMode() !== 'eta_earth_direct') {
+    s.f_composition = draw('adv_P_rocky');
+  }
 
   return s;
 }
@@ -2885,14 +3601,15 @@ function sampleAdvanced(dist, sampler = null, boundsDescriptor = getMonteCarloBo
 function buildEnvelopeBaseInputs(side, correlationModel = 'independent', boundsDescriptor = getMonteCarloBoundsDescriptor()) {
   const meanInp = getInputsForBoundsDescriptor(boundsDescriptor);
   const draw = id => getParamBoundValue(id, side, boundsDescriptor);
+  const occurrenceMode = getActiveOccurrenceMode();
 
   const s = {
-    N_GHZ: draw('N_GHZ'),
+    N_GHZ: resolveNGHZForSimulationDraw(draw),
     f_sun_type: draw('f_sun_type'),
     f_sun_age: draw('f_sun_age'),
-    N_p_star: draw('N_p_star'),
-    f_composition: draw('f_composition'),
-    f_orbit: draw('f_orbit'),
+    N_p_star: occurrenceMode === 'eta_earth_direct' ? meanInp.N_p_star : draw('N_p_star'),
+    f_composition: occurrenceMode === 'eta_earth_direct' ? meanInp.f_composition : draw('f_composition'),
+    f_orbit: occurrenceMode === 'eta_earth_direct' ? meanInp.f_orbit : draw('f_orbit'),
     f_stability: draw('f_stability'),
     f_magnetosphere: draw('f_magnetosphere'),
     f_size: draw('f_size'),
@@ -2902,8 +3619,10 @@ function buildEnvelopeBaseInputs(side, correlationModel = 'independent', boundsD
     f_H2O: parameterEnabledForBoundsDescriptor('f_H2O', boundsDescriptor) ? draw('f_H2O') : 1,
     f_CHNOPS: parameterEnabledForBoundsDescriptor('f_CHNOPS', boundsDescriptor) ? draw('f_CHNOPS') : 1,
     f_complex_life: parameterEnabledForBoundsDescriptor('f_complex_life', boundsDescriptor) ? draw('f_complex_life') : 1,
-    f_x: parameterEnabledForBoundsDescriptor('f_x', boundsDescriptor) ? draw('f_x') : 1
+    f_x: parameterEnabledForBoundsDescriptor('f_x', boundsDescriptor) ? draw('f_x') : 1,
+    _occurrence_mode: occurrenceMode
   };
+  if (occurrenceMode === 'eta_earth_direct') s._eta_earth_bryson = getActiveEtaEarthBryson();
 
   return applyBaseCorrelationModel(s, meanInp, correlationModel);
 }
@@ -2929,7 +3648,9 @@ function buildEnvelopeAdvancedInputs(side, boundsDescriptor = getMonteCarloBound
   if (ADV.modules.prebioticUV.enabled) s._f_uv = draw('adv_f_uv');
   if (ADV.modules.binary.enabled) s._f_binary = draw('adv_f_binary');
   if (ADV.modules.radiation.enabled) s._f_rad = draw('adv_f_rad');
-  if (ADV.modules.radiusValley.enabled) s.f_composition = draw('adv_P_rocky');
+  if (ADV.modules.radiusValley.enabled && getActiveOccurrenceMode() !== 'eta_earth_direct') {
+    s.f_composition = draw('adv_P_rocky');
+  }
 
   return s;
 }
@@ -2946,7 +3667,8 @@ function computeSimulationEnvelope(options = getSimulationOptions()) {
 
   return {
     low: Math.min(low, high),
-    high: Math.max(low, high)
+    high: Math.max(low, high),
+    coverage: getRobustEnvelopeCoverageDescriptor(descriptor)
   };
 }
 
@@ -3050,6 +3772,7 @@ function applyAdvancedModules(baseInputs, sampledAdv = {}) {
   if (!ADV.enabled) return { ...baseInputs };
 
   const inp = { ...baseInputs };
+  const occurrenceMode = (baseInputs && baseInputs._occurrence_mode) || getActiveOccurrenceMode();
 
   const getAdv = (key, id, kind = 'number') => {
     const v = sampledAdv[key];
@@ -3109,7 +3832,7 @@ function applyAdvancedModules(baseInputs, sampledAdv = {}) {
     inp.f_lunar_stability = 1;
   }
 
-  if (ADV.modules.radiusValley.enabled) {
+  if (ADV.modules.radiusValley.enabled && occurrenceMode !== 'eta_earth_direct') {
     inp.f_composition = clamp01(getAdv('f_composition', 'adv_P_rocky', 'probability'));
     inp.f_size = 1;
   }
@@ -3345,7 +4068,7 @@ function buildRadialDistanceModel(count, ciLowCount = null, ciHighCount = null) 
 }
 
 function calculateDeterministic() {
-  const inp = getInputs();
+  const inp = resolveInputsForCalculation();
   const advInp = applyAdvancedModules(inp);
   renderConfigurationWarnings();
   const N = computePlanetsAdvanced(advInp);
@@ -3366,7 +4089,11 @@ function resolveMonteCarloIterations(options = {}) {
   if (Number.isFinite(Number(options.samples))) {
     return Math.max(1, Math.floor(Number(options.samples)));
   }
-  return clamp(parseInt((byId('iterations') || {}).value || '2000', 10), 1000, 20000);
+  return clamp(
+    parseInt((byId('iterations') || {}).value || '2000', 10),
+    MONTE_CARLO_ITERATIONS_MIN,
+    MONTE_CARLO_ITERATIONS_MAX
+  );
 }
 
 function getMonteCarloOptions(options = {}) {
@@ -3457,18 +4184,20 @@ function runMonteCarloSimulation(options = {}) {
   const prngDescription = options.prngDescription || MONTE_CARLO_PRNG_DESCRIPTION;
   const rng = typeof options.rng === 'function' ? options.rng : createSeededRng(seedForRun);
   clearBoundIntervalWarnings();
-  const deterministicInputs = getInputsForBoundsDescriptor(boundsDescriptor);
+  const astronomyPriorModelAtRun = getAstronomyPriorExportSnapshot();
+  const deterministicInputs = resolveInputsForCalculation(boundsDescriptor);
   const deterministicAtRun = computePlanetsAdvanced(applyAdvancedModules(deterministicInputs));
   const initialValidationWarnings = getInputValidationWarnings();
   const sampler = createParameterSampler(simulationOptions.engine, dist, iterations, rng, boundsDescriptor);
-
+  const directEtaMode = getActiveOccurrenceMode() === 'eta_earth_direct';
+  const occurrenceSensKeys = directEtaMode
+    ? ['eta_earth_bryson']
+    : ['N_p_star', 'f_composition', 'f_orbit'];
   const sensKeys = [
     'N_GHZ',
     'f_sun_type',
     'f_sun_age',
-    'N_p_star',
-    'f_composition',
-    'f_orbit',
+    ...occurrenceSensKeys,
     'f_stability',
     'f_magnetosphere',
     'f_lunar_stability',
@@ -3525,9 +4254,6 @@ function runMonteCarloSimulation(options = {}) {
           N_GHZ: full.N_GHZ,
           f_sun_type: full.f_sun_type,
           f_sun_age: full.f_sun_age,
-          N_p_star: full.N_p_star,
-          f_composition: full.f_composition,
-          f_orbit: full.f_orbit,
           f_stability: full.f_stability,
           f_magnetosphere: full.f_magnetosphere,
           f_lunar_stability: full.f_lunar_stability,
@@ -3545,6 +4271,13 @@ function runMonteCarloSimulation(options = {}) {
           _f_binary: full._f_binary ?? 1,
           _f_rad: full._f_rad ?? 1
         };
+        if (directEtaMode) {
+          sensRecord.eta_earth_bryson = full._eta_earth_bryson ?? getActiveEtaEarthBryson();
+        } else {
+          sensRecord.N_p_star = full.N_p_star;
+          sensRecord.f_composition = full.f_composition;
+          sensRecord.f_orbit = full.f_orbit;
+        }
         SENS.record(sensRecord, N);
       }
     }
@@ -3556,6 +4289,45 @@ function runMonteCarloSimulation(options = {}) {
 
   if (initialValidationWarnings.length) {
     inputValidationWarnings = initialValidationWarnings.slice();
+  }
+
+  if (!results.length) {
+    return {
+      n: 0,
+      requestedSamples: iterations,
+      results: [],
+      mean: NaN,
+      median: NaN,
+      p025: NaN,
+      p500: NaN,
+      p975: NaN,
+      stdDev: NaN,
+      mode: NaN,
+      checkpoints: [],
+      convergence: null,
+      envelope: null,
+      sampledN_GHZ: sampledStarCounts,
+      yieldSamples: sampleYields,
+      yieldStats: null,
+      deterministic: deterministicAtRun,
+      intervalComparison: null,
+      boundsMode: boundsDescriptor.mode,
+      boundsLabel: boundsDescriptor.label,
+      uncertaintyBasisLabel: boundsDescriptor.uncertaintyBasisLabel,
+      distribution: dist,
+      simulationOptions,
+      seed: seedForRun,
+      seedMode,
+      prng,
+      prngDescription,
+      astronomyPriorModel: astronomyPriorModelAtRun,
+      resolvedModelState: buildResolvedModelState({ simulationOptions, boundsDescriptor }),
+      error: 'NO_VALID_MONTE_CARLO_SAMPLES',
+      warnings: [{
+        code: 'NO_VALID_MONTE_CARLO_SAMPLES',
+        text: 'Monte Carlo produced zero finite non-negative samples; no percentile or mean was computed.'
+      }]
+    };
   }
 
   results.sort((a, b) => a - b);
@@ -3609,7 +4381,10 @@ function runMonteCarloSimulation(options = {}) {
     seed: seedForRun,
     seedMode,
     prng,
-    prngDescription
+    prngDescription,
+    astronomyPriorModel: astronomyPriorModelAtRun,
+    resolvedModelState: buildResolvedModelState({ simulationOptions, boundsDescriptor }),
+    warnings: []
   };
 }
 
@@ -3617,8 +4392,35 @@ function applyMonteCarloSummary(summary) {
   if (typeof renderConfigurationWarnings === 'function') renderConfigurationWarnings();
 
   if (!summary.results.length) {
+    const errorCode = summary.error || 'NO_VALID_MONTE_CARLO_SAMPLES';
+    const errorText = (summary.warnings || [])
+      .map(w => w.text || w.code)
+      .filter(Boolean)
+      .join(' ') || 'Monte Carlo produced zero valid finite samples.';
+    lastResults = [];
     lastSampleYields = [];
-    lastMonteCarloRunMetadata = null;
+    lastMonteCarloRunMetadata = {
+      requestedSamples: summary.requestedSamples,
+      validSamples: 0,
+      deterministic: summary.deterministic,
+      engine: summary.simulationOptions?.engine || null,
+      distribution: summary.distribution || null,
+      correlation: summary.simulationOptions?.correlation || null,
+      robustBounds: !!summary.simulationOptions?.robustBounds,
+      mcMode: summary.simulationOptions?.mcMode ?? summary.boundsMode ?? null,
+      boundsMode: summary.boundsMode || null,
+      boundsLabel: summary.boundsLabel || null,
+      uncertaintyBasisLabel: summary.uncertaintyBasisLabel || null,
+      robustEnvelopeCoverage: summary.envelope?.coverage || null,
+      seed: normalizeMonteCarloSeed(summary.seed),
+      seedMode: summary.seedMode || 'random',
+      prng: summary.prng || MONTE_CARLO_PRNG,
+      prngDescription: summary.prngDescription || MONTE_CARLO_PRNG_DESCRIPTION,
+      astronomyPriorModel: summary.astronomyPriorModel || getAstronomyPriorExportSnapshot(),
+      resolvedModelState: summary.resolvedModelState || buildResolvedModelState(),
+      error: errorCode,
+      warnings: summary.warnings || []
+    };
     monteCarloYieldStats = null;
     convergenceSummary = null;
     simulationEnvelope = null;
@@ -3626,6 +4428,16 @@ function applyMonteCarloSummary(summary) {
     monteCarloBoundsLabel = '';
     monteCarloUncertaintyBasisLabel = '';
     monteCarloIntervalComparison = null;
+    simulationCompleted = false;
+    monteCarloState = 'not-run';
+    if (byId('monteCarloResult')) {
+      byId('monteCarloResult').innerHTML =
+        `<span class="result-label">${errorCode} ·</span> ${escapeHtml(errorText)}`;
+    }
+    if (byId('monteCarloMedian')) byId('monteCarloMedian').textContent = '';
+    if (byId('stats')) byId('stats').innerHTML =
+      '<span class="result-label">Monte Carlo interval unavailable ·</span> no valid samples';
+    if (typeof renderConfigurationWarnings === 'function') renderConfigurationWarnings();
     if (typeof renderConvergenceSummary === 'function') renderConvergenceSummary();
     if (typeof renderSimulationMethodSummary === 'function') renderSimulationMethodSummary();
     if (typeof updateShareButtons === 'function') updateShareButtons();
@@ -3646,10 +4458,14 @@ function applyMonteCarloSummary(summary) {
     boundsMode: summary.boundsMode || null,
     boundsLabel: summary.boundsLabel || null,
     uncertaintyBasisLabel: summary.uncertaintyBasisLabel || null,
+    robustEnvelopeCoverage: summary.envelope?.coverage || null,
     seed: normalizeMonteCarloSeed(summary.seed),
     seedMode: summary.seedMode || 'random',
     prng: summary.prng || MONTE_CARLO_PRNG,
     prngDescription: summary.prngDescription || MONTE_CARLO_PRNG_DESCRIPTION,
+    astronomyPriorModel: summary.astronomyPriorModel || getAstronomyPriorExportSnapshot(),
+    resolvedModelState: summary.resolvedModelState || buildResolvedModelState(),
+    warnings: summary.warnings || [],
     sampleOrder: 'ascending_candidate_count'
   };
   monteCarloYieldStats = summary.yieldStats || null;
@@ -3754,7 +4570,7 @@ function monteCarloCalculate(options = {}) {
 }
 
 function getCurrentDeterministicPlanets() {
-  const inp = getInputs();
+  const inp = resolveInputsForCalculation();
   const advInp = applyAdvancedModules(inp);
   return computePlanetsAdvanced(advInp);
 }
@@ -3957,21 +4773,6 @@ function buildDistanceScenario(count, ciLowCount = null, ciHighCount = null) {
     };
   }
 
-  if (galaxyName === 'Custom Galaxy X') {
-    const customEarthDist = getGalaxyEarthDistance();
-    if (customEarthDist > 0) {
-      return {
-        kind: 'external',
-        html:
-          `<span class="result-label">DISTANCE ·</span> Custom galaxy reference distance from Earth · ` +
-          `<span class="bold-number">${fmtN(customEarthDist)}</span> light years.`,
-        refModel: null,
-        fermiDistance: customEarthDist,
-        metrics: null
-      };
-    }
-  }
-
   if (allDistanceModelsDisabled()) {
     return {
       kind: 'no-model',
@@ -4059,15 +4860,15 @@ function buildFermiContext(distLy, refModel = null, options = {}) {
   if (starDiff <= nearThreshold) {
     starCtx =
       `roughly the same distance as ${starNameHtml} (${fmtN(star.d)} ly, ` +
-      `${star.note}.${starCatalogHtml}`;
+      `${star.note})${starCatalogHtml}`;
   } else if (starDiff <= moderateThreshold) {
     starCtx =
       `${distLy >= star.d ? 'somewhat farther out than' : 'somewhat closer than'} ` +
-      `${starNameHtml} (${fmtN(star.d)} ly, ${star.note}.${starCatalogHtml}`;
+      `${starNameHtml} (${fmtN(star.d)} ly, ${star.note})${starCatalogHtml}`;
   } else {
     starCtx =
       `the nearest reference object in this catalogue is ${starNameHtml} (${fmtN(star.d)} ly, ` +
-      `${star.note}.${starCatalogHtml}`;
+      `${star.note})${starCatalogHtml}`;
   }
 
   const hist = getHistoricalContext(signalTime);
@@ -4160,7 +4961,7 @@ function buildFermiContext(distLy, refModel = null, options = {}) {
 
     const interpretationItem =
       `<div ${setiItemStyle}><strong>Model interpretation · expected non-detection</strong><br>` +
-      `Expected non-detection is mainly driven by ${diagnosis} This is a signal-detection diagnostic, not a claim about a specific nearest transmitter.</div>`;
+      `Expected non-detection is mainly driven by ${ensureSentenceEnd(diagnosis)} This is a signal-detection diagnostic, not a claim about a specific nearest transmitter.</div>`;
 
     const pTemporal = Math.max(0, detection.p_temporal_pct / 100);
     const horizonFraction = detection.is_external_reference
@@ -4225,7 +5026,7 @@ function buildFermiContext(distLy, refModel = null, options = {}) {
   const text = `
     <strong>${sourceShort} · modelled candidate distance scale (${refModel ? refModel.modelLabel : 'external distance reference'}): ~${fmtN(distLy)} light years</strong><br><br>
     ➤ A radio signal travelling at light speed would take <strong>${fmtN(signalTime)}</strong> years to reach us ∼ ${starCtx}.<br><br>
-    ➤ For us to detect a civilisation there, it would need to have been transmitting for at least <strong>${fmtN(signalTime)}</strong> years. ${historicalContextText}.<br><br>
+    ➤ If a civilisation were located that far away, its signal would have had to leave its source about <strong>${fmtN(signalTime)}</strong> years ago to reach us today. ${historicalContextText}.<br><br>
     ➤ A round-trip exchange would take <strong>${fmtN(roundTrip)}</strong> years.<br><br>
     ${radioBubbleText}
     ${setiDetectabilityText}
@@ -4495,7 +5296,7 @@ function computeSobolIndices(N_samples, rng = Math.random) {
 
   const A = buildMatrix();
   const B = buildMatrix();
-  const baseInp = getInputs();
+  const baseInp = resolveInputsForCalculation(boundsDescriptor);
 
   function evalRow(overrides) {
     const baseOverrides = {};
@@ -4610,9 +5411,7 @@ function computeDetectionFilter(countOverride = mcMedianQ50) {
   const T_gal_yr = 13.5e9;
   const geom = getGHZGeometryLy();
   const manualEarthDist = getGalaxyEarthDistance();
-  const isExternalReference =
-    (galaxyName !== 'Milky Way (MW)' && galaxyName !== 'Custom Galaxy X') ||
-    (galaxyName === 'Custom Galaxy X' && manualEarthDist > 0);
+  const isExternalReference = galaxyName !== 'Milky Way (MW)' && galaxyName !== 'Custom Galaxy X';
   const earthDist = isExternalReference
     ? (manualEarthDist > 0 ? manualEarthDist : galaxyDistances[galaxyName])
     : null;
@@ -4683,5 +5482,4 @@ function computeDetectionFilter(countOverride = mcMedianQ50) {
     earth_distance: null
   };
 }
-
 

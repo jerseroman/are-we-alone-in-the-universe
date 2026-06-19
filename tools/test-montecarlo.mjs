@@ -90,7 +90,7 @@ function createDocumentStub() {
 }
 
 function loadCalculator() {
-  const { document } = createDocumentStub();
+  const { elements, document } = createDocumentStub();
   const source = fs.readFileSync(path.join(root, 'src', 'calculator-core.js'), 'utf8');
   const context = vm.createContext({
     console,
@@ -108,10 +108,18 @@ function loadCalculator() {
       runMonteCarloSimulation,
       createSeededRng,
       sampleLogitNormalQuantile,
+      sampleLogitNormalBounded,
       sampleLogNormalQuantile,
+      sampleParamFromQuantile,
+      sampleParam,
+      normalizeProbabilitySamplingState,
+      getParamSamplingState,
+      getBoundValidationWarnings,
+      clearBoundIntervalWarnings,
       buildDistanceMetrics,
       getSimulationOptions,
       getMonteCarloBoundsDescriptor,
+      MONTE_CARLO_BASIS_MODES,
       loadPresetForTest(name) {
         const preset = PRESETS[name];
         if (!preset) throw new Error('Unknown preset: ' + name);
@@ -129,7 +137,10 @@ function loadCalculator() {
     { filename: 'src/calculator-core.js' }
   );
 
-  return context.__MC_TEST_EXPORTS__;
+  return {
+    elements,
+    ...context.__MC_TEST_EXPORTS__
+  };
 }
 
 function summarizeSequence(summary) {
@@ -266,6 +277,115 @@ pass('Default unseeded Monte Carlo mode returns a valid summary.');
     } else {
       fail(`${item.label}: q50=${fmt(item.actual)}, expected ${fmt(item.expected)}.`);
     }
+  }
+}
+
+{
+  const calculator = loadCalculator();
+  const exactZeroState = calculator.normalizeProbabilitySamplingState(0, 0, 0);
+  const exactOneState = calculator.normalizeProbabilitySamplingState(1, 1, 1);
+  const exactZeroSamples = [
+    calculator.sampleLogitNormalBounded(0, 0, 0, () => 0.5),
+    calculator.sampleLogitNormalQuantile(0, 0, 0, 0.5)
+  ];
+  const exactOneSamples = [
+    calculator.sampleLogitNormalBounded(1, 1, 1, () => 0.5),
+    calculator.sampleLogitNormalQuantile(1, 1, 1, 0.5)
+  ];
+
+  if (exactZeroState.fixed && exactZeroState.fixedValue === 0 && exactZeroSamples.every(value => Object.is(value, 0))) {
+    pass('Exact probability boundary 0/0/0 remains fixed at exact 0 in all logit-normal MC paths.');
+  } else {
+    fail(`Exact probability 0/0/0 was not fixed at 0: state=${JSON.stringify(exactZeroState)}, samples=${exactZeroSamples.join(',')}.`);
+  }
+
+  if (exactOneState.fixed && exactOneState.fixedValue === 1 && exactOneSamples.every(value => value === 1)) {
+    pass('Exact probability boundary 1/1/1 remains fixed at exact 1 in all logit-normal MC paths.');
+  } else {
+    fail(`Exact probability 1/1/1 was not fixed at 1: state=${JSON.stringify(exactOneState)}, samples=${exactOneSamples.join(',')}.`);
+  }
+}
+
+[
+  {
+    label: 'central zero with positive upper bound',
+    central: '0',
+    min: '0',
+    max: '0.25'
+  },
+  {
+    label: 'central one with lower bound below one',
+    central: '1',
+    min: '0.75',
+    max: '1'
+  }
+].forEach(testCase => {
+  const calculator = loadCalculator();
+  calculator.elements.get('f_orbit').value = testCase.central;
+  calculator.elements.get('f_orbit_min').value = testCase.min;
+  calculator.elements.get('f_orbit_max').value = testCase.max;
+  calculator.clearBoundIntervalWarnings();
+  const state = calculator.getParamSamplingState('f_orbit', {
+    mode: calculator.MONTE_CARLO_BASIS_MODES.customInput,
+    label: 'test',
+    uncertaintyBasisLabel: 'test'
+  });
+  const warning = calculator
+    .getBoundValidationWarnings()
+    .find(item => item.code === 'PROBABILITY_BOUNDARY_WITH_WIDTH');
+
+  if (warning && state.lo < state.hi) {
+    pass(`${testCase.label} emits PROBABILITY_BOUNDARY_WITH_WIDTH and keeps a non-degenerate MC interval.`);
+  } else {
+    fail(`${testCase.label}: expected boundary-width warning, got state=${JSON.stringify(state)}, warnings=${JSON.stringify(calculator.getBoundValidationWarnings())}.`);
+  }
+});
+
+{
+  const calculator = loadCalculator();
+  calculator.elements.get('f_orbit').value = '0';
+  calculator.elements.get('f_orbit_min').value = '0';
+  calculator.elements.get('f_orbit_max').value = '0';
+  const directSample = calculator.sampleParamFromQuantile('f_orbit', 'lognormal', 0.5, {
+    mode: calculator.MONTE_CARLO_BASIS_MODES.customInput,
+    label: 'test',
+    uncertaintyBasisLabel: 'test'
+  });
+  const summary = calculator.monteCarloCalculate({
+    samples: presetSampleCount,
+    seed: 404,
+    distribution: 'lognormal',
+    engine: 'standard',
+    correlation: 'independent',
+    mcMode: 'customInput',
+    updateUi: false
+  });
+
+  if (Object.is(directSample, 0) && summary.median === 0 && summary.mean === 0 && summary.p025 === 0 && summary.p975 === 0) {
+    pass('Fixed zero probability produces exact-zero MC samples and does not become a positive median.');
+  } else {
+    fail(
+      `Fixed zero probability leaked into positive MC output: direct=${directSample}, ` +
+      `median=${summary.median}, mean=${summary.mean}, p025=${summary.p025}, p975=${summary.p975}.`
+    );
+  }
+}
+
+{
+  const calculator = loadCalculator();
+  calculator.elements.get('f_orbit').value = '1';
+  calculator.elements.get('f_orbit_min').value = '1';
+  calculator.elements.get('f_orbit_max').value = '1';
+  const directSample = calculator.sampleParamFromQuantile('f_orbit', 'lognormal', 0.5, {
+    mode: calculator.MONTE_CARLO_BASIS_MODES.customInput,
+    label: 'test',
+    uncertaintyBasisLabel: 'test'
+  });
+
+  if (directSample === 1) {
+    pass('Fixed one probability sample remains exact 1 and is not converted to 1 - epsilon.');
+  } else {
+    fail(`Fixed one probability sample was ${directSample}, expected exact 1.`);
   }
 }
 

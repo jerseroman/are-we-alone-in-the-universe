@@ -40,7 +40,7 @@ function loadRuntimeCalculator() {
   const source = fs.readFileSync(corePath, 'utf8');
   const context = vm.createContext({ console });
   vm.runInContext(
-    `${source}\n;globalThis.__NUMERIC_TEST_EXPORTS__ = { PRESETS, computePlanetsAdvanced, fmtExistencePct, fmtPct };`,
+    `${source}\n;globalThis.__NUMERIC_TEST_EXPORTS__ = { PRESETS, computePlanetsAdvanced, fmtExistencePct, fmtPct, nearlyEqual };`,
     context,
     { filename: corePath }
   );
@@ -58,6 +58,20 @@ function makeElement(value, min = null, max = null) {
       return null;
     }
   };
+}
+
+function snapshotValues(elements, ids = null) {
+  const out = {};
+  const source = ids || [...elements.keys()];
+  source.forEach(id => {
+    const el = elements.get(id);
+    if (el) out[id] = el.value;
+  });
+  return out;
+}
+
+function snapshotsEqual(a, b) {
+  return JSON.stringify(a) === JSON.stringify(b);
 }
 
 function loadValidationCalculator() {
@@ -100,6 +114,8 @@ function loadValidationCalculator() {
       getBoundValidationWarnings,
       getConfigurationWarnings,
       getParamSamplingState,
+      buildResolvedModelState,
+      clearBoundIntervalWarnings,
       applyAdvancedModules,
       setH2OEnabled(value) { isH2OEnabled = !!value; },
       computePlanetsAdvanced
@@ -157,6 +173,17 @@ function comparePresetValues(name, runtimePreset, registryPreset) {
 
 const { PRESETS, computePlanetsAdvanced } = loadRuntimeCalculator();
 const actualOutputs = {};
+
+{
+  const { nearlyEqual } = loadRuntimeCalculator();
+  if (nearlyEqual(1e-9, 2e-9)) {
+    fail('nearlyEqual treats 1e-9 and 2e-9 as equal; tiny bound edits would be missed.');
+  } else if (!nearlyEqual(1e-9, 1e-9 + 1e-13)) {
+    fail('nearlyEqual is too strict for harmless tiny floating-point noise.');
+  } else {
+    pass('nearlyEqual preserves tiny bound edit detection while tolerating floating-point noise.');
+  }
+}
 
 for (const name of scenarioOrder) {
   const preset = PRESETS[name];
@@ -231,8 +258,8 @@ for (const testCase of validationCases) {
     continue;
   }
 
-  if (domValue !== String(testCase.expected)) {
-    fail(`${testCase.name}: expected DOM value to be normalized to ${testCase.expected}, got ${domValue}.`);
+  if (domValue !== testCase.raw) {
+    fail(`${testCase.name}: getInputs() mutated DOM value from ${testCase.raw} to ${domValue}.`);
     continue;
   }
 
@@ -246,7 +273,7 @@ for (const testCase of validationCases) {
     continue;
   }
 
-  pass(`${testCase.name} normalized with visible validation state for ${testCase.field}.`);
+  pass(`${testCase.name} normalizes calculation value without mutating DOM for ${testCase.field}.`);
 }
 
 const boundCases = [
@@ -288,7 +315,9 @@ const boundCases = [
 for (const testCase of boundCases) {
   const calculator = loadValidationCalculator();
   testCase.mutate(calculator);
+  const before = snapshotValues(calculator.elements, [testCase.field, `${testCase.field}_min`, `${testCase.field}_max`]);
   const ok = testCase.expect(calculator);
+  const after = snapshotValues(calculator.elements, [testCase.field, `${testCase.field}_min`, `${testCase.field}_max`]);
   const warnings = calculator.getBoundValidationWarnings();
   const configWarnings = calculator.getConfigurationWarnings();
 
@@ -302,7 +331,68 @@ for (const testCase of boundCases) {
     continue;
   }
 
-  pass(`${testCase.name} normalizes Monte Carlo bounds with visible warning state.`);
+  if (!snapshotsEqual(before, after)) {
+    fail(`${testCase.name}: sampling state mutated DOM bounds from ${JSON.stringify(before)} to ${JSON.stringify(after)}.`);
+    continue;
+  }
+
+  pass(`${testCase.name} normalizes Monte Carlo bounds locally with visible warning state.`);
+}
+
+[
+  {
+    name: 'probabilityZeroWithWidth',
+    mutate(calc) {
+      calc.elements.get('f_orbit').value = '0';
+      calc.elements.get('f_orbit_min').value = '0';
+      calc.elements.get('f_orbit_max').value = '0.2';
+    }
+  },
+  {
+    name: 'probabilityOneWithWidth',
+    mutate(calc) {
+      calc.elements.get('f_orbit').value = '1';
+      calc.elements.get('f_orbit_min').value = '0.8';
+      calc.elements.get('f_orbit_max').value = '1';
+    }
+  }
+].forEach(testCase => {
+  const calculator = loadValidationCalculator();
+  testCase.mutate(calculator);
+  const before = snapshotValues(calculator.elements, ['f_orbit', 'f_orbit_min', 'f_orbit_max']);
+  const state = calculator.getParamSamplingState('f_orbit');
+  const after = snapshotValues(calculator.elements, ['f_orbit', 'f_orbit_min', 'f_orbit_max']);
+  const warning = calculator
+    .getBoundValidationWarnings()
+    .find(item => item.code === 'PROBABILITY_BOUNDARY_WITH_WIDTH');
+
+  if (!warning) {
+    fail(`${testCase.name}: expected PROBABILITY_BOUNDARY_WITH_WIDTH warning.`);
+  } else if (!snapshotsEqual(before, after)) {
+    fail(`${testCase.name}: boundary warning path mutated DOM from ${JSON.stringify(before)} to ${JSON.stringify(after)}.`);
+  } else if (!(state.lo < state.hi)) {
+    fail(`${testCase.name}: expected non-degenerate sampling interval, got ${JSON.stringify(state)}.`);
+  } else {
+    pass(`${testCase.name} emits PROBABILITY_BOUNDARY_WITH_WIDTH without mutating DOM.`);
+  }
+});
+
+{
+  const calculator = loadValidationCalculator();
+  calculator.elements.get('f_orbit').value = 'not-a-number';
+  calculator.elements.get('f_orbit_min').value = '0.9';
+  calculator.elements.get('f_orbit_max').value = '0.1';
+  const before = snapshotValues(calculator.elements);
+  const state = calculator.buildResolvedModelState();
+  const after = snapshotValues(calculator.elements);
+
+  if (!state || typeof state !== 'object') {
+    fail('buildResolvedModelStateNoDomMutation: resolved state was not returned.');
+  } else if (!snapshotsEqual(before, after)) {
+    fail(`buildResolvedModelStateNoDomMutation: DOM mutated from ${JSON.stringify(before)} to ${JSON.stringify(after)}.`);
+  } else {
+    pass('buildResolvedModelState() reads normalized state without mutating DOM inputs.');
+  }
 }
 
 [
@@ -319,12 +409,12 @@ for (const testCase of boundCases) {
 
   if (full._f_atm_ret !== testCase.expected) {
     fail(`${testCase.name}: expected advanced value ${testCase.expected}, got ${full._f_atm_ret}.`);
-  } else if (calculator.elements.get('adv_f_atm_ret').value !== String(testCase.expected)) {
-    fail(`${testCase.name}: DOM was not normalized to ${testCase.expected}.`);
+  } else if (calculator.elements.get('adv_f_atm_ret').value !== testCase.raw) {
+    fail(`${testCase.name}: advanced read path mutated DOM to ${calculator.elements.get('adv_f_atm_ret').value}.`);
   } else if (!warning) {
     fail(`${testCase.name}: advanced clamp happened without visible validation warning.`);
   } else {
-    pass(`${testCase.name} normalizes advanced input with visible validation state.`);
+    pass(`${testCase.name} normalizes advanced calculation value without mutating DOM.`);
   }
 });
 

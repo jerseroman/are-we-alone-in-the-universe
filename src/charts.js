@@ -423,3 +423,4 @@ function initCharts() {
   monteCarloChart.render();
   gaussianChart.render();
 }
+

@@ -5,8 +5,8 @@
     }
   ],
   "title": "Are We Alone in the Universe? Earth-like Planet Calculator",
-  "version": "2.16",
-  "publication_date": "2026-06-14",
+  "version": "2.17",
+  "publication_date": "2026-06-18",
   "upload_type": "software",
   "access_right": "open",
   "license": "AGPL-3.0-only",
@@ -33,7 +33,7 @@
     "nearest-neighbour distance scale",
     "Milky Way"
   ],
-  "description": "<p>Are We Alone in the Universe? Earth-like Planet Calculator is a static browser-based scientific modelling tool for examining how different astrophysical and planetary assumptions shape estimates of potentially Earth-like candidate environments in the Milky Way and the observable universe.</p><p>Version 2.16 presents the calculator as a literature-informed exploratory model with mathematically valid Poisson distance estimates and simplified GHZ comparison geometries. It adds reproducible Monte Carlo seed controls, Monte Carlo chart/data/package exports, self-contained HTML export validation, formula-operator regression checks, and Fermi panel usability cleanup while preserving the scientific parameters, presets, Monte Carlo distributions, numerical constants, and deterministic calculation chain.</p><p>The software is intended for exploratory modelling, sensitivity analysis, and methodological communication. Its numerical outputs are conditional scenario estimates derived from explicit assumptions, not observational measurements, empirical occurrence-rate determinations, or claims about confirmed biospheres, inhabited worlds, or technologically detectable activity.</p>",
+  "description": "<p>Are We Alone in the Universe? Earth-like Planet Calculator is a static browser-based scientific modelling tool for examining how different astrophysical and planetary assumptions shape estimates of potentially Earth-like candidate environments in the Milky Way and the observable universe.</p><p>Version 2.17 adds a default paper-white light theme with a White/Black switch, replaces named external-galaxy presets with a single user-defined Custom Galaxy X scenario, resolves Galactic Habitable Zone star counts through a unified effective N_GHZ source, extends JSON and Monte Carlo exports with galaxy-scaling provenance, and improves SETI/Fermi historical-context wording around light-travel time.</p><p>The software is intended for exploratory modelling, sensitivity analysis, and methodological communication. Its numerical outputs are conditional scenario estimates derived from explicit assumptions, not observational measurements, empirical occurrence-rate determinations, or claims about confirmed biospheres, inhabited worlds, or technologically detectable activity.</p>",
   "related_identifiers": [
     {
       "identifier": "https://github.com/jerseroman/are-we-alone-in-the-universe",

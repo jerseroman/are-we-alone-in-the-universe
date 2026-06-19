@@ -14,6 +14,33 @@ const requiredFiles = [
 const refs = ['src/styles.css', 'src/scientific-parameters.js', 'src/calculator-core.js', 'src/charts.js', 'src/share.js', 'src/accessibility.js', 'src/app.js'];
 const markers = ['API_KEY', 'SECRET', 'TOKEN', 'PASSWORD', 'localhost', 'C:\\', 'TODO', 'FIXME', 'console.log', 'debugger'];
 const markerScanExcluded = new Set(['tools/verify-static-site.mjs']);
+// console.log is permitted ONLY inside these explicit browser-console development
+// helper functions (they must match the standalone reference). Accidental console.log
+// anywhere else in production source is still flagged.
+const consoleLogAllowlist = {
+  'src/share.js': ['runGalaxySettingsTests', 'runHistoricalContextTests', 'runAllOccurrenceTests']
+};
+// Returns a Set of allowed line indices for console.log in `rel`, or null if the file
+// has no allowlist. A function body spans from its `function <name>(` signature line
+// through the first subsequent line that is a bare closing brace at column 0
+// (the top-level function terminator used throughout the source).
+function consoleLogAllowedLines(rel, text) {
+  const fns = consoleLogAllowlist[rel];
+  if (!fns) return null;
+  const lines = text.split(/\r?\n/);
+  const sigRe = new RegExp('^\\s*function\\s+(?:' + fns.join('|') + ')\\b');
+  const allowed = new Set();
+  for (let i = 0; i < lines.length; i++) {
+    if (!sigRe.test(lines[i])) continue;
+    let j = i;
+    for (; j < lines.length; j++) {
+      allowed.add(j);
+      if (j > i && /^\}\s*$/.test(lines[j])) break;
+    }
+    i = j;
+  }
+  return allowed;
+}
 const skipDirs = new Set(['.git', 'node_modules', 'dist', 'build', '.cache']);
 let failures = 0;
 function fail(message) { failures += 1; process.stderr.write('FAIL: ' + message + '\n'); }
@@ -57,7 +84,16 @@ for (const file of allFiles) {
   if (!textExts.has(ext)) continue;
   if (markerScanExcluded.has(rel)) continue;
   const text = fs.readFileSync(file, 'utf8');
-  for (const marker of markers) if (text.includes(marker)) fail('Marker found in ' + rel + ': ' + marker);
+  const allowedConsoleLines = consoleLogAllowedLines(rel, text);
+  for (const marker of markers) {
+    if (marker === 'console.log' && allowedConsoleLines) {
+      const fileLines = text.split(/\r?\n/);
+      const strayLine = fileLines.findIndex((line, i) => line.includes('console.log') && !allowedConsoleLines.has(i));
+      if (strayLine !== -1) fail('Marker found in ' + rel + ': ' + marker + ' (line ' + (strayLine + 1) + ', outside allowed dev helpers)');
+      continue;
+    }
+    if (text.includes(marker)) fail('Marker found in ' + rel + ': ' + marker);
+  }
 }
 if (failures === 0) pass('Static site verification completed');
 else { process.stderr.write(String(failures) + ' verification issue(s) found.\n'); process.exitCode = 1; }

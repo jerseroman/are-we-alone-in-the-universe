@@ -116,7 +116,7 @@ function scanFiles() {
     path.join(root, 'CHANGELOG.md'),
     path.join(root, 'RELEASE_NOTES_v2.14.md'),
     path.join(root, 'RELEASE_NOTES_v2.15.md'),
-    path.join(root, 'RELEASE_NOTES_v2.16.md')
+    path.join(root, 'RELEASE_NOTES_v2.17.md')
   ];
 
   files.push(...walk(path.join(root, 'src'), file => file.endsWith('.js')));
@@ -406,7 +406,7 @@ const requiredSourceFragments = [
   },
   {
     label: 'corrected historical signal context wording',
-    value: 'In historical terms, that points roughly to'
+    value: 'In historical terms, this corresponds to'
   },
   {
     label: 'single-period historical context sentence helper',
@@ -433,8 +433,8 @@ const requiredSourceFragments = [
     value: 'Range / uncertainty interval'
   },
   {
-    label: 'galaxy preset model note',
-    value: 'Galaxy presets are model inputs'
+    label: 'galaxy settings model note',
+    value: 'Galaxy Settings are user-defined model inputs'
   },
   {
     label: 'sampled model interval wording',

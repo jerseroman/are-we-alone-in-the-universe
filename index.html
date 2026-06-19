@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
  <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -17,18 +17,18 @@
   <meta name="twitter:image" content="https://www.arewealoneintheuniverse.com/assets/images/Banner.jpg">
   <link rel="icon" type="image/webp" href="assets/images/site-logo.webp">
   <title>
-   Are We Alone in the Universe? Earth-like Planet Calculator   / Version 2.16
+   Are We Alone in the Universe? Earth-like Planet Calculator   / Version 2.17
   </title>
   <script async crossorigin="anonymous" id="MathJax-script" integrity="sha384-Wuix6BuhrWbjDBs24bXrjf4ZQ5aFeFWBuKkFekO2t8xFU0iNaLQfp2K6/1Nxveei" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"></script>
   <script crossorigin="anonymous" integrity="sha384-VzkrKzZ91/plZ4HYGoiYkmzTHxxDK2ezfxfzA5Sg/EhhKf9MY0SkYZ0pBd4yG1CF" src="https://cdn.jsdelivr.net/npm/apexcharts@5.12.0/dist/apexcharts.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&amp;family=Nunito:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
   <link crossorigin="anonymous" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" rel="stylesheet"/>
-  <link href="src/styles.css?v=site-v2.16-20260614" rel="stylesheet">
+  <link href="src/styles.css?v=site-v2.17-20260618" rel="stylesheet">
  </head>
  <body>
 <noscript>
   <div role="alert" style="background:#1c1e23;border:1px solid #d4a843;color:#f5f5f5;padding:12px 16px;margin:12px;border-radius:6px;font-family:Nunito,sans-serif;font-size:14px;line-height:1.5;">
-    <strong>JavaScript is required.</strong> This calculator needs JavaScript for preset loading, Monte Carlo, exports, and interpretation outputs. Static fallback values shown below may not reflect the active default preset (Kepler/Gaia · Bryson with Updated Kepler/Gaia observational prior).
+    <strong>JavaScript is required.</strong> This calculator needs JavaScript for preset loading, Monte Carlo, exports, and interpretation outputs. Static fallback values shown below may not reflect the active default preset (Kepler/Gaia · Bryson with no occurrence overlay active).
   </div>
 </noscript>
 <canvas id="starfield">
@@ -38,12 +38,12 @@
     <div class="header-eyebrow">
      Cosmic Earth Analog Calculator
      <span class="version-badge">
-      v2.16
+      v2.17
      </span>
     </div>
     <div class="header-inner">
      <div class="header-logo-wrap">
-      <img alt="Are We Alone in the Universe? Earth-like Planet Calculator logo" src="assets/images/site-logo.webp" onerror="this.onerror=null;this.style.display='none';"/>
+      <img id="site-logo" alt="Are We Alone in the Universe? Earth-like Planet Calculator logo" src="assets/images/site-logo.webp" onerror="this.onerror=null;this.style.display='none';"/>
      </div>
      <div class="header-text">
       <h1>
@@ -68,6 +68,11 @@
      <a class="top-link-btn report" href="https://github.com/jerseroman/are-we-alone-in-the-universe/issues/new" rel="noopener noreferrer" target="_blank">Report problem <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>
      <a class="top-link-btn github" href="https://github.com/jerseroman/are-we-alone-in-the-universe" rel="noopener noreferrer" target="_blank">GitHub <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>
      <a class="top-link-btn perplexity" href="https://www.perplexity.ai/?q=Analyze%20https%3A%2F%2Fwww.arewealoneintheuniverse.com%2F%20and%20explain%20how%20the%20Earth-like%20Planet%20Estimator%20works%2C%20what%20assumptions%20drive%20its%20estimates." rel="noopener noreferrer" target="_blank">Ask Perplexity <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>
+     <div class="theme-switch" role="group" aria-label="Color theme">
+      <div class="theme-switch-line" id="theme-switch-line"></div>
+      <button class="theme-switch-opt active" id="theme-opt-white" type="button" onclick="setTheme('light')">White</button>
+      <button class="theme-switch-opt" id="theme-opt-black" type="button" onclick="setTheme('dark')">Black</button>
+     </div>
     </div>
    </header>
    <div class="panel">
@@ -85,31 +90,39 @@
    </div>
    <div class="panel desc-panel">
   <h2>
-    Introduction
+    <strong>Introduction</strong>
    </h2>
 
   <div class="collapsible-section">
     <div class="collapsible-preview">
       <p>
-        The Milky Way is far more than a vast system of stars scattered across space. It is a galaxy that has been evolving for billions of years, carrying the record of a long cosmic history. And the Milky Way is only one among countless other galaxies in the observable universe, each with its own generations of stars, planets, and changing environments. Across these vast stretches of space and time, many worlds could have formed long before the Sun and Earth came into existence. Across roughly thirteen billion years of galactic history, many generations of stars, planetary systems, and chemically enriched environments could have formed before the Sun existed. Some worlds may have emerged around older stars, persisted billions of years before Earth, developed their own geological dynamics, and perhaps reached conditions compatible with the emergence or maintenance of life. Some of those worlds may still exist. Others may have become uninhabitable, been destroyed, or remained permanently inaccessible to us because of distance, time, and the limits of observation.
+        The Milky Way is far more than a vast collection of stars scattered through space. It is an evolving galaxy, shaped over billions of years and carrying within it the record of a long cosmic history. Yet the Milky Way is only one among countless galaxies in the observable universe, each with its own generations of stars, planets, and changing environments.
       </p>
     </div>
 
     <div class="collapsible-body">
       <p>
-        The question of whether we are alone cannot be reduced to the number of planets in space. It also depends on timing: when biospheres emerge, how long complex life persists, whether technological phases arise, and whether any trace of them can be detected from our present position. A biosphere or civilization that existed a billion years ago in another region of the Galaxy may have left no signal that remains detectable today. Even if a signal once existed, cosmic distance, the finite speed of light, short technological lifetimes, the loss of planetary habitability, or destructive astrophysical events could place it beyond practical detection.
+        Across these immense spans of space and time, many worlds may have formed long before the Sun and Earth came into existence. Over roughly thirteen billion years of galactic history, successive generations of stars, planetary systems, and chemically enriched environments could have produced planets older than our own. Some may have emerged around ancient stars, persisted for billions of years before Earth formed, developed their own geological and atmospheric dynamics, and perhaps reached conditions compatible with the emergence or maintenance of life.
       </p>
 
       <p>
-        In this context, failure to detect something should not be confused with evidence that it never existed. It marks the boundary of our observational position. A basic epistemological caution follows from this: existence, detectability in principle, and actual detection from our current historical moment are separate categories.
+        Some of those worlds may still exist. Others may have become uninhabitable, been destroyed, or remained permanently beyond our reach because of distance, time, and the limits of observation.
       </p>
 
       <p>
-        The observable universe contains an enormous but uncertain number of stars. Order of magnitude estimates usually place the total somewhere between 10²² and 10²⁴. These figures are not a direct count of every individual star. They come from astronomical observations, estimates of galaxy populations, stellar mass distributions, galaxy luminosities, and assumptions about faint, distant, and difficult to observe systems. They are best treated as a broad cosmological scale, not as a precisely measured total.
+        The question of whether we are alone, therefore, cannot be reduced simply to the number of planets in space. It is also a question of timing. When do biospheres emerge? How long does complex life persist? Do technological phases arise, and if they do, how long do they remain detectable? A biosphere or civilization that existed a billion years ago in another region of the Galaxy may have left no signal that is still detectable today. Even if such a signal once existed, cosmic distance, the finite speed of light, short technological lifetimes, loss of planetary habitability, or destructive astrophysical events could place it beyond practical detection.
       </p>
 
       <p>
-        Against that background, estimating the number of Earth-like worlds becomes a methodological problem rather than a simple counting exercise. A meaningful estimate must ask how many planets orbit suitable stars, how many lie within an appropriate orbital zone, how many are rocky, and how many could preserve water, an atmosphere, a stable climate, and the basic chemical conditions needed for more complex processes over long timescales. Each condition acts as a filter. When these filters are multiplied, small changes in assumptions can lead to sharply different results.
+        In this context, failure to detect something should not be confused with evidence that it never existed. It marks the boundary of our observational position. A basic epistemological distinction follows from this: existence, detectability in principle, and actual detection from our present historical moment are not the same thing.
+      </p>
+
+      <p>
+        The observable universe contains an enormous but uncertain number of stars. Order-of-magnitude estimates usually place the total somewhere between 10²² and 10²⁴. These figures are not direct counts of every individual star. They are inferred from astronomical observations, estimates of galaxy populations, stellar mass distributions, galaxy luminosities, and assumptions about faint, distant, and difficult-to-observe systems. They should therefore be understood as a broad cosmological scale, not as a precisely measured total.
+      </p>
+
+      <p>
+        Against this background, estimating the number of Earth-like worlds becomes a methodological problem rather than a simple counting exercise. A meaningful estimate must ask how many planets orbit suitable stars, how many lie within an appropriate orbital zone, how many are rocky, and how many could preserve water, an atmosphere, a stable climate, and the basic chemical conditions required for more complex processes over long timescales. Each condition acts as a filter. When these filters are multiplied, even small changes in assumptions can lead to sharply different results.
       </p>
 
       <p>
@@ -121,11 +134,15 @@
       </p>
 
       <p>
-        The main value of the calculator lies in its structure, not in any single number. The user can see which assumptions are active, how individual filters combine, which parameters drive the result most strongly, and how the output changes under more optimistic, more conservative, or more restrictive scenarios. The model does not turn uncertainty into certainty. It makes the sensitivity of the question visible.
+        The main value of the calculator lies in its structure, not in any single numerical result. It allows the user to see which assumptions are active, how individual filters combine, which parameters drive the result most strongly, and how the output changes under more optimistic, conservative, or restrictive scenarios. The model does not turn uncertainty into certainty. Instead, it makes the sensitivity of the question visible.
       </p>
 
       <p>
-        The calculator is best understood as a literature-informed exploratory model with mathematically valid Poisson distance estimates and simplified GHZ comparison geometries. It does not provide a final answer to whether Earth is unique. It creates a disciplined space for reasoning about what follows when certain assumptions are accepted, modified, or rejected. Its usefulness lies there. It does not replace observation, confirm life elsewhere, or predict civilizations. It helps show how quickly our conclusions about Earth-like worlds can change once hidden assumptions are made explicit.
+        The calculator is best understood as a literature-informed exploratory model, using mathematically valid Poisson distance estimates and simplified Galactic Habitable Zone comparison geometries. It does not provide a final answer to whether Earth is unique. Rather, it creates a disciplined space for reasoning about what follows when certain assumptions are accepted, modified, or rejected.
+      </p>
+
+      <p>
+        Its usefulness lies precisely there. It does not replace observation, confirm life elsewhere, or predict civilizations. It helps show how quickly our conclusions about Earth-like worlds can change once hidden assumptions are made explicit.
       </p>
 
       <p>
@@ -238,12 +255,12 @@
   <div class="collapsible-section">
     <div class="collapsible-preview">
       <p>
-        The calculator includes two observational-prior presets: <strong>Conservative Kepler-era</strong> and <strong>Updated Kepler/Gaia</strong>. These mainly adjust the rocky-planet and habitable-zone occurrence terms, while the scenario cards load broader literature-anchored or illustrative assumption sets.
+        The calculator includes three optional occurrence overlays: <strong>Conservative Kepler-era</strong>, <strong>Updated Kepler/Gaia posterior proxy</strong>, and <strong>Bryson η⊕ direct proxy</strong>. Conservative Kepler-era and Updated Kepler/Gaia are rocky/HZ occurrence overlays: they adjust only the rocky fraction (f_rocky) and habitable-zone fraction (f_HZ) inside the currently selected scenario, and they preserve the scenario's GHZ scale (N_GHZ), host-star fraction (f_sun_type), stellar-age filter (f_sun_age), and planets-per-star value (N_p_star). The Bryson η⊕ direct proxy is separate: it replaces the full factorized occurrence product N_p × f_rocky × f_HZ with the Bryson et al. 2021 η⊕ combined rocky habitable-zone occurrence rate as a single direct occurrence term. These overlays are distinct from the scenario cards: a scenario preset loads its own values but is not itself an occurrence overlay, and no overlay is active until one of the three buttons is clicked. η⊕ is an astronomy-side occurrence estimate only; it does not estimate abiogenesis, complex life, intelligence, detectability, or civilization lifetime.
       </p>
     </div>
     <div class="collapsible-body">
       <p>
-        These should be interpreted as parameter presets, not as a formal Bayesian posterior inference engine. In addition to the prior toggle, the calculator provides named scenario presets such as <strong>Consensus</strong>, <strong>High-End</strong>, <strong>Pessimist</strong>, and <strong>Kepler/Gaia</strong>, each paired with a short provenance note so the user can see which literature framing or interpretive stance is being loaded.
+        These should be interpreted as astronomy-only literature/posterior proxies, not as a formal Bayesian posterior inference engine for the full life-and-civilization chain. In addition to the prior toggle, the calculator provides named scenario presets such as <strong>Consensus</strong>, <strong>High-End</strong>, <strong>Pessimist</strong>, and <strong>Kepler/Gaia</strong>, each paired with a short provenance note so the user can see which literature framing or interpretive stance is being loaded.
       </p>
     </div>
     <button class="read-more-btn" onclick="toggleSection(this)">
@@ -260,7 +277,7 @@
     </div>
     <div class="collapsible-body">
       <p>
-        Parameters without usable uncertainty intervals remain fixed at their central value. Disabled optional filters are treated as neutral multiplicative factors. Active advanced modules may add or replace factors before the final planet count is computed. The default uncertainty mode keeps factors independent; an optional heuristic correlation scaffold can be enabled, but it is a modelling assumption, not a measured covariance matrix. The optional robust envelope is a parameterwise min/max bounds check, separate from the empirical q2.5–q97.5 Monte Carlo interval.
+        Parameters without usable uncertainty intervals remain fixed at their central value. Disabled optional filters are treated as neutral multiplicative factors. Active advanced modules may add or replace factors before the final planet count is computed. The default uncertainty mode keeps factors independent; an optional heuristic correlation scaffold can be enabled, but it is a modelling assumption, not a measured covariance matrix. The optional robust envelope is a sampled-parameter min/max bounds check, separate from the empirical q2.5–q97.5 Monte Carlo interval.
       </p>
     </div>
     <button class="read-more-btn" onclick="toggleSection(this)">
@@ -315,8 +332,8 @@
       <div class="preset-helper">
         Select a literature-anchored scenario or illustrative stress-test:
       </div>
-      <div class="preset-helper">
-        <em>(The calculator uses the Kepler/Gaia preset as its primary reference baseline, as it is most consistent with currently available observational data. The other presets are not presented as definitive estimates, but as research-oriented scenarios for examining how the result changes under different theoretical assumptions.)</em>
+      <div class="preset-helper preset-helper-note">
+        <em>(the calculator uses the kepler/gaia preset as its primary reference baseline, as it is most consistent with currently available observational data. the other presets are not presented as definitive estimates, but as research-oriented scenarios for examining how the result changes under different theoretical assumptions.)</em>
       </div>
       <div class="preset-grid">
         <button class="preset-btn kepler" data-preset="kepler" onclick="loadPreset('kepler')" type="button">
@@ -347,16 +364,45 @@
     </div>
 
     <div class="preset-section">
+      <!-- SECTION A: factorized rocky/HZ overlays. These keep the occurrence term as the
+           factorized product N_p_star × f_rocky × f_HZ and only adjust f_rocky / f_HZ. -->
       <div class="preset-section-title no-divider">
-        Observational Source Toggle <span>Separate Control</span>
+        Rocky/HZ Factorized Occurrence Overlays <span>Optional</span>
+      </div>
+      <div class="occurrence-section-desc">
+        <strong>Factorized modes.</strong> The active occurrence term stays
+        <strong>N_p_star × f_rocky × f_HZ</strong>; these buttons adjust only the rocky fraction (f_rocky)
+        and habitable-zone fraction (f_HZ) inside the selected scenario. They do not replace the scenario's
+        GHZ scale, host-star fraction, stellar-age filter, or planets-per-star value.
       </div>
       <div class="bayes-row">
-        <span class="epoch-label">f_HZ / f_rocky source:</span>
+        <span class="epoch-label">Factorized overlay:</span>
         <button class="bayes-btn" id="bayes-pre" aria-pressed="false" onclick="setBayesian('pre')" type="button">Conservative Kepler-era</button>
-        <button class="bayes-btn active" id="bayes-post" aria-pressed="true" onclick="setBayesian('post')" type="button">Updated Kepler/Gaia</button>
+        <button class="bayes-btn" id="bayes-post" aria-pressed="false" onclick="setBayesian('post')" type="button">Updated Kepler/Gaia posterior proxy</button>
+      </div>
+
+      <!-- SECTION B: direct η⊕ occurrence replacement. This is mathematically different: it replaces
+           the WHOLE occurrence product with a single η⊕ term and bypasses N_p_star / f_rocky / f_HZ. -->
+      <div class="preset-section-title dashed-divider" style="margin-top:16px;">
+        Direct η⊕ Occurrence Replacement <span>Optional</span>
+      </div>
+      <div class="occurrence-section-desc">
+        <strong>Direct mode (mathematically different).</strong> This <strong>replaces the whole occurrence
+        product</strong> N_p_star × f_rocky × f_HZ with Bryson et al. 2021 <strong>η⊕ = 0.60</strong> as a single
+        combined rocky-HZ occurrence term. In this mode N_p_star, f_rocky, and f_HZ are <strong>diagnostic only and
+        are not used in the calculation</strong>.
+      </div>
+      <div class="bayes-row">
+        <span class="epoch-label">Direct η⊕:</span>
+        <button class="bayes-btn" id="bayes-eta" aria-pressed="false" onclick="setBayesian('bryson_eta_direct')" type="button">Bryson η⊕ direct proxy</button>
         <span class="bayes-note" id="bayes-note">
-          <strong>Default - most up-to-date empirical baseline.</strong> Updated Kepler/Gaia occurrence priors for f_HZ and f_rocky, anchored in Bryson et al. 2021 using the Kepler DR25 planet-candidate catalog and Gaia-based stellar properties. Later Gaia releases further refine stellar radii but are not part of the original Bryson 2021 analysis. Switch to Conservative Kepler-era only for direct comparison with older Kepler-era literature.
+          <strong>Scenario astronomy values active.</strong> No occurrence overlay applied. The scenario card supplies its own N_GHZ, host-star, planets-per-star, rocky, and habitable-zone values. Conservative Kepler-era and Updated Kepler/Gaia adjust only the rocky/HZ occurrence fractions (f_rocky and f_HZ) inside the currently selected scenario. They do not replace the scenario's GHZ scale, host-star fraction, stellar-age filter, or planets-per-star value. Bryson η⊕ direct is separate: it replaces the full factorized occurrence product N_p × f_rocky × f_HZ with Bryson et al. 2021 η⊕ as a single combined rocky-HZ occurrence term, and it does not write the factorized fields. Switching away from Bryson η⊕ restores the scenario's factorized occurrence controls before applying the selected overlay. η⊕ is an astronomy-side occurrence estimate only. It does not estimate abiogenesis, complex life, intelligence, detectability, or civilization lifetime.
         </span>
+      </div>
+
+      <div class="active-calculation-state" id="active-calculation-state" aria-live="polite">
+        <div class="active-state-title">Active calculation state</div>
+        <div class="active-state-grid" id="active-calculation-state-body"></div>
       </div>
     </div>
   </div>
@@ -511,7 +557,13 @@
     </div>
 
     
+    <!-- The occurrence-mode banner (Bryson η⊕ direct only) is injected here at runtime by
+         renderOccurrenceModeBanner() and removed when no longer applicable. No static markup, so it
+         can never persist as a stale artifact. The canonical summary lives in the upper Active
+         Calculation State box. -->
+
     <div class="input-card physical" id="card-N_p_star">
+      <div class="eta-top-badge" id="eta-top-badge-N_p_star">Bypassed by η⊕</div>
       <div class="card-icons">
         <span class="calibration-badge calibration-li" tabindex="0" aria-label="Calibration status: literature-informed numerical prior" data-tooltip="Literature-informed numerical prior. Planet-occurrence studies support the approximate numerical context, but the displayed value combines occurrence domains and is a model prior rather than a directly quoted value.">LI</span>
         <div class="tooltip">
@@ -545,6 +597,7 @@
         </div>
       </div>
       <div class="input-note">Average planets per star.</div>
+      <div class="eta-replaced-note" id="eta-replaced-N_p_star" title="Bryson η⊕ direct mode replaces the whole occurrence product N_p_star × f_rocky × f_HZ with η⊕ = 0.60. This value is shown for diagnostic comparison only and is not used in the deterministic, Monte Carlo, or export calculation.">BYPASSED BY η⊕ NOT USED</div>
       <div class="lit-range source-links">
         <span>Literature-informed range: 1.0 ~ 2.5   /</span>
         <a class="source-link" href="https://doi.org/10.1038/nature10684" target="_blank" rel="noopener noreferrer" aria-label="Open source: Cassan et al. 2012">Cassan et al. 2012 <span class="source-link-icon" aria-hidden="true">↗</span></a>
@@ -555,6 +608,7 @@
 
     
     <div class="input-card physical" id="card-f_composition">
+      <div class="eta-top-badge" id="eta-top-badge-f_composition">Bypassed by η⊕</div>
       <div class="card-icons">
         <span class="calibration-badge calibration-li" tabindex="0" aria-label="Calibration status: literature-informed numerical prior" data-tooltip="Literature-informed numerical prior. Radius-valley and rocky/non-rocky transition literature supports the approximate numerical context, but the displayed value is a model prior rather than a directly quoted occurrence value.">LI</span>
         <div class="tooltip">
@@ -588,6 +642,7 @@
         </div>
       </div>
       <div class="input-note">Fraction of rocky planets in the base model.</div>
+      <div class="eta-replaced-note" id="eta-replaced-f_composition" title="Bryson η⊕ direct mode replaces the whole occurrence product N_p_star × f_rocky × f_HZ with η⊕ = 0.60. This value is shown for diagnostic comparison only and is not used in the deterministic, Monte Carlo, or export calculation.">BYPASSED BY η⊕ NOT USED</div>
       <div class="lit-range source-links">
         <span>Literature-informed model range: 0.15 ~ 0.35   /</span>
         <a class="source-link" href="https://doi.org/10.1088/0004-637X/807/1/45" target="_blank" rel="noopener noreferrer" aria-label="Open source: Dressing &amp; Charbonneau 2015">Dressing &amp; Charbonneau 2015 <span class="source-link-icon" aria-hidden="true">↗</span></a>
@@ -598,6 +653,7 @@
 
     
     <div class="input-card physical" id="card-f_orbit">
+      <div class="eta-top-badge" id="eta-top-badge-f_orbit">Bypassed by η⊕</div>
       <div class="card-icons">
         <span class="calibration-badge calibration-li" tabindex="0" aria-label="Calibration status: literature-informed numerical prior" data-tooltip="Literature-informed numerical prior. Bryson and Kopparapu support the approximate habitable-zone occurrence and boundary context, but this displayed value is a model factor, not a directly quoted single-paper probability.">LI</span>
         <div class="tooltip">
@@ -629,6 +685,7 @@
         </div>
       </div>
       <div class="input-note">Fraction of rocky planets inside the habitable zone.</div>
+      <div class="eta-replaced-note" id="eta-replaced-f_orbit" title="Bryson η⊕ direct mode replaces the whole occurrence product N_p_star × f_rocky × f_HZ with η⊕ = 0.60. This value is shown for diagnostic comparison only and is not used in the deterministic, Monte Carlo, or export calculation.">BYPASSED BY η⊕ NOT USED</div>
       <div class="lit-range source-links">
         <span>Literature-informed model range: 0.10 ~ 0.21   /</span>
         <a class="source-link" href="https://doi.org/10.3847/1538-3881/abc418" target="_blank" rel="noopener noreferrer" aria-label="Open source: Bryson et al. 2021">Bryson et al. 2021 <span class="source-link-icon" aria-hidden="true">↗</span></a>
@@ -1081,11 +1138,11 @@
       <label>Monte Carlo Iterations</label>
       <div class="param-inputs">
         <div class="param-mean-row">
-          <input id="iterations" max="20000" min="1000" step="100" type="number" value="2000">
+          <input id="iterations" max="200000" min="1000" step="100" type="number" value="2000">
         </div>
       </div>
       <div class="input-note">Number of simulation draws.</div>
-      <div class="input-note">Max: 20,000. Higher input is automatically clamped to 20,000.</div>
+      <div class="input-note">Max: 200,000. Higher input is automatically clamped to 200,000.</div>
     </div>
 
     
@@ -1996,6 +2053,7 @@
      </span>
     </div>
     <div id="galaxy-options" style="display:none; margin-top:10px;">
+     <input id="galaxy-preset" type="hidden" value="custom"/>
      <div class="galaxy-inner-grid">
       <div class="input-card physical">
        <label>
@@ -2019,28 +2077,6 @@
       </div>
       <div class="input-card physical">
        <label>
-        Galaxy Preset
-       </label>
-       <select id="galaxy-preset">
-        <option value="mw">
-         Milky Way (MW)
-        </option>
-        <option value="m31">
-         Andromeda (M31)
-        </option>
-        <option value="m81">
-         Bode's (M81)
-        </option>
-        <option value="ngc5128">
-         Centaurus A (NGC 5128)
-        </option>
-        <option value="custom">
-         Custom Galaxy X
-        </option>
-       </select>
-      </div>
-      <div class="input-card physical">
-       <label>
         Distance from Earth (light years)
        </label>
        <div class="param-inputs">
@@ -2053,9 +2089,47 @@
        </div>
       </div>
      </div>
+     <div class="distance-models-title" style="margin-top:10px;">N<sub>GHZ</sub> Scaling Mode</div>
+     <div class="distance-models-row">
+      <label class="distance-model-option" for="galaxy-scaling-manual">
+       <input checked="" id="galaxy-scaling-manual" name="galaxy-scaling-mode" type="radio" value="manual"/>
+       <span class="toggle-label-text">Manual / use N<sub>GHZ</sub> field directly</span>
+      </label>
+      <label class="distance-model-option" for="galaxy-scaling-simple">
+       <input id="galaxy-scaling-simple" name="galaxy-scaling-mode" type="radio" value="simple"/>
+       <span class="toggle-label-text">Simple scaling / Total Stars × GHZ Fraction</span>
+      </label>
+      <label class="distance-model-option" for="galaxy-scaling-radial">
+       <input id="galaxy-scaling-radial" name="galaxy-scaling-mode" type="radio" value="radial"/>
+       <span class="toggle-label-text">Radial GHZ Integrator / physics-based density profile</span>
+      </label>
+     </div>
+     <div id="galaxy-simple-opts" class="galaxy-inner-grid" style="display:none; margin-top:8px;">
+      <div class="input-card physical">
+       <label>Total Stars in Galaxy</label>
+       <div class="param-inputs">
+        <div class="param-mean-row">
+         <input id="galaxy-total-stars" min="0" step="1000000000" type="number" value="200000000000"/>
+        </div>
+       </div>
+       <div class="input-note">Total stellar population of Galaxy X. Milky Way reference: 200 billion.</div>
+      </div>
+      <div class="input-card physical">
+       <label>GHZ Fraction</label>
+       <div class="param-inputs">
+        <div class="param-mean-row">
+         <input id="galaxy-ghz-fraction" max="1" min="0" step="0.001" type="number" value="0.05"/>
+        </div>
+       </div>
+       <div class="input-note">Fraction of stars in the Galactic Habitable Zone. Effective N<sub>GHZ</sub> = Total Stars × Fraction.</div>
+      </div>
+     </div>
+     <div id="galaxy-radial-note" class="input-note" style="display:none; margin-top:6px;">
+      Radial mode computes N<sub>GHZ</sub> from an exponential disk density profile weighted by metallicity and supernova survival. Advanced Modules → Radial GHZ Integrator controls the profile parameters.
+     </div>
      <div class="input-note galaxy-source-note">
-      Galaxy presets are model inputs. Star counts and geometry are approximate and should be treated as configurable priors unless a specific source table is selected.
-      <span class="calibration-badge calibration-li" tabindex="0" aria-label="Calibration status: literature-informed numerical prior" data-tooltip="Literature-informed numerical prior. Galaxy preset star counts and geometry use approximate numerical context, but each displayed value is a model prior rather than a directly quoted value from one source table. M31 and Centaurus A require future recalibration from a consistent stellar-mass/star-count source table.">LI</span>
+      Galaxy X is a user-defined scaling scenario. It estimates effective GHZ star count from total stars × GHZ fraction. It is not a galaxy-specific chemical-evolution GHZ model.
+      <span class="calibration-badge calibration-mp" tabindex="0" aria-label="Calibration status: user-defined scaling proxy" data-tooltip="User-defined scaling proxy. This mode does not apply galaxy-specific chemical-evolution or metallicity-gradient models. All parameters are user-specified priors.">MP</span>
      </div>
      <div class="distance-models-title">
       Distance Models
@@ -2115,7 +2189,7 @@
      </div>
 
      <div class="ceq-group">
-      <div class="ceq-label">Nearest-neighbour distance — uniform models</div>
+      <div class="ceq-label">Nearest-neighbour distance / uniform models</div>
       <div class="ceq-formula">\[ \text{2D annulus:}\quad \lambda = \frac{N}{A_{\mathrm{GHZ}}}, \quad E[R] = \frac{\Gamma(3/2)}{(\lambda \pi)^{1/2}} \]</div>
       <div class="ceq-formula">\[ \text{3D disk:}\quad \lambda = \frac{N}{V_{\mathrm{disk}}}, \quad E[R] = \frac{\Gamma(4/3)}{\left(\lambda \cdot \frac{4\pi}{3}\right)^{1/3}} \]</div>
       <div class="ceq-note">The radial GHZ model uses a non-uniform density profile instead of a flat λ; see Distance Model Method docs.</div>
@@ -2312,8 +2386,8 @@
      <span style="display:block;margin-top:6px;font-size:9px;color:var(--text-dim);">Method: variance-based global sensitivity (Saltelli et al. 2010, <em>Computer Physics Communications</em>), more rigorous than local derivatives because it scans the full parameter range, not just a single point.</span>
     </div>
     <div class="sobol-legend">
-     <span><span class="sobol-legend-dot" style="background:#1a5fd4;"></span> Direct effect (S₁ 〰 how much this parameter alone moves the result)</span>
-     <span><span class="sobol-legend-dot" style="background:#39ff8a;"></span> Total effect (T<sub>i</sub> 〰 including all interactions with other parameters)</span>
+     <span><span class="sobol-legend-dot sobol-bar-S"></span> Direct effect (S₁ 〰 how much this parameter alone moves the result)</span>
+     <span><span class="sobol-legend-dot sobol-bar-T"></span> Total effect (T<sub>i</sub> 〰 including all interactions with other parameters)</span>
     </div>
     <div id="sobol-bars"></div>
     <div style="font-size:9.5px;color:var(--text-dim);margin-top:10px;line-height:1.6;border-top:1px solid var(--border);padding-top:8px;" id="sobol-note"></div>
@@ -2456,17 +2530,17 @@
     </div>
    </div>
    <div class="footer">
-    <span>© Are We Alone in the Universe? Research modelling tool v2.16   / Also by the author of: <a href="https://www.apocalypseclock.com/" rel="noopener noreferrer" target="_blank" style="text-decoration:none;color:inherit;">Apocalypse Clock</a></span>
+    <span>© Are We Alone in the Universe? Research modelling tool v2.17   / Also by the author of: <a href="https://www.apocalypseclock.com/" rel="noopener noreferrer" target="_blank" style="text-decoration:none;color:inherit;">Apocalypse Clock</a></span>
    </div>
   </div>
   <div id="copy-tooltip">
    Copied!
   </div>
-  <script src="src/scientific-parameters.js?v=site-v2.16-20260614"></script>
-  <script src="src/calculator-core.js?v=site-v2.16-20260614"></script>
-<script src="src/charts.js?v=site-v2.16-20260614"></script>
-<script src="src/share.js?v=site-v2.16-20260614"></script>
-<script src="src/accessibility.js?v=site-v2.16-20260614"></script>
-<script src="src/app.js?v=site-v2.16-20260614"></script>
+  <script src="src/scientific-parameters.js?v=site-v2.17-20260618"></script>
+  <script  src="src/calculator-core.js?v=site-v2.17-20260618"></script>
+<script src="src/charts.js?v=site-v2.17-20260618"></script>
+<script  src="src/share.js?v=site-v2.17-20260618"></script>
+<script src="src/accessibility.js?v=site-v2.17-20260618"></script>
+<script  src="src/app.js?v=site-v2.17-20260618"></script>
  </body>
 </html>

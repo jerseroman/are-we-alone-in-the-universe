@@ -14,7 +14,7 @@ authors:
 affiliations:
   - name: Independent researcher, Slovenia
     index: 1
-date: 14 June 2026
+date: 18 June 2026
 bibliography: paper.bib
 ---
 
@@ -22,7 +22,7 @@ bibliography: paper.bib
 
 *Are We Alone in the Universe? Earth-like Planet Calculator* is a browser-based research and communication tool for exploring how uncertain astrophysical and planetary assumptions propagate into estimates of potentially Earth-like planetary candidates in the Milky Way and in an observable-universe scaling. The software is not a catalogue of confirmed habitable planets and does not claim detections of life or civilizations. Instead, it provides an auditable scenario model in which users can inspect assumptions, compare presets, vary uncertain inputs, run Monte Carlo uncertainty propagation, and export structured results.
 
-The calculator is designed for astrobiology-adjacent sensitivity analysis, reproducible popular-science communication, and methods teaching. It combines occurrence-rate reasoning from exoplanet demographics, Galactic Habitable Zone constraints, and optional planetary filters such as moon stabilization, magnetosphere-related protection, water delivery, and bioessential-element availability. Version 2.16 adds reproducible Monte Carlo seed controls, stronger export validation, chart/data/package exports, formula-display regression checks, and a clearer statement that the calculator is a literature-informed exploratory model with mathematically valid Poisson distance estimates and simplified GHZ comparison geometries.
+The calculator is designed for astrobiology-adjacent sensitivity analysis, reproducible popular-science communication, and methods teaching. It combines occurrence-rate reasoning from exoplanet demographics, Galactic Habitable Zone constraints, and optional planetary filters such as moon stabilization, magnetosphere-related protection, water delivery, and bioessential-element availability. Version 2.17 adds a default paper-white light theme, a single user-defined Custom Galaxy X scaling model, unified effective `N_GHZ` resolution across deterministic and Monte Carlo paths, expanded galaxy-scaling export provenance, and clearer SETI/Fermi historical-context wording around light-travel time. It also separates scenario astronomy values from optional rocky/habitable-zone occurrence overlays and a Bryson et al. `\eta_{\oplus}` direct occurrence mode; this `\eta_{\oplus}` term is used only for the astronomy-side occurrence product and is not a model for abiogenesis, life, intelligence, detectability, or civilization lifetime.
 
 # Statement of need
 
@@ -42,7 +42,7 @@ The central design decision is to separate the scientific model from the present
 
 The core architecture therefore uses explicit parameter objects, named presets, deterministic calculations, seeded Monte Carlo sampling, validation warnings, and exportable JSON-style outputs. The model is intentionally scenario-based. Baseline estimates can be run with conservative, consensus, high-end, or custom assumptions, while additional planetary modules are framed as optional multiplicative filters rather than as confirmed necessary conditions for life. This design preserves scientific caution: the software can ask how estimates change if a filter is imposed, but it does not claim that the filter is empirically established as necessary or sufficient.
 
-Version 2.16 further clarifies this epistemic boundary. The new release emphasizes reproducible uncertainty export, release-auditable warnings, formula-display integrity, and stronger documentation around model scope. The trade-off is deliberate: rather than maximizing physical completeness, the software maximizes inspectability, reproducibility, and falsifiability of assumptions. This makes it useful as a teaching and sensitivity-analysis instrument, while leaving detailed astrophysical, geophysical, and atmospheric simulation to specialist packages.
+Version 2.17 further clarifies this epistemic boundary. The new release emphasizes readable theme control, explicit Custom Galaxy X scaling, single-source `N_GHZ` provenance, release-auditable exports, and less ambiguous historical signal-travel wording. The trade-off is deliberate: rather than maximizing physical completeness, the software maximizes inspectability, reproducibility, and falsifiability of assumptions. This makes it useful as a teaching and sensitivity-analysis instrument, while leaving detailed astrophysical, geophysical, and atmospheric simulation to specialist packages.
 
 # Research impact statement
 

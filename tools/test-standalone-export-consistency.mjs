@@ -250,7 +250,7 @@ function smokeTestShareSeedMetadata() {
     simulationCompleted: false,
     activePreset: 'test-preset',
     galaxyName: 'Milky Way',
-    bayesianMode: 'updated',
+    astronomyOverrideMode: null,
     currentScale: 'galaxy',
     fermiMode: 'dt',
     intervalsVisible: true,
@@ -260,6 +260,21 @@ function smokeTestShareSeedMetadata() {
     isXEnabled: false,
     ADV: { enabled: false, modules: {} },
     isGalaxySettingsEnabled: false,
+    galaxyScalingMode: 'manual',
+    MW_TOTAL_STARS: 200000000000,
+    MW_DEFAULT_GHZ_FRACTION: 0.05,
+    getEffectiveNGHZ() {
+      return { value: 1e10, source: 'manual_raw_N_GHZ', metadata: null };
+    },
+    getNGHZSource() {
+      return 'manual_raw_N_GHZ';
+    },
+    sanitizePositiveInput() {
+      return 1e10;
+    },
+    pf(id, fallback) {
+      return fallback;
+    },
     monteCarloBoundsMode: null,
     monteCarloUncertaintyBasisLabel: null,
     deterministicPlanets: 12,
@@ -301,6 +316,14 @@ function smokeTestShareSeedMetadata() {
     },
     getScenarioState() {
       return { label: 'test' };
+    },
+    getAstronomyPriorExportSnapshot() {
+      return {
+        astronomy_override_mode: null,
+        source_label: 'Scenario astronomy values',
+        astronomy_model_type: 'scenario_factorized',
+        occurrence_mode: 'factorized'
+      };
     },
     downloadBlob() {}
   };
