@@ -1,4 +1,4 @@
-﻿function byId(id) {
+function byId(id) {
   return document.getElementById(id);
 }
 
@@ -106,7 +106,7 @@ function fmtExistencePct(prob, plain = false) {
   else if (inv >= 1e6)  odds = 'about 1 in ' + (inv / 1e6).toFixed(1) + ' million';
   else                  odds = 'about 1 in ' + Math.round(inv).toLocaleString();
 
-  const sep = plain ? ' / ' : ' · ';
+  const sep = plain ? ' / ' : ' / ';
   return pctStr + sep + odds;
 }
 
@@ -769,9 +769,9 @@ const SIM_CORRELATION_LABELS = {
 
 const MONTE_CARLO_BOUNDS_LABELS = {
   presetLocal: 'Scenario-local preset uncertainty',
-  modifiedPresetLocal: 'Modified preset-local uncertainty · Uses visible bounds for edited fields and preset-local uncertainty for unchanged preset fields',
-  customInput: 'Custom input uncertainty · Uses visible input bounds',
-  globalEnvelope: 'Global exploratory envelope · Not local preset uncertainty'
+  modifiedPresetLocal: 'Modified preset-local uncertainty / Uses visible bounds for edited fields and preset-local uncertainty for unchanged preset fields',
+  customInput: 'Custom input uncertainty / Uses visible input bounds',
+  globalEnvelope: 'Global exploratory envelope / Not local preset uncertainty'
 };
 
 const PRESET_PUBLIC_LABELS = {
@@ -884,7 +884,7 @@ const ADV = {
 
 const PRESETS = {
   pessimist: {
-    label: 'Pessimist · Rare Earth Stress Test',
+    label: 'Pessimist / Rare Earth Stress Test',
     source: 'Rare Earth / Hart 1975 / Hanson 1998',
     description:
       'An illustrative restrictive stress-test: Hart motivates the Fermi-absence tension, Rare Earth motivates strong biological/geophysical filters, and Hanson motivates the Great Filter framing. The numeric chain is not a Hart point-estimate table.',
@@ -908,7 +908,7 @@ const PRESETS = {
     enableX: false
   },
   consensus: {
-    label: 'Consensus · Lineweaver',
+    label: 'Consensus / Lineweaver',
     source: 'Lineweaver 2004',
     description:
       'Lineweaver anchors the Galactic Habitable Zone and age terms; N_GHZ is a balanced conservative GHZ star-count prior, not directly quoted by Lineweaver.',
@@ -932,7 +932,7 @@ const PRESETS = {
     enableX: false
   },
   optimist: {
-    label: 'High-End · Literature Bounds',
+    label: 'High-End / Literature Bounds',
     source: 'Illustrative upper-range stress test',
     description:
       'High-end values drawn from the upper side of the displayed literature-informed ranges. N_GHZ is an upper Lineweaver-style GHZ prior, not a direct star-count reported by Lineweaver.',
@@ -956,7 +956,7 @@ const PRESETS = {
     enableX: false
   },
   kepler: {
-    label: 'Kepler/Gaia · Bryson',
+    label: 'Kepler/Gaia / Bryson',
     source: 'Bryson et al. 2021',
     description:
       'Updates the observational rocky/HZ priors using Kepler DR25 plus Gaia-era occurrence-rate constraints. Bryson reports eta-Earth as a combined occurrence metric, so this split into factors is a model approximation; N_GHZ remains the balanced Lineweaver-informed GHZ prior.',
@@ -4078,7 +4078,7 @@ function calculateDeterministic() {
   hasDeterministicCalculation = true;
 
   byId('deterministicResult').innerHTML =
-    `<span class="result-label">DETERMINISTIC ·</span> ${fmtN(N)} modelled Earth-like candidates in ${galaxyName}${lifeLabel()}`;
+    `<span class="result-label">DETERMINISTIC /</span> ${fmtN(N)} modelled Earth-like candidates in ${galaxyName}${lifeLabel()}`;
   if (byId('whereAreTheyBtn')) byId('whereAreTheyBtn').disabled = false;
   renderResultRealityCheck();
   renderCalculationConsole();
@@ -4432,11 +4432,11 @@ function applyMonteCarloSummary(summary) {
     monteCarloState = 'not-run';
     if (byId('monteCarloResult')) {
       byId('monteCarloResult').innerHTML =
-        `<span class="result-label">${errorCode} ·</span> ${escapeHtml(errorText)}`;
+        `<span class="result-label">${errorCode} /</span> ${escapeHtml(errorText)}`;
     }
     if (byId('monteCarloMedian')) byId('monteCarloMedian').textContent = '';
     if (byId('stats')) byId('stats').innerHTML =
-      '<span class="result-label">Monte Carlo interval unavailable ·</span> no valid samples';
+      '<span class="result-label">Monte Carlo interval unavailable /</span> no valid samples';
     if (typeof renderConfigurationWarnings === 'function') renderConfigurationWarnings();
     if (typeof renderConvergenceSummary === 'function') renderConvergenceSummary();
     if (typeof renderSimulationMethodSummary === 'function') renderSimulationMethodSummary();
@@ -4484,17 +4484,17 @@ function applyMonteCarloSummary(summary) {
 
   if (byId('monteCarloResult')) {
     byId('monteCarloResult').innerHTML =
-      `<span class="result-label">MONTE CARLO Q50 MEDIAN ·</span> ${fmtN(mcMedianQ50)} modelled Earth-like candidates in ${galaxyName}${lifeLabel()} <span style="font-size:10px;color:var(--text-dim)">(sample median; methodological primary)</span>`;
+      `<span class="result-label">MONTE CARLO Q50 MEDIAN /</span> ${fmtN(mcMedianQ50)} modelled Earth-like candidates in ${galaxyName}${lifeLabel()} <span style="font-size:10px;color:var(--text-dim)">(sample median; methodological primary)</span>`;
   }
 
   if (byId('monteCarloMedian')) {
     byId('monteCarloMedian').innerHTML =
-      `<span class="result-label">MC ARITHMETIC MEAN ·</span> ${fmtN(mcArithmeticMean)} modelled Earth-like candidates in ${galaxyName}${lifeLabel()} <span style="font-size:10px;color:var(--text-dim)">(reference only; drifts above median for multiplicative chains due to Jensen's inequality)</span>`;
+      `<span class="result-label">MC ARITHMETIC MEAN /</span> ${fmtN(mcArithmeticMean)} modelled Earth-like candidates in ${galaxyName}${lifeLabel()} <span style="font-size:10px;color:var(--text-dim)">(reference only; drifts above median for multiplicative chains due to Jensen's inequality)</span>`;
   }
 
   if (byId('stats')) {
     byId('stats').innerHTML =
-      `<span class="result-label">95% SAMPLED MODEL INTERVAL ·</span> [${fmtN(mcQ025)}, ${fmtN(mcQ975)}] <span style="font-size:10px;color:var(--text-dim)">(q2.5–q97.5; not an observational confidence interval)</span>`;
+      `<span class="result-label">95% SAMPLED MODEL INTERVAL /</span> [${fmtN(mcQ025)}, ${fmtN(mcQ975)}] <span style="font-size:10px;color:var(--text-dim)">(q2.5–q97.5; not an observational confidence interval)</span>`;
   }
 
   if (typeof renderResultRealityCheck === 'function') renderResultRealityCheck();
@@ -4684,7 +4684,7 @@ function getDistanceBasisHtml(scenario, countBasisLabel) {
           : 'nearest-neighbour distance scale, not a detected planet distance';
 
   return (
-    `<span class="result-label">DISTANCE BASIS ·</span> ${modelLabel}; ` +
+    `<span class="result-label">DISTANCE BASIS /</span> ${modelLabel}; ` +
     `${countBasisLabel}; ${kindLabel}.<br>`
   );
 }
@@ -4748,7 +4748,7 @@ function buildDistanceScenario(count, ciLowCount = null, ciHighCount = null) {
     return {
       kind: 'sparse',
       html:
-        `<span class="result-label">DISTANCE ·</span> Expected count < 1. ` +
+        `<span class="result-label">DISTANCE /</span> Expected count < 1. ` +
         `P(at least one modelled candidate) = <span class="bold-number">${fmtExistencePct(pAtLeastOne)}</span>. ` +
         `Nearest-distance estimate suppressed in this sparse regime.`,
       refModel: null,
@@ -4765,8 +4765,8 @@ function buildDistanceScenario(count, ciLowCount = null, ciHighCount = null) {
       kind: 'external',
       html:
         earthDist === null
-          ? '<span class="result-label">DISTANCE ·</span> Galaxy X · distance from Earth unknown.'
-          : `<span class="result-label">DISTANCE ·</span> Foreign galaxy · <span class="bold-number">${fmtN(earthDist)}</span> light years from Earth.`,
+          ? '<span class="result-label">DISTANCE /</span> Galaxy X / distance from Earth unknown.'
+          : `<span class="result-label">DISTANCE /</span> Foreign galaxy / <span class="bold-number">${fmtN(earthDist)}</span> light years from Earth.`,
       refModel: null,
       fermiDistance: earthDist,
       metrics: null
@@ -4777,7 +4777,7 @@ function buildDistanceScenario(count, ciLowCount = null, ciHighCount = null) {
     return {
       kind: 'no-model',
       html:
-        '<span class="result-label">DISTANCE ·</span> No geometric distance model selected. Enable at least one distance model to derive a nearest-neighbour estimate.',
+        '<span class="result-label">DISTANCE /</span> No geometric distance model selected. Enable at least one distance model to derive a nearest-neighbour estimate.',
       refModel: null,
       fermiDistance: null,
       metrics: null
@@ -4819,7 +4819,7 @@ function buildSparseFermiContext(count, options = {}) {
     mode,
     distLy: null,
     html:
-      `<strong>${sourceShort} · no stable nearest-neighbour estimate in this sparse regime</strong><br><br>` +
+      `<strong>${sourceShort} / no stable nearest-neighbour estimate in this sparse regime</strong><br><br>` +
       `➤ The expected count under the current filters is below <strong>1</strong>, so the script does not show a nearest-distance estimate here.<br><br>` +
       `➤ Instead, the most meaningful summary is the existence probability: <strong>${fmtExistencePct(pAtLeastOne)}</strong> for at least one such world in ${galaxyName}.<br><br>` +
       `➤ In plain terms: this scenario implies fewer than one expected on average; the probability is not zero unless the expected count is zero.<br><br>` +
@@ -4896,7 +4896,7 @@ function buildFermiContext(distLy, refModel = null, options = {}) {
   if (detection) {
     const setiItemStyle = 'style="padding:7px 8px;border-left:2px solid rgba(78,204,163,0.48);background:rgba(255,255,255,0.018);font-size:10px;line-height:1.6;"';
     let waitItem =
-      `<div ${setiItemStyle}><strong>Temporal Poisson view · time to first signal</strong><br>` +
+      `<div ${setiItemStyle}><strong>Temporal Poisson view / time to first signal</strong><br>` +
       `Unavailable because the expected active detectable count is zero in the current calculator state.<br>` +
       `<span class="fermi-subnote">This waiting time is a temporal Poisson expectation, not a light-travel distance and not a distance to a source.</span></div>`;
 
@@ -4906,7 +4906,7 @@ function buildFermiContext(distLy, refModel = null, options = {}) {
       const ratePerYear = detection.N_det / detection.L;
       const ratePer1Myr = 1e6 / waitMean;
       waitItem =
-        `<div ${setiItemStyle}><strong>Temporal Poisson view · time to first signal</strong><br>` +
+        `<div ${setiItemStyle}><strong>Temporal Poisson view / time to first signal</strong><br>` +
         `Mean waiting time: <span class="bold-number">${fmtSetiWait(waitMean)}</span><br>` +
         `Median waiting time: <span class="bold-number">${fmtSetiWait(waitMedian)}</span><br>` +
         `<div class="fermi-subnote" style="margin-top:4px;">` +
@@ -4919,7 +4919,7 @@ function buildFermiContext(distLy, refModel = null, options = {}) {
     }
 
     let distanceItem =
-      `<div ${setiItemStyle}><strong>Spatial Poisson view · detectable-transmitter scale</strong><br>` +
+      `<div ${setiItemStyle}><strong>Spatial Poisson view / detectable-transmitter scale</strong><br>` +
       `No finite Poisson detectable-transmitter distance scale is available in the current calculator state.</div>`;
 
     if (Number.isFinite(detection.d_nearest_det) && detection.d_nearest_det > 0) {
@@ -4931,7 +4931,7 @@ function buildFermiContext(distLy, refModel = null, options = {}) {
         : ` This scale lies within the current detection horizon under these assumptions.`;
 
       distanceItem =
-        `<div ${setiItemStyle}><strong>Spatial Poisson view · detectable-transmitter scale</strong><br>` +
+        `<div ${setiItemStyle}><strong>Spatial Poisson view / detectable-transmitter scale</strong><br>` +
         `<span class="bold-number">${fmtN(detection.d_nearest_det)}</span> light years. This is a statistical distance scale implied by the low active-detectable density, not a located transmitter.${horizonText}${horizonNote}</div>`;
     }
 
@@ -4960,7 +4960,7 @@ function buildFermiContext(distLy, refModel = null, options = {}) {
     }
 
     const interpretationItem =
-      `<div ${setiItemStyle}><strong>Model interpretation · expected non-detection</strong><br>` +
+      `<div ${setiItemStyle}><strong>Model interpretation / expected non-detection</strong><br>` +
       `Expected non-detection is mainly driven by ${ensureSentenceEnd(diagnosis)} This is a signal-detection diagnostic, not a claim about a specific nearest transmitter.</div>`;
 
     const pTemporal = Math.max(0, detection.p_temporal_pct / 100);
@@ -5024,7 +5024,7 @@ function buildFermiContext(distLy, refModel = null, options = {}) {
   }
 
   const text = `
-    <strong>${sourceShort} · modelled candidate distance scale (${refModel ? refModel.modelLabel : 'external distance reference'}): ~${fmtN(distLy)} light years</strong><br><br>
+    <strong>${sourceShort} / modelled candidate distance scale (${refModel ? refModel.modelLabel : 'external distance reference'}): ~${fmtN(distLy)} light years</strong><br><br>
     ➤ A radio signal travelling at light speed would take <strong>${fmtN(signalTime)}</strong> years to reach us ∼ ${starCtx}.<br><br>
     ➤ If a civilisation were located that far away, its signal would have had to leave its source about <strong>${fmtN(signalTime)}</strong> years ago to reach us today. ${historicalContextText}.<br><br>
     ➤ A round-trip exchange would take <strong>${fmtN(roundTrip)}</strong> years.<br><br>
@@ -5195,13 +5195,13 @@ function computeARD() {
   if (!el) return { ard, hz_i, hz_o, fractionRetained: retainedFraction };
 
   if (ard < hz_i) {
-    el.innerHTML = `✓ ARD (${ard.toFixed(3)} AU) < HZ inner (${hz_i.toFixed(3)} AU) · <strong>100% of HZ retains atmosphere</strong>`;
+    el.innerHTML = `✓ ARD (${ard.toFixed(3)} AU) < HZ inner (${hz_i.toFixed(3)} AU) / <strong>100% of HZ retains atmosphere</strong>`;
     el.style.color = 'var(--green)';
   } else if (ard > hz_o) {
-    el.innerHTML = `✗ ARD (${ard.toFixed(3)} AU) > HZ outer (${hz_o.toFixed(3)} AU) · <strong>No atmosphere-safe HZ</strong>`;
+    el.innerHTML = `✗ ARD (${ard.toFixed(3)} AU) > HZ outer (${hz_o.toFixed(3)} AU) / <strong>No atmosphere-safe HZ</strong>`;
     el.style.color = 'var(--red)';
   } else {
-    el.innerHTML = `⚠ ARD (${ard.toFixed(3)} AU) cuts into HZ · <strong>${(retainedFraction * 100).toFixed(0)}% retains atmosphere</strong>`;
+    el.innerHTML = `⚠ ARD (${ard.toFixed(3)} AU) cuts into HZ / <strong>${(retainedFraction * 100).toFixed(0)}% retains atmosphere</strong>`;
     el.style.color = 'var(--yellow)';
   }
 
@@ -5252,9 +5252,9 @@ function computeTemporal() {
 
   byId('adv-temporal-timeline').innerHTML = svg;
   byId('adv-temporal-text').innerHTML =
-    `R=${R.toFixed(1)} kpc · Habitability from <strong>${tStart.toFixed(1)} Gyr</strong> ` +
-    `(${window.toFixed(1)} Gyr window) · Complex life from <strong>${tComplex.toFixed(1)} Gyr</strong> ` +
-    `(${cWindow.toFixed(1)} Gyr) · Head start: <strong>${headStart.toFixed(1)} Gyr</strong> · ` +
+    `R=${R.toFixed(1)} kpc / Habitability from <strong>${tStart.toFixed(1)} Gyr</strong> ` +
+    `(${window.toFixed(1)} Gyr window) / Complex life from <strong>${tComplex.toFixed(1)} Gyr</strong> ` +
+    `(${cWindow.toFixed(1)} Gyr) / Head start: <strong>${headStart.toFixed(1)} Gyr</strong> / ` +
     `Habitable fraction: <strong>${((window / gAge) * 100).toFixed(0)}%</strong>`;
 
   return { tStart, tComplex, window, cWindow, headStart };

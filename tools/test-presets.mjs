@@ -260,7 +260,7 @@ if (startupLoadMatch && startupLoadMatch[1] === 'kepler') {
 
 const initialDescriptionMatch = /<div class=["']preset-description["'] id=["']preset-description["']>\s*([\s\S]*?)\s*<\/div>/m.exec(indexSource);
 const initialDescription = initialDescriptionMatch ? initialDescriptionMatch[1].replace(/\s+/g, ' ').trim() : '';
-if (initialDescription.includes('Kepler/Gaia · Bryson') && !initialDescription.includes('Consensus · Lineweaver')) {
+if (initialDescription.includes('Kepler/Gaia / Bryson') && !initialDescription.includes('Consensus / Lineweaver')) {
   pass('Initial preset description matches the Kepler/Gaia default.');
 } else {
   fail(`Initial preset description does not match Kepler/Gaia default: ${initialDescription}`);

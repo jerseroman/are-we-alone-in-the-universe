@@ -77,78 +77,44 @@ function assertMatches(label, text, pattern, description) {
 }
 
 function validateOperatorParity(label, html, sourceBundle) {
-  const requiredMiddleDotStrings = [
-    'Kepler/Gaia · Bryson',
-    'Consensus · Lineweaver',
-    'High-End · Literature Bounds',
-    'Modified preset-local uncertainty · Uses visible bounds for edited fields and preset-local uncertainty for unchanged preset fields',
-    'Custom input uncertainty · Uses visible input bounds',
-    'Global exploratory envelope · Not local preset uncertainty',
-    'Log-sensitivity score: ${d.score.toFixed(0)} · signed correlation',
-    '${summary.engineLabel} · ${summary.distributionShort} · ${summary.correlationLabel} · ${summary.boundsLabel}',
-    "result.N_samples + ' base samples · ' + result.activeIds.length + ' uncertain params'",
-    'Computed N_GHZ = ${details.N_GHZ.toLocaleString()} stars · GHZ = ${details.innerKpc.toFixed(1)}~${details.outerKpc.toFixed(1)} kpc',
-    'Formula: N̂ = (N<sub>Earth-like</sub> × f<sub>tx</sub> × range-gate) × (L / T<sub>galaxy</sub>) · P(≥1) = 1 − e<sup>−N̂</sup><br>',
-    '1 · within light-travel reach',
-    '0 · outside light-travel reach',
-    'Step 0 · Civilisation prior',
-    'Step 1 · Distance barrier',
-    'Step 2 · Timing barrier',
-    'Combined result · Poisson mean of detectable transmitters now'
+  const requiredSlashSeparatorStrings = [
+    'Kepler/Gaia / Bryson',
+    'Consensus / Lineweaver',
+    'High-End / Literature Bounds',
+    'Modified preset-local uncertainty / Uses visible bounds for edited fields and preset-local uncertainty for unchanged preset fields',
+    'Custom input uncertainty / Uses visible input bounds',
+    'Global exploratory envelope / Not local preset uncertainty',
+    'Log-sensitivity score: ${d.score.toFixed(0)} / signed correlation',
+    '${summary.engineLabel} / ${summary.distributionShort} / ${summary.correlationLabel} / ${summary.boundsLabel}',
+    "result.N_samples + ' base samples / ' + result.activeIds.length + ' uncertain params'",
+    'Computed N_GHZ = ${details.N_GHZ.toLocaleString()} stars / GHZ = ${details.innerKpc.toFixed(1)}~${details.outerKpc.toFixed(1)} kpc',
+    'Formula: N̂ = (N<sub>Earth-like</sub> × f<sub>tx</sub> × range-gate) × (L / T<sub>galaxy</sub>) / P(≥1) = 1 − e<sup>−N̂</sup><br>',
+    '1 / within light-travel reach',
+    '0 / outside light-travel reach',
+    'Step 0 / Civilisation prior',
+    'Step 1 / Distance barrier',
+    'Step 2 / Timing barrier',
+    'Combined result / Poisson mean of detectable transmitters now'
   ];
 
-  for (const needle of requiredMiddleDotStrings) {
+  for (const needle of requiredSlashSeparatorStrings) {
     if (!sourceBundle.includes(needle)) {
-      fail(`source bundle is missing middle-dot regression string: "${needle}".`);
+      fail(`source bundle is missing slash-separator regression string: "${needle}".`);
     } else {
       assertIncludes(label, html, needle);
     }
   }
 
-  const sourceDotCount = countOccurrences(sourceBundle, '·');
-  const htmlDotCount = countOccurrences(html, '·');
-  if (htmlDotCount < sourceDotCount) {
-    fail(`${label}: middle-dot count dropped from ${sourceDotCount} in source to ${htmlDotCount} in standalone export.`);
+  const middleDot = String.fromCharCode(0x00B7);
+  const sourceDotCount = countOccurrences(sourceBundle, middleDot);
+  const htmlDotCount = countOccurrences(html, middleDot);
+  if (sourceDotCount || htmlDotCount) {
+    fail(`${label}: middle-dot separator remains (${sourceDotCount} in source, ${htmlDotCount} in export).`);
   } else {
-    pass(`${label}: middle-dot count preserved (${htmlDotCount} in export, ${sourceDotCount} in source bundle).`);
+    pass(`${label}: no middle-dot separators remain in source or export.`);
   }
 
-  const suspiciousSlashPatterns = [
-    {
-      pattern: /ρ<sub>det<\/sub>\s*\/\s*π/i,
-      description: 'rho-det slash pi displayed formula'
-    },
-    {
-      pattern: /\brho_det\b\s*\/\s*\bpi\b/i,
-      description: 'rho_det slash pi displayed formula'
-    },
-    {
-      pattern: /\\rho_\{\\mathrm\{det\}\}\s*\/\s*\\pi/i,
-      description: 'LaTeX rho_det slash pi formula'
-    },
-    {
-      pattern: /Combined result\s+\/\s+Poisson mean of detectable transmitters now/i,
-      description: 'slash replacing combined-result separator'
-    },
-    {
-      pattern: /Step [0-9]\s+\/\s+(?:Civilisation prior|Distance barrier|Timing barrier)/i,
-      description: 'slash replacing SETI step separator'
-    },
-    {
-      pattern: /(?:1|0)\s+\/\s+(?:within|outside) light-travel reach/i,
-      description: 'slash replacing range-gate separator'
-    },
-    {
-      pattern: /Log-sensitivity score:\s*\$\{d\.score\.toFixed\(0\)\}\s+\/\s+signed correlation/i,
-      description: 'slash replacing sensitivity-score separator'
-    }
-  ];
-
-  for (const check of suspiciousSlashPatterns) {
-    assertNotMatches(label, html, check.pattern, check.description);
-  }
-
-  const intendedFormula = 'ρ<sub>det</sub>·π';
+  const intendedFormula = 'ρ<sub>det</sub>/π';
   assertIncludes(label, html, intendedFormula);
 }
 

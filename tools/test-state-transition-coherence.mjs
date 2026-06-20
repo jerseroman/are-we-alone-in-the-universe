@@ -551,7 +551,7 @@ function runEditPath(field, value) {
 
   if (
     modifiedBounds.mode === 'modifiedPresetLocal' &&
-    modifiedBounds.label === 'Modified preset-local uncertainty · Uses visible bounds for edited fields and preset-local uncertainty for unchanged preset fields'
+    modifiedBounds.label === 'Modified preset-local uncertainty / Uses visible bounds for edited fields and preset-local uncertainty for unchanged preset fields'
   ) {
     pass(`${field}: modified Pessimist uses modified preset-local uncertainty.`);
   } else {

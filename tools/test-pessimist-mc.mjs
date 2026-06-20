@@ -2,7 +2,7 @@
 // Unified Monte Carlo diagnostic across all named presets.
 //
 // All presets (Pessimist / Rare Earth, Consensus / Lineweaver,
-// High-End / Literature Bounds, Kepler/Gaia · Bryson) must now share the
+// High-End / Literature Bounds, Kepler/Gaia / Bryson) must now share the
 // same balanced Monte Carlo sampling semantics: sampling depends only on
 // the active central / min / max values and the selected distribution,
 // never on the preset name. This file:

@@ -20,9 +20,9 @@ const sampleCount = 1200;
 // values, not from the Monte Carlo method.
 const validBoundsLabels = new Set([
   'Scenario-local preset uncertainty',
-  'Modified preset-local uncertainty · Uses visible bounds for edited fields and preset-local uncertainty for unchanged preset fields',
-  'Custom input uncertainty · Uses visible input bounds',
-  'Global exploratory envelope · Not local preset uncertainty'
+  'Modified preset-local uncertainty / Uses visible bounds for edited fields and preset-local uncertainty for unchanged preset fields',
+  'Custom input uncertainty / Uses visible input bounds',
+  'Global exploratory envelope / Not local preset uncertainty'
 ]);
 
 const presets = [

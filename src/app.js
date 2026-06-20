@@ -276,7 +276,7 @@ function fmtActiveStateNumber(value) {
 function formatNGHZSourceLabel(source) {
   switch (source) {
     case 'manual_raw_N_GHZ': return 'Visible N_GHZ field';
-    case 'simple_galaxy_scaling': return 'Galaxy Settings · simple scaling';
+    case 'simple_galaxy_scaling': return 'Galaxy Settings / simple scaling';
     case 'radial_ghz_integrator': return 'Radial GHZ integrator';
     default: return source ? String(source).replace(/_/g, ' ') : 'Scenario value';
   }
@@ -323,9 +323,9 @@ function renderActiveCalculationStateBox() {
     : `N_p_star × f_rocky × f_HZ = <strong>${fmtActiveStateNumber(state.occurrenceTerm_used)}</strong>`;
 
   const rows = [
-    ['Base scenario', `${escapeHtml(state.baseScenarioLabel)}${state.scenarioModified ? ' · modified' : ''}`],
+    ['Base scenario', `${escapeHtml(state.baseScenarioLabel)}${state.scenarioModified ? ' / modified' : ''}`],
     ['Occurrence mode', occurrenceLabel],
-    ['N_GHZ used', `<strong>${fmtActiveStateNumber(state.N_GHZ_used)}</strong> · ${escapeHtml(formatNGHZSourceLabel(state.N_GHZ_source))}`],
+    ['N_GHZ used', `<strong>${fmtActiveStateNumber(state.N_GHZ_used)}</strong> / ${escapeHtml(formatNGHZSourceLabel(state.N_GHZ_source))}`],
     ['Occurrence controls', factorStatus],
     ['Active occurrence term', activeOccurrenceTerm]
   ];
@@ -335,7 +335,7 @@ function renderActiveCalculationStateBox() {
   if (direct) {
     rows.push([
       'Bypassed diagnostic factorized product',
-      `N_p_star × f_rocky × f_HZ = <strong>${fmtActiveStateNumber(state.factorizedOccurrenceTerm_visible)}</strong> · diagnostic only, not used`
+      `N_p_star × f_rocky × f_HZ = <strong>${fmtActiveStateNumber(state.factorizedOccurrenceTerm_visible)}</strong> / diagnostic only, not used`
     ]);
   }
 
@@ -531,7 +531,7 @@ function renderConfigurationWarnings() {
         return `
         <div class="${itemClass}">
           <div class="alert-head">
-            <div class="alert-title">${icon} Warning <span class="alert-label">· ${w.label}</span></div>
+            <div class="alert-title">${icon} Warning <span class="alert-label">/ ${w.label}</span></div>
           </div>
           <div class="alert-copy">${w.text}</div>
         </div>
@@ -1457,8 +1457,8 @@ function renderSimulationMethodSummary() {
   const summary = describeSimulationOptions();
   modelLine.style.display = 'block';
   modelLine.innerHTML =
-    `<span class="result-label">SIMULATION MODEL ·</span> ` +
-    `${summary.engineLabel} · ${summary.distributionShort} · ${summary.correlationLabel} · ${summary.boundsLabel}`;
+    `<span class="result-label">SIMULATION MODEL /</span> ` +
+    `${summary.engineLabel} / ${summary.distributionShort} / ${summary.correlationLabel} / ${summary.boundsLabel}`;
   if (summary.uncertaintyBasisLabel) {
     modelLine.innerHTML += ` <span style="font-size:10px;color:var(--text-dim)">(${summary.uncertaintyBasisLabel})</span>`;
   }
@@ -1469,7 +1469,7 @@ function renderSimulationMethodSummary() {
       : [];
     envelopeLine.style.display = 'block';
     envelopeLine.innerHTML =
-      `<span class="result-label">ROBUST ENVELOPE ·</span> ` +
+      `<span class="result-label">ROBUST ENVELOPE /</span> ` +
       `[${fmtN(simulationEnvelope.low)}, ${fmtN(simulationEnvelope.high)}] ` +
       `<span style="font-size:10px;color:var(--text-dim)">(sampled-parameter min/max bounds check${fixedAdvanced.length ? '; fixed active controls: ' + fixedAdvanced.join(', ') : ''})</span>`;
   } else {
@@ -1942,7 +1942,7 @@ function renderDistanceHtml(metrics) {
 
   if (metrics.modelRadial) {
     rows.push(
-      `<span class="result-label">${metrics.modelRadial.htmlLabel} ·</span> ` +
+      `<span class="result-label">${metrics.modelRadial.htmlLabel} /</span> ` +
         `<span class="bold-number">${fmtN(metrics.modelRadial.distance)}</span> ly` +
         (Number.isFinite(metrics.modelRadial.ciLow) && Number.isFinite(metrics.modelRadial.ciHigh)
           ? ` (95% sampled model interval: ${fmtN(metrics.modelRadial.ciLow)}~${fmtN(metrics.modelRadial.ciHigh)} ly`
@@ -1953,7 +1953,7 @@ function renderDistanceHtml(metrics) {
 
   if (metrics.model3dDisk) {
     rows.push(
-      `<span class="result-label">${metrics.model3dDisk.htmlLabel} ·</span> ` +
+      `<span class="result-label">${metrics.model3dDisk.htmlLabel} /</span> ` +
         `<span class="bold-number">${fmtN(metrics.model3dDisk.distance)}</span> ly` +
         (Number.isFinite(metrics.model3dDisk.ciLow) && Number.isFinite(metrics.model3dDisk.ciHigh)
           ? ` (95% sampled model interval: ${fmtN(metrics.model3dDisk.ciLow)}~${fmtN(metrics.model3dDisk.ciHigh)} ly`
@@ -1964,7 +1964,7 @@ function renderDistanceHtml(metrics) {
 
   if (metrics.model2d) {
     rows.push(
-      `<span class="result-label">${metrics.model2d.htmlLabel} ·</span> ` +
+      `<span class="result-label">${metrics.model2d.htmlLabel} /</span> ` +
         `<span class="bold-number">${fmtN(metrics.model2d.distance)}</span> ly` +
         (Number.isFinite(metrics.model2d.ciLow) && Number.isFinite(metrics.model2d.ciHigh)
           ? ` (95% sampled model interval: ${fmtN(metrics.model2d.ciLow)}~${fmtN(metrics.model2d.ciHigh)} ly`
@@ -1975,7 +1975,7 @@ function renderDistanceHtml(metrics) {
 
   if (metrics.model3dSphere) {
     rows.push(
-      `<span class="result-label">${metrics.model3dSphere.htmlLabel} ·</span> ` +
+      `<span class="result-label">${metrics.model3dSphere.htmlLabel} /</span> ` +
         `<span class="bold-number">${fmtN(metrics.model3dSphere.distance)}</span> ly` +
         (metrics.model3dSphere.noteHtml || '')
     );
@@ -2736,7 +2736,7 @@ function refreshAdvancedInlineNotes() {
   if (ghzNote) {
     const details = computeRadialGHZDetails();
     ghzNote.textContent =
-      `Computed N_GHZ = ${details.N_GHZ.toLocaleString()} stars · GHZ = ${details.innerKpc.toFixed(1)}~${details.outerKpc.toFixed(1)} kpc`;
+      `Computed N_GHZ = ${details.N_GHZ.toLocaleString()} stars / GHZ = ${details.innerKpc.toFixed(1)}~${details.outerKpc.toFixed(1)} kpc`;
   }
 }
 
@@ -3183,7 +3183,7 @@ function renderSobolPanel(result) {
   if (!result) { panel.style.display = 'none'; return; }
 
   panel.style.display = 'block';
-  if (nLabel) nLabel.textContent = result.N_samples + ' base samples · ' + result.activeIds.length + ' uncertain params';
+  if (nLabel) nLabel.textContent = result.N_samples + ' base samples / ' + result.activeIds.length + ' uncertain params';
 
   
   const sorted = result.activeIds.slice().sort(function(a, b){ return result.indices[b].T - result.indices[a].T; });
@@ -3237,7 +3237,7 @@ function renderSobolPanel(result) {
       interp += 'The sum of direct effects (' + sumS.toFixed(2) + ') is below 1 〰 this means a significant portion of the total variance comes from <em>interactions between parameters</em>, not from any single parameter acting alone. ';
     }
 
-    interp += '<br><span style="font-size:9px;opacity:.7;">Technical: Saltelli 2010 estimator · ' + result.N_samples + ' base samples · ' + (result.N_samples * (2 + result.activeIds.length)) + ' total model evaluations · ' + result.activeIds.length + ' uncertain parameters included.</span>';
+    interp += '<br><span style="font-size:9px;opacity:.7;">Technical: Saltelli 2010 estimator / ' + result.N_samples + ' base samples / ' + (result.N_samples * (2 + result.activeIds.length)) + ' total model evaluations / ' + result.activeIds.length + ' uncertain parameters included.</span>';
     noteEl.innerHTML = interp;
   }
 }
@@ -3336,7 +3336,7 @@ function renderTemporalNtPanel() {
       '<span class="nt-pill">N fraction at Sun\'s birth: ' + (fracAtSun * 100).toFixed(0) + '%</span>' +
       '<span class="nt-pill">Fraction before bio. window: ' + (fracAtComplex * 100).toFixed(0) + '%</span>' +
       '<span class="nt-pill">Potential head start: ~' + headStart + ' Gyr</span>' +
-      '<span class="nt-pill" style="color:var(--text-dim);">Sources: Lineweaver 2004 · Madau &amp; Dickinson 2014</span>';
+      '<span class="nt-pill" style="color:var(--text-dim);">Sources: Lineweaver 2004 / Madau &amp; Dickinson 2014</span>';
   }
 }
 
@@ -3392,20 +3392,20 @@ function renderDetectionPanel() {
     ? '= (' + fmtHuman(r.N_planets) + ' modelled Earth-like candidates × f_tx ' + r.f_tx.toFixed(4).replace(/\.?0+$/, '') + ') × range gate × ' + fmtPct(r.p_temporal_pct)
     : '= (' + fmtHuman(r.N_planets) + ' modelled Earth-like candidates × f_tx ' + r.f_tx.toFixed(4).replace(/\.?0+$/, '') + ') × area fraction × ' + fmtPct(r.p_temporal_pct);
   const formulaCopy = r.is_external_reference
-    ? 'Formula: N̂ = (N<sub>Earth-like</sub> × f<sub>tx</sub> × range-gate) × (L / T<sub>galaxy</sub>) · P(≥1) = 1 − e<sup>−N̂</sup><br>'
-    : 'Formula: N̂ = (N<sub>Earth-like</sub> × f<sub>tx</sub> × A<sub>horizon</sub> / A<sub>GHZ</sub>) × (L / T<sub>galaxy</sub>) · P(≥1) = 1 − e<sup>−N̂</sup><br>';
+    ? 'Formula: N̂ = (N<sub>Earth-like</sub> × f<sub>tx</sub> × range-gate) × (L / T<sub>galaxy</sub>) / P(≥1) = 1 − e<sup>−N̂</sup><br>'
+    : 'Formula: N̂ = (N<sub>Earth-like</sub> × f<sub>tx</sub> × A<sub>horizon</sub> / A<sub>GHZ</sub>) × (L / T<sub>galaxy</sub>) / P(≥1) = 1 − e<sup>−N̂</sup><br>';
   const geometryFactor = r.is_external_reference
     ? (r.N_within > 0 ? 1 : 0)
     : (r.N_tx_total > 0 ? Math.max(0, Math.min(1, r.N_within / r.N_tx_total)) : 0);
   const geometryFactorLabel = r.is_external_reference ? 'range gate' : 'area fraction';
   const geometryFactorText = r.is_external_reference
-    ? (geometryFactor > 0 ? '1 · within light-travel reach' : '0 · outside light-travel reach')
+    ? (geometryFactor > 0 ? '1 / within light-travel reach' : '0 / outside light-travel reach')
     : (geometryFactor > 0 ? fmtPct(geometryFactor * 100) : '0%');
   const rawExpectedText = fmtN(r.N_det);
   const basisCopy =
     '<div style="font-size:9.5px;color:var(--text-dim);margin-bottom:8px;line-height:1.45;">' +
       'Count basis: <strong style="color:var(--text-bright);">' + basis.label + '</strong> ' +
-      '<span style="opacity:.78;">(' + basis.note + ')</span> · ' +
+      '<span style="opacity:.78;">(' + basis.note + ')</span> / ' +
       '<span class="bold-number">' + fmtHuman(basis.count) + '</span> modelled Earth-like candidates.' +
     '</div>';
 
@@ -3413,19 +3413,19 @@ function renderDetectionPanel() {
     basisCopy +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-bottom:12px;">' +
       '<div style="' + detectionCardStyle + '">' +
-        '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:4px;">Step 0 · Civilisation prior</div>' +
+        '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:4px;">Step 0 / Civilisation prior</div>' +
         '<div style="font-size:11px;font-weight:700;color:var(--text-bright);">f_tx = ' + r.f_tx.toFixed(4).replace(/\.?0+$/, '') + '</div>' +
         '<div style="font-size:9.5px;color:var(--text-dim);margin-top:3px;">Only this share of modelled Earth-like candidates is assumed to ever produce a detectable transmitter.</div>' +
         '<div style="font-size:10px;color:' + detectionLinkColor + ';font-weight:700;margin-top:5px;">' + fmtHuman(r.N_tx_total) + ' transmitter-bearing worlds in the modelled system</div>' +
       '</div>' +
       '<div style="' + detectionCardStyle + '">' +
-        '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:4px;">Step 1 · Distance barrier</div>' +
+        '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:4px;">Step 1 / Distance barrier</div>' +
         '<div style="font-size:11px;font-weight:700;color:var(--text-bright);">' + distanceBarrierValue + '</div>' +
         '<div style="font-size:9.5px;color:var(--text-dim);margin-top:3px;">' + distanceBarrierCopy + '</div>' +
         '<div style="font-size:10px;color:' + detectionLinkColor + ';font-weight:700;margin-top:5px;">' + withinRangeCopy + '</div>' +
       '</div>' +
       '<div style="' + detectionCardStyle + '">' +
-        '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:4px;">Step 2 · Timing barrier</div>' +
+        '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:4px;">Step 2 / Timing barrier</div>' +
         '<div style="font-size:11px;font-weight:700;color:var(--text-bright);">' + fmtPct(r.p_temporal_pct) + '</div>' +
         '<div style="font-size:9.5px;color:var(--text-dim);margin-top:3px;">Temporal-overlap probability for a transmitter-bearing world <strong>right now</strong> 〰 L ÷ galaxy age. This model-derived timing factor does not include f_tx, which separately represents whether a planet ever produces a detectable transmitter.</div>' +
         '<div style="font-size:10px;color:' + detectionPositiveColor + ';font-weight:700;margin-top:5px;">Both barriers multiply together →</div>' +
@@ -3474,11 +3474,11 @@ function renderDetectionPanel() {
         subPoissonWarning +
         '<div style="font-size:8.5px;color:var(--text-dim);margin-top:4px;opacity:.7;">' + (r.is_external_reference
           ? 'For external galaxies this is treated as an Earth-reference distance gate, not an internal GHZ nearest-neighbour gap.'
-          : 'd̄ = Γ(3/2) / (ρ<sub>det</sub>·π)<sup>½</sup>, ρ<sub>det</sub> = N̂<sub>det</sub> / A<sub>horizon</sub> (spatial density within the observer-centred detection area)') + '</div>' +
+          : 'd̄ = Γ(3/2) / (ρ<sub>det</sub>/π)<sup>½</sup>, ρ<sub>det</sub> = N̂<sub>det</sub> / A<sub>horizon</sub> (spatial density within the observer-centred detection area)') + '</div>' +
       '</div>';
     })() +
     '<div style="' + detectionCardStyle + 'border-left:3px solid ' + gaugeColor + ';margin-bottom:10px;">' +
-      '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:4px;">Combined result · Poisson mean of detectable transmitters now</div>' +
+      '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:4px;">Combined result / Poisson mean of detectable transmitters now</div>' +
       '<div style="font-size:16px;font-weight:800;color:' + gaugeColor + ';">' + fmtHuman(r.N_det) + '</div>' +
       '<div style="font-size:9.5px;color:var(--text-dim);margin-top:2px;">' + combinedResultCopy + '</div>' +
       '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:5px;margin-top:7px;font-size:9.2px;color:var(--text-dim);">' +

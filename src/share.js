@@ -26,7 +26,7 @@ function normalizeShareText(text) {
 }
 
 function stripShareLead(text) {
-  return normalizeShareText(text).replace(/^(DETERMINISTIC|MONTE CARLO|DISTANCE)\s*[·•]\s*/i, '');
+  return normalizeShareText(text).replace(/^(DETERMINISTIC|MONTE CARLO|DISTANCE)\s*[/•]\s*/i, '');
 }
 
 function buildShareSummary() {
@@ -1066,7 +1066,7 @@ function runOccurrenceModeRegressionTests() {
   const _savedOverride = astronomyOverrideMode;
 
   try {
-    // ---- A. The exact confusing case on the Kepler/Gaia · Bryson main preset. ----
+    // ---- A. The exact confusing case on the Kepler/Gaia / Bryson main preset. ----
 
     // B + C: Updated Kepler/Gaia posterior proxy keeps the factorized rocky/HZ values visible.
     loadPreset('kepler');
@@ -1313,7 +1313,7 @@ function runOccurrenceNoticeUiTests() {
       /preset-local with Bryson η⊕ direct override/.test(fUpper), `got "${fUpper}"`);
     assert('F N_GHZ source shows "Visible N_GHZ field"', /Visible N_GHZ field/.test(fUpper), `got "${fUpper}"`);
     assert('F map manual_raw_N_GHZ -> Visible N_GHZ field', formatNGHZSourceLabel('manual_raw_N_GHZ') === 'Visible N_GHZ field', formatNGHZSourceLabel('manual_raw_N_GHZ'));
-    assert('F map simple_galaxy_scaling -> Galaxy Settings · simple scaling', formatNGHZSourceLabel('simple_galaxy_scaling') === 'Galaxy Settings · simple scaling', formatNGHZSourceLabel('simple_galaxy_scaling'));
+    assert('F map simple_galaxy_scaling -> Galaxy Settings / simple scaling', formatNGHZSourceLabel('simple_galaxy_scaling') === 'Galaxy Settings / simple scaling', formatNGHZSourceLabel('simple_galaxy_scaling'));
     assert('F map radial_ghz_integrator -> Radial GHZ integrator', formatNGHZSourceLabel('radial_ghz_integrator') === 'Radial GHZ integrator', formatNGHZSourceLabel('radial_ghz_integrator'));
     assert('F map modifiedPresetLocal -> readable', monteCarloBasisPlainLabel('modifiedPresetLocal') === 'modified preset-local', monteCarloBasisPlainLabel('modifiedPresetLocal'));
   } finally {

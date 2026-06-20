@@ -88,7 +88,7 @@ const SENS = {
           <div class="sens-rank">Rank #${idx + 1}</div>
           <div class="sens-name">${d.label}</div>
           <div class="sens-impact">${d.direction === 'positive' ? 'Positive impact on log₁₀(N)' : 'Negative impact on log₁₀(N)'}</div>
-          <div class="sens-score">Log-sensitivity score: ${d.score.toFixed(0)} · signed correlation ${d.r >= 0 ? '+' : ''}${(d.r * 100).toFixed(0)}%</div>
+          <div class="sens-score">Log-sensitivity score: ${d.score.toFixed(0)} / signed correlation ${d.r >= 0 ? '+' : ''}${(d.r * 100).toFixed(0)}%</div>
         </div>
       `;
     });
@@ -109,7 +109,7 @@ const SENS = {
             <div class="sens-bar-fill" style="width:${pct}%;background:${color};"></div>
           </div>
           <span class="sens-bar-meta">
-            ${d.r >= 0 ? '+' : ''}${(d.r * 100).toFixed(0)}% · score ${d.score.toFixed(0)}
+            ${d.r >= 0 ? '+' : ''}${(d.r * 100).toFixed(0)}% / score ${d.score.toFixed(0)}
           </span>
         </div>
       `;
