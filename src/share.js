@@ -1835,7 +1835,7 @@ function pdfNumber(value) {
 }
 
 function pdfHexColor(hex) {
-  const clean = String(hex || '#000000').replace('#', '');
+  const clean = String(hex || '#302f2f').replace('#', '');
   const r = parseInt(clean.slice(0, 2), 16) / 255;
   const g = parseInt(clean.slice(2, 4), 16) / 255;
   const b = parseInt(clean.slice(4, 6), 16) / 255;
