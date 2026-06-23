@@ -1537,8 +1537,12 @@ const STAR_DB = [
   { d: 124.0, name: "Dubhe", note: "the brighter of the Big Dipper's two pointer stars, a multiple-star system rather than a simple single star", ...cat("Dubhe") },
   { d: 127.0, name: "HD 10180", note: "a Sun-like star with 6 confirmed exoplanets in the current archive, making it one of the richer nearby radial-velocity systems", ...cat("HD 10180") },
   { d: 129.0, name: "HR 8799", note: "a young star with 4 confirmed directly imaged giant exoplanets, one of the showpieces of exoplanet imaging", ...cat("HR 8799") },
+  { d: 173.0, name: "TOI-2068", note: "an M-type star with one confirmed close-in super-Earth, TOI-2068 b", ...cat("TOI-2068") },
+  { d: 180.0, name: "HIP 116454", note: "a nearby K-type star with one confirmed close-in super-Earth, HIP 116454 b", ...cat("HIP 116454") },
   { d: 1799.0, name: "Kepler-452", note: "the host star of Kepler-452b, with 1 archive-listed but controversial exoplanet often nicknamed an 'Earth cousin' in early popular coverage", ...cat("Kepler-452") },
   { d: 250.0, name: "Spica", note: "a luminous close binary of hot stars and the brightest star in Virgo", ...cat("Spica") },
+  { d: 280.0, name: "TOI-561", note: "a G-type star hosting TOI-561 b, a confirmed ultra-short-period super-Earth", ...cat("TOI-561") },
+  { d: 290.0, name: "Kepler-408", note: "an F-type star hosting Kepler-408 b, a confirmed terrestrial exoplanet with a very short 2.5-day orbit", ...cat("Kepler-408") },
   { d: 310.0, name: "Canopus", note: "the second-brightest star in Earth's night sky and a long-used reference in spacecraft navigation", ...cat("Canopus") },
   { d: 315.97, name: "HD 73526", note: "a G-type planet-host star with 2 confirmed giant exoplanets whose roughly 188-day and 379-day orbits make a classic near-2:1 resonant pair", ...cat("HD 73526") },
   { d: 321.0, name: "Acrux", note: "the brightest star in the Southern Cross, actually a multiple stellar system", ...cat("Acrux") },
@@ -4846,30 +4850,15 @@ function buildFermiContext(distLy, refModel = null, options = {}) {
   const distanceMetrics = options.metrics || options.distanceMetrics || null;
 
   const star = getNearestStar(distLy);
-  const starDiff = Math.abs(distLy - star.d);
 
   const starNameHtml = `<strong>${star.name}</strong>`;
   const starCatalogHtml = star.catalogLink
-    ? ` <a href="${star.catalogLink}" target="_blank" rel="noopener noreferrer" style="color:var(--text-bright);text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.24);font-weight:700;">${star.catalogLabel || "Check star in catalogue"} ↗</a>`
+    ? `. <a href="${star.catalogLink}" target="_blank" rel="noopener noreferrer" style="color:var(--text-bright);text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.24);font-weight:700;">${star.catalogLabel || "Check star in catalogue"} ↗</a>`
     : '';
 
-  const nearThreshold = Math.max(12, distLy * 0.12);
-  const moderateThreshold = Math.max(40, distLy * 0.28);
-
-  let starCtx = '';
-  if (starDiff <= nearThreshold) {
-    starCtx =
-      `roughly the same distance as ${starNameHtml} (${fmtN(star.d)} ly, ` +
-      `${star.note})${starCatalogHtml}`;
-  } else if (starDiff <= moderateThreshold) {
-    starCtx =
-      `${distLy >= star.d ? 'somewhat farther out than' : 'somewhat closer than'} ` +
-      `${starNameHtml} (${fmtN(star.d)} ly, ${star.note})${starCatalogHtml}`;
-  } else {
-    starCtx =
-      `the nearest reference object in this catalogue is ${starNameHtml} (${fmtN(star.d)} ly, ` +
-      `${star.note})${starCatalogHtml}`;
-  }
+  const starCtx =
+    `the closest distance-matching reference object in this catalogue is ${starNameHtml} (~${fmtN(star.d)} ly, ` +
+    `${star.note})${starCatalogHtml}`;
 
   const hist = getHistoricalContext(signalTime);
   const historicalContextText = (hist
@@ -5482,4 +5471,3 @@ function computeDetectionFilter(countOverride = mcMedianQ50) {
     earth_distance: null
   };
 }
-
