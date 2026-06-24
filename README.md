@@ -60,7 +60,7 @@ The calculator should not be interpreted as a deterministic prediction, an obser
 - `.github/` — GitHub workflow and issue-template configuration
 - `package.json` — npm metadata and validation commands
 - `REPRODUCIBILITY.md` — reproducibility and verification instructions
-- `CODE_AUDIT_MATRIX.md` — calculator code audit matrix
+- `CODE_AUDIT_MATRIX.md` — audit-matrix placeholder (revised v2.18 matrix pending; see `REPRODUCIBILITY.md`)
 - `CHANGELOG.md` — release history
 - `RELEASE_NOTES_v2.*.md` — release-specific notes
 - `CITATION.cff` — citation metadata
@@ -96,7 +96,7 @@ Repository verification instructions are in `REPRODUCIBILITY.md`.
 
 The v2.18 release is summarized in `RELEASE_NOTES_v2.18.md`.
 
-The calculator code audit matrix is documented in `CODE_AUDIT_MATRIX.md`.
+`CODE_AUDIT_MATRIX.md` is currently a placeholder; a revised v2.18 audit matrix will be added after the next full audit cycle. Current verification instructions are in `REPRODUCIBILITY.md`.
 
 ## GitHub Pages deployment
 

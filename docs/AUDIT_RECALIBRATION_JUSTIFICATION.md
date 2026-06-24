@@ -1,5 +1,7 @@
 # Audit Recalibration Justification
 
+_This document remains applicable to v2.18 unless otherwise stated._
+
 ## N_GHZ GHZ Star-Count Prior
 
 `N_GHZ` was re-baselined from `5e9` to `1e10` for the default Kepler/Gaia and Consensus scenarios. The value `5e9` is retained as a strict Rare Earth lower-bound prior. The value `4e10` is retained as an upper Lineweaver-style prior.

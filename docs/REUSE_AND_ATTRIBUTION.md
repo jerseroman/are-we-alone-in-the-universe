@@ -1,5 +1,7 @@
 # Reuse and Attribution
 
+_This document remains applicable to v2.18 unless otherwise stated._
+
 Official project name:
 Are We Alone in the Universe? Earth-like Planet Calculator
 

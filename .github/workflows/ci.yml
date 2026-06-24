@@ -1,3 +1,7 @@
+# CI for "Are We Alone in the Universe? Earth-like Planet Calculator" (v2.18+).
+# Version-neutral pipeline: `npm run test:all` is the stable release gate.
+# The deeper `test:absolute` and `test:deep` audits can be run locally;
+# see REPRODUCIBILITY.md for the full verification instructions.
 name: CI
 
 on:

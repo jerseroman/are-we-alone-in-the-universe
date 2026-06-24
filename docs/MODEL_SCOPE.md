@@ -1,5 +1,7 @@
 # Model Scope
 
+_This document remains applicable to v2.18 unless otherwise stated._
+
 Are We Alone in the Universe? Earth-like Planet Calculator is a browser-based probabilistic modelling calculator.
 
 It explores how astrophysical, planetary, geophysical, biochemical, and optional speculative assumptions affect estimates of modelled Earth-like candidates across the Milky Way and the observable universe.

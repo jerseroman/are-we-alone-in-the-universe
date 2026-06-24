@@ -1,5 +1,7 @@
 # Monte Carlo Method
 
+_This document remains applicable to v2.18 unless otherwise stated. v2.18 changed Monte Carlo presentation and export metadata only; the sampling method described here is unchanged._
+
 This calculator uses Monte Carlo sampling to explore how uncertainty in the input parameters propagates through the multiplicative habitability chain. The Monte Carlo output is an uncertainty diagnostic for the current model settings, not an observational census and not a prediction of confirmed life.
 
 ## Sampling Mode

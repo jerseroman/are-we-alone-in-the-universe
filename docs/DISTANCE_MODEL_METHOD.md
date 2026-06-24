@@ -1,5 +1,7 @@
 # Distance Model Method
 
+_This document remains applicable to v2.18 unless otherwise stated._
+
 The nearest-distance panel uses Poisson point-process approximations. These are mathematically valid geometric model expectations inside a literature-informed exploratory model, not catalogue predictions of known planets.
 
 ## Uniform Comparison Models
