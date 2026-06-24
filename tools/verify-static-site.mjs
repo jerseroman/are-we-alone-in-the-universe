@@ -18,8 +18,17 @@ const markerScanExcluded = new Set(['tools/verify-static-site.mjs']);
 // helper functions (they must match the standalone reference). Accidental console.log
 // anywhere else in production source is still flagged.
 const consoleLogAllowlist = {
-  'src/share.js': ['runGalaxySettingsTests', 'runHistoricalContextTests', 'runAllOccurrenceTests']
+  'src/share.js': ['runGalaxySettingsTests', 'runHistoricalContextTests', 'runAllOccurrenceTests', 'runMonteCarloDisplayConfigTests', 'runExceedanceChartTests']
 };
+// Identifier-style placeholder markers must match as standalone tokens, not as a
+// substring of a longer valid identifier (e.g. TOKEN inside MC_BASIS_INTERVAL_TOKENS).
+// Markers containing non-identifier characters (console.log, C:\) keep substring matching.
+function markerPresent(text, marker) {
+  if (/^[A-Za-z0-9_]+$/.test(marker)) {
+    return new RegExp('(?<![A-Za-z0-9_])' + marker + '(?![A-Za-z0-9_])').test(text);
+  }
+  return text.includes(marker);
+}
 // Returns a Set of allowed line indices for console.log in `rel`, or null if the file
 // has no allowlist. A function body spans from its `function <name>(` signature line
 // through the first subsequent line that is a bare closing brace at column 0
@@ -92,7 +101,7 @@ for (const file of allFiles) {
       if (strayLine !== -1) fail('Marker found in ' + rel + ': ' + marker + ' (line ' + (strayLine + 1) + ', outside allowed dev helpers)');
       continue;
     }
-    if (text.includes(marker)) fail('Marker found in ' + rel + ': ' + marker);
+    if (markerPresent(text, marker)) fail('Marker found in ' + rel + ': ' + marker);
   }
 }
 if (failures === 0) pass('Static site verification completed');

@@ -17,13 +17,13 @@
   <meta name="twitter:image" content="https://www.arewealoneintheuniverse.com/assets/images/Banner.jpg">
   <link rel="icon" type="image/webp" href="assets/images/site-logo.webp">
   <title>
-   Are We Alone in the Universe? Earth-like Planet Calculator   / Version 2.17
+   Are We Alone in the Universe? Earth-like Planet Calculator   / Version 2.18
   </title>
   <script async crossorigin="anonymous" id="MathJax-script" integrity="sha384-Wuix6BuhrWbjDBs24bXrjf4ZQ5aFeFWBuKkFekO2t8xFU0iNaLQfp2K6/1Nxveei" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"></script>
   <script crossorigin="anonymous" integrity="sha384-VzkrKzZ91/plZ4HYGoiYkmzTHxxDK2ezfxfzA5Sg/EhhKf9MY0SkYZ0pBd4yG1CF" src="https://cdn.jsdelivr.net/npm/apexcharts@5.12.0/dist/apexcharts.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&amp;family=Nunito:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
   <link crossorigin="anonymous" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" rel="stylesheet"/>
-  <link href="src/styles.css?v=site-v2.17-20260618" rel="stylesheet">
+  <link href="src/styles.css?v=site-v2.18-20260624" rel="stylesheet">
  </head>
  <body>
 <noscript>
@@ -38,7 +38,7 @@
     <div class="header-eyebrow">
      Cosmic Earth Analog Calculator
      <span class="version-badge">
-      v2.17
+      v2.18
      </span>
     </div>
     <div class="header-inner">
@@ -253,7 +253,7 @@
     </div>
     <div class="collapsible-body">
       <p>
-        The output area combines the histogram and empirical kernel density estimate (KDE) with convergence diagnostics, top-driver sensitivity summaries, optional robust-envelope diagnostics, and model-health warnings for edge cases such as disabled distance models, sparse expected counts, or normalized host fractions. These visualizations and notices are intended to help users interpret the result, not just read a single headline number.
+        The output area combines the candidate-count histogram and a model exceedance-probability curve (P(N ≥ threshold)) with convergence diagnostics, top-driver sensitivity summaries, optional robust-envelope diagnostics, and model-health warnings for edge cases such as disabled distance models, sparse expected counts, or normalized host fractions. These visualizations and notices are intended to help users interpret the result, not just read a single headline number.
       </p>
     </div>
     <button class="read-more-btn" onclick="toggleSection(this)">
@@ -2169,6 +2169,12 @@
      </p>
      <p class="result-line" id="stats">
      </p>
+     <p class="result-line mc-config-line" id="mcConfigLine" style="display:none;">
+     </p>
+     <details class="mc-details" id="mc-details" style="display:none;">
+      <summary class="mc-details-summary">MC details</summary>
+      <div class="mc-details-body" id="mc-details-body"></div>
+     </details>
      <p class="result-line" id="simulationModel" style="display:none;">
      </p>
      <p class="result-line" id="robustEnvelopeResult" style="display:none;">
@@ -2295,9 +2301,10 @@
     <div class="charts-grid">
      <div id="monteCarloChart">
      </div>
-     <div id="gaussianChart">
+     <div id="exceedanceChart">
      </div>
     </div>
+    <div class="exceedance-caption" id="exceedance-caption" style="display:none;"></div>
    </div>
 
    <div class="panel" id="calc-console-panel">
@@ -2316,22 +2323,24 @@
    <div class="panel" id="sobol-panel" style="display:none;">
     <div class="panel-title">
      Which Parameters Matter Most?
-     <span>  / Sensitivity Analysis (Sobol / Saltelli 2010)</span>
+     <span id="sobol-subheading">  / Sensitivity Analysis (Sobol / Saltelli 2010)</span>
      <span style="margin-left:auto;font-size:9px;color:var(--text-dim);" id="sobol-N-label"></span>
     </div>
     <div class="sobol-intro">
-     <strong>What this shows 〰 in plain terms:</strong> Think of the calculator as a mixing board with many knobs. This chart reveals which knobs actually matter. Turn a knob that scores high here and the final result changes dramatically. Turn a knob that scores near zero and almost nothing happens 〰 you could set it to any value and the outcome would barely budge.<br><br>
-     <strong>The blue bar</strong> shows how much a parameter matters <em>on its own</em> 〰 independently of everything else.<br>
-     <strong>The green bar</strong> shows how much it matters <em>including its interactions</em> with other parameters 〰 its total influence on the result.<br><br>
+     <strong>What this shows in plain terms:</strong> Think of the calculator as a mixing board with many knobs. This chart reveals which knobs actually matter. Turn a knob that scores high here and the final result changes dramatically. Turn a knob that scores near zero and almost nothing happens - you could set it to any value and the outcome would barely budge.<br><br>
+     <strong>The blue bar</strong> shows how much a parameter matters <em>on its own</em> - independently of everything else.<br>
+     <strong>The green bar</strong> shows how much it matters <em>including its interactions</em> with other parameters - its total influence on the result.<br><br>
      A large green bar with a tiny blue bar means: this parameter does not drive the result alone, but it amplifies or suppresses the effect of other parameters. A large blue bar means: this one factor almost single-handedly determines how large N ends up being.<br><br>
-     <strong>Why does this matter?</strong> It tells you where scientific uncertainty actually bites. Parameters with near-zero bars can be set loosely 〰 the result is insensitive to them. Parameters with large bars are the ones where better data or better theory would change the answer most.
+     <strong>Why does this matter?</strong> It tells you where scientific uncertainty actually bites. Parameters with near-zero bars can be set loosely - the result is insensitive to them. Parameters with large bars are the ones where better data or better theory would change the answer most.
      <span style="display:block;margin-top:6px;font-size:9px;color:var(--text-dim);">Method: variance-based global sensitivity (Saltelli et al. 2010, <em>Computer Physics Communications</em>), more rigorous than local derivatives because it scans the full parameter range, not just a single point.</span>
     </div>
     <div class="sobol-legend">
-     <span><span class="sobol-legend-dot sobol-bar-S"></span> Direct effect (S₁ 〰 how much this parameter alone moves the result)</span>
-     <span><span class="sobol-legend-dot sobol-bar-T"></span> Total effect (T<sub>i</sub> 〰 including all interactions with other parameters)</span>
+     <span><span class="sobol-legend-dot sobol-bar-S"></span> Direct effect (S₁ - how much this parameter alone moves the result)</span>
+     <span><span class="sobol-legend-dot sobol-bar-T"></span> Total effect (T<sub>i</sub> - including all interactions with other parameters)</span>
     </div>
+    <div id="sobol-mode-status" role="status" aria-live="polite" style="display:none;font-size:9.5px;line-height:1.6;margin-bottom:10px;padding:7px 9px;border-left:2px solid var(--yellow);background:rgba(212,168,67,0.07);"></div>
     <div id="sobol-bars"></div>
+    <div id="sobol-excluded-note" style="display:none;font-size:9px;color:var(--text-dim);margin-top:8px;line-height:1.55;"></div>
     <div style="font-size:9.5px;color:var(--text-dim);margin-top:10px;line-height:1.6;border-top:1px solid var(--border);padding-top:8px;" id="sobol-note"></div>
    </div>
 
@@ -2342,13 +2351,13 @@
      <span>  / Galaxy History Model (Lineweaver 2004   / Madau &amp; Dickinson 2014)</span>
     </div>
     <div class="nt-intro">
-     <strong>What this shows 〰 in plain terms:</strong> The galaxy is about 13.5 billion years old 〰 almost three times the age of our Sun. This chart shows how the population of potentially habitable planets grew over that vast stretch of time. The answer is far from uniform.<br><br>
-     In the very early galaxy, rocky Earth-like worlds simply <em>could not exist</em>. The heavy elements needed to build them 〰 iron, silicon, magnesium, carbon 〰 had not yet been forged inside stars and scattered by supernovae. The universe started almost entirely as hydrogen and helium. Only after billions of years of stellar generations did enough "cosmic ingredients" accumulate for rocky planets to form.<br><br>
+     <strong>What this shows in plain terms:</strong> The galaxy is about 13.5 billion years old - almost three times the age of our Sun. This chart shows how the population of potentially habitable planets grew over that vast stretch of time. The answer is far from uniform.<br><br>
+     In the very early galaxy, rocky Earth-like worlds simply <em>could not exist</em>. The heavy elements needed to build them - iron, silicon, magnesium, carbon - had not yet been forged inside stars and scattered by supernovae. The universe started almost entirely as hydrogen and helium. Only after billions of years of stellar generations did enough "cosmic ingredients" accumulate for rocky planets to form.<br><br>
      <strong style="color:rgba(224,92,92,0.85);">Red region (left) = pre-metallicity era.</strong> Too early. Rocky planets could not yet form in sufficient numbers.<br>
      <strong style="color:rgba(78,204,163,0.85);">Green region (right) = biological window.</strong> Enough heavy elements exist; conditions are suitable.<br>
      <strong style="color:#d4a843;">Yellow dashed line = when our Sun was born</strong> (~8.9 billion years after the Big Bang).<br><br>
-     <strong>The key insight:</strong> A significant fraction of potentially habitable planets formed <em>before</em> our Solar System even existed. If life arose on any of them, it had a multi-billion-year head start on us. This makes the silence we observe in the universe all the more striking 〰 and all the more in need of explanation.
-     <span style="display:block;margin-top:6px;font-size:9px;color:var(--text-dim);">The curve models star formation rate × metallicity build-up. It does not predict the number of civilisations 〰 only the physical opportunity window for Earth-like planet formation.</span>
+     <strong>The key insight:</strong> A significant fraction of potentially habitable planets formed <em>before</em> our Solar System even existed. If life arose on any of them, it had a multi-billion-year head start on us. This makes the silence we observe in the universe all the more striking and all the more in need of explanation.
+     <span style="display:block;margin-top:6px;font-size:9px;color:var(--text-dim);">The curve models star formation rate × metallicity build-up. It does not predict the number of civilisations - only the physical opportunity window for Earth-like planet formation.</span>
     </div>
     <div class="nt-chart-wrap" id="nt-chart-svg-wrap"></div>
     <div class="nt-meta" id="nt-meta"></div>
@@ -2361,13 +2370,13 @@
      <span>  / Detection Horizon &amp; Timing Filter</span>
     </div>
    <div class="nt-intro">
-     <strong>The problem in plain terms:</strong> The calculator estimates how many modelled Earth-like candidates a scenario implies <em>may exist</em>. But existence is not the same as detectability. Even if a million civilisations are out there, most of them are invisible to us 〰 either too far away, or transmitting at the wrong time in history.<br><br>
+     <strong>The problem in plain terms:</strong> The calculator estimates how many modelled Earth-like candidates a scenario implies <em>may exist</em>. But existence is not the same as detectability. Even if a million civilisations are out there, most of them are invisible to us - either too far away, or transmitting at the wrong time in history.<br><br>
      There are two separate barriers working against detection:<br><br>
-     <strong>1   / The distance barrier.</strong> Signals travel at the speed of light 〰 1 light-year per year. If a civilisation is 10,000 light-years away, their signal needs 10,000 years to reach us. So we can only hear from civilisations within a certain range, determined by how long they have been transmitting. That range is called the <em>detection horizon</em>.<br><br>
-     <strong>2   / The timing barrier.</strong> Even a civilisation within range is only detectable if it happens to be transmitting <em>right now</em>. The galaxy is 13.5 billion years old. If a civilisation transmits for only 1,000 years and then goes quiet, the odds that their broadcast window overlaps with ours today is roughly 1,000 ÷ 13,500,000,000 〰 about one in thirteen million.<br><br>
+     <strong>1   / The distance barrier.</strong> Signals travel at the speed of light - 1 light-year per year. If a civilisation is 10,000 light-years away, their signal needs 10,000 years to reach us. So we can only hear from civilisations within a certain range, determined by how long they have been transmitting. That range is called the <em>detection horizon</em>.<br><br>
+     <strong>2   / The timing barrier.</strong> Even a civilisation within range is only detectable if it happens to be transmitting <em>right now</em>. The galaxy is 13.5 billion years old. If a civilisation transmits for only 1,000 years and then goes quiet, the odds that their broadcast window overlaps with ours today is roughly 1,000 ÷ 13,500,000,000 - about one in thirteen million.<br><br>
      <strong>Both barriers multiply together.</strong> A civilisation must be close enough <em>and</em> transmitting at the same time as us. This is why the detectable number is often drastically smaller than the raw modelled candidate count.<br><br>
      <strong>One more assumption is needed:</strong> the calculator itself estimates modelled Earth-like candidates, not confirmed transmitting societies. The <strong>f_tx</strong> control below is an explicit conversion factor: the share of modelled Earth-like candidates you assume eventually produce a detectable transmitter. Setting <strong>f_tx = 1</strong> is an intentionally optimistic upper bound.<br><br>
-     <strong>How to use the controls below:</strong> Set <strong>L</strong> to your assumed detectable-lifetime in years and <strong>f_tx</strong> to your civilisation/transmitter prior. Try different values 〰 both assumptions have a very large effect on the answer.
+     <strong>How to use the controls below:</strong> Set <strong>L</strong> to your assumed detectable-lifetime in years and <strong>f_tx</strong> to your civilisation/transmitter prior. Try different values - both assumptions have a very large effect on the answer.
     </div>
     <div class="det-input-row">
      <label for="detection-L">How long does a civilisation remain detectable? L =
@@ -2412,21 +2421,21 @@
       </select>
      </div>
      <div class="export-btn-row export-file-row">
-      <button class="export-btn" onclick="exportJSON()"><i class="fas fa-code"></i>&nbsp; JSON 〰 full data file</button>
+      <button class="export-btn" onclick="exportJSON()"><i class="fas fa-code"></i>&nbsp; JSON - full data file</button>
       <button class="export-btn" id="exportMonteCarloDataBtn" onclick="exportMonteCarloData()" title="Download raw Monte Carlo samples and summary statistics for reproducibility, plotting, and independent analysis." type="button"><i class="fas fa-chart-line"></i>&nbsp; Export Monte Carlo data</button>
       <button class="export-btn" id="exportMonteCarloPackageBtn" onclick="exportMonteCarloPackage()" title="Download a ZIP with chart files, raw Monte Carlo data, and a reproducibility readme." type="button"><i class="fas fa-file-archive"></i>&nbsp; Export Monte Carlo package</button>
-      <button class="export-btn" onclick="exportLatex()"><i class="fas fa-file-alt"></i>&nbsp; LaTeX 〰 ready-to-paste table</button>
-      <button class="export-btn" onclick="exportBibtex()"><i class="fas fa-book"></i>&nbsp; BibTeX 〰 reference list</button>
+      <button class="export-btn" onclick="exportLatex()"><i class="fas fa-file-alt"></i>&nbsp; LaTeX - ready-to-paste table</button>
+      <button class="export-btn" onclick="exportBibtex()"><i class="fas fa-book"></i>&nbsp; BibTeX - reference list</button>
      </div>
     </div>
     <div aria-live="polite" class="export-warning" id="monte-carlo-export-warning" role="status"></div>
     <div class="export-note" style="margin-top:12px;line-height:1.7;">
-     <strong style="color:var(--text-bright);">JSON</strong> 〰 A complete snapshot of the current calculator state, including base inputs, advanced-module controls, galaxy settings, detection assumptions, and numeric results. Use it to recreate the same run later, share it with a collaborator, or feed it into your own analysis scripts.<br>
-     <strong style="color:var(--text-bright);">Download Monte Carlo chart</strong> 〰 A publication-oriented PNG, SVG, or PDF chart from the latest current Monte Carlo run, annotated with the uncertainty interval, q50 median, arithmetic mean, and deterministic central estimate.<br>
-     <strong style="color:var(--text-bright);">Export Monte Carlo data</strong> 〰 Raw numeric candidate-count samples from the latest current Monte Carlo run, plus run metadata and summary statistics for reproducibility and independent plotting.<br>
-     <strong style="color:var(--text-bright);">Export Monte Carlo package</strong> 〰 ZIP bundle containing chart files, raw sample JSON, and a readme with export metadata.<br>
-     <strong style="color:var(--text-bright);">LaTeX</strong> 〰 A formatted parameter table ready to paste directly into a scientific paper or report. No reformatting needed.<br>
-     <strong style="color:var(--text-bright);">BibTeX</strong> 〰 All scientific sources cited in this calculator (Drake, Lineweaver, Sandberg, Saltelli, Madau &amp; Dickinson, and others) in a format that works with any reference manager (Zotero, Mendeley, Overleaf).
+     <strong style="color:var(--text-bright);">JSON</strong> - A complete snapshot of the current calculator state, including base inputs, advanced-module controls, galaxy settings, detection assumptions, and numeric results. Use it to recreate the same run later, share it with a collaborator, or feed it into your own analysis scripts.<br>
+     <strong style="color:var(--text-bright);">Download Monte Carlo chart</strong> - A publication-oriented PNG, SVG, or PDF chart from the latest current Monte Carlo run, annotated with the uncertainty interval, q50 median, arithmetic mean, and deterministic central estimate.<br>
+     <strong style="color:var(--text-bright);">Export Monte Carlo data</strong> - Raw numeric candidate-count samples from the latest current Monte Carlo run, plus run metadata and summary statistics for reproducibility and independent plotting.<br>
+     <strong style="color:var(--text-bright);">Export Monte Carlo package</strong> - ZIP bundle containing chart files, raw sample JSON, and a readme with export metadata.<br>
+     <strong style="color:var(--text-bright);">LaTeX</strong> - A formatted parameter table ready to paste directly into a scientific paper or report. No reformatting needed.<br>
+     <strong style="color:var(--text-bright);">BibTeX</strong> - All scientific sources cited in this calculator (Drake, Lineweaver, Sandberg, Saltelli, Madau &amp; Dickinson, and others) in a format that works with any reference manager (Zotero, Mendeley, Overleaf).
     </div>
    </div>
 
@@ -2472,17 +2481,17 @@
     </div>
    </div>
    <div class="footer">
-    <span>© Are We Alone in the Universe? Research modelling tool v2.17   / Also by the author of: <a href="https://www.apocalypseclock.com/" rel="noopener noreferrer" target="_blank" style="text-decoration:none;color:inherit;">Apocalypse Clock</a></span>
+    <span>© Are We Alone in the Universe? Research modelling tool v2.18   / Also by the author of: <a href="https://www.apocalypseclock.com/" rel="noopener noreferrer" target="_blank" style="text-decoration:none;color:inherit;">Apocalypse Clock</a></span>
    </div>
   </div>
   <div id="copy-tooltip">
    Copied!
   </div>
-  <script src="src/scientific-parameters.js?v=site-v2.17-20260618"></script>
-  <script  src="src/calculator-core.js?v=site-v2.17-20260618"></script>
-<script src="src/charts.js?v=site-v2.17-20260618"></script>
-<script  src="src/share.js?v=site-v2.17-20260618"></script>
-<script src="src/accessibility.js?v=site-v2.17-20260618"></script>
-<script  src="src/app.js?v=site-v2.17-20260618"></script>
+  <script src="src/scientific-parameters.js?v=site-v2.18-20260624"></script>
+  <script  src="src/calculator-core.js?v=site-v2.18-20260624"></script>
+<script src="src/charts.js?v=site-v2.18-20260624"></script>
+<script  src="src/share.js?v=site-v2.18-20260624"></script>
+<script src="src/accessibility.js?v=site-v2.18-20260624"></script>
+<script  src="src/app.js?v=site-v2.18-20260624"></script>
  </body>
 </html>

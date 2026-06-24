@@ -1028,6 +1028,29 @@
     .status-title { color:var(--accent); }
     .result-reality-check { border-left-color: var(--orange); }
     .result-reality-check .status-title { color: var(--orange); }
+    .mc-config-line {
+      font-size: 10.5px; color: var(--text-dim); margin: 2px 0 0 0;
+    }
+    .mc-config-line .result-label { color: var(--accent); }
+    .mc-details { margin: 2px 0 3px 0; text-align: center; }
+    .mc-details > .mc-details-summary {
+      cursor: pointer; display: inline-block; list-style: none;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase;
+      color: var(--accent); opacity: 0.85; user-select: none;
+    }
+    .mc-details > .mc-details-summary::-webkit-details-marker { display: none; }
+    .mc-details > .mc-details-summary::after { content: ' \25BE'; font-size: 9px; }
+    .mc-details[open] > .mc-details-summary::after { content: ' \25B4'; }
+    .mc-details[open] > .mc-details-summary { opacity: 1; }
+    .mc-details-body {
+      margin: 8px auto 2px auto; max-width: 360px; text-align: left;
+      font-size: 11px; line-height: 1.65; color: var(--text);
+      border-left: 2px solid var(--border); padding-left: 12px;
+    }
+    .mc-details-row { display: flex; gap: 8px; }
+    .mc-details-row .mc-config-key { flex: 0 0 120px; color: var(--text-dim); font-weight: 600; }
+    .mc-details-row .mc-config-val { color: var(--text-bright); font-weight: 600; }
+    .mc-details-note { margin-top: 6px; font-size: 10px; color: var(--text-dim); line-height: 1.5; }
     .alert-item + .alert-item {
       margin-top:10px; padding-top:10px; border-top:1px solid var(--border);
     }
@@ -1462,7 +1485,9 @@
     .share-row a { color:var(--text-dim); font-size:14px; text-decoration:none; }
     .share-row a:hover { color:var(--text); }
     .charts-grid { display:flex; flex-wrap:wrap; gap:10px; }
-    #monteCarloChart, #gaussianChart { flex:1; min-width:260px; min-height:200px; background:var(--bg); border-radius:6px; border:1px solid var(--border); padding:5px; }
+    #monteCarloChart, #exceedanceChart { flex:1; min-width:260px; min-height:200px; background:var(--bg); border-radius:6px; border:1px solid var(--border); padding:5px; }
+    .exceedance-caption { margin-top:8px; font-size:9.5px; line-height:1.6; color:var(--text-dim); }
+    .exceedance-caption .exceedance-engine { color:var(--accent); font-weight:600; }
     .bold-number { font-weight:800; color:var(--accent); }
     .cursor { display:inline-block; width:2px; height:1em; background:var(--accent); animation:blink 1s step-end infinite; vertical-align:middle; }
     @keyframes blink { 50%{opacity:0} }
@@ -1514,7 +1539,7 @@
     }
     @media (max-width: 640px) {
       .input-grid, .galaxy-inner-grid, .adv-grid { grid-template-columns:1fr 1fr; }
-      #monteCarloChart, #gaussianChart { min-width:100%; }
+      #monteCarloChart, #exceedanceChart { min-width:100%; }
       .btn { font-size:11px; padding:8px 13px; }
       .preset-btn { font-size:10px; padding:7px 11px; }
       .header-inner { flex-direction:column; gap:16px; }
@@ -2154,7 +2179,7 @@
   .share-row a { font-size: 13px; }
   .charts-grid { flex-direction: column; gap: 8px; }
   #monteCarloChart,
-  #gaussianChart {
+  #exceedanceChart {
     min-width: 100%;
     min-height: 180px;
   }

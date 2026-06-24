@@ -2,6 +2,39 @@
 
 ## Unreleased
 
+## v2.18 - 2026-06-24
+
+### Release Framing
+
+- Updated active application, package, citation, Zenodo, export, README, cache-buster, footer, paper, audit, standalone HTML, and test metadata to v2.18.
+- Added `RELEASE_NOTES_v2.18.md` for GitHub release preparation.
+
+### Monte Carlo Transparency
+
+- Replaced the previous KDE/Gaussian relative-density chart with an empirical exceedance-probability chart showing `P(N >= threshold)` across Monte Carlo candidate-count samples.
+- Added a resolved MC CONFIG line and collapsible MC details panel reporting the active sampling engine, distribution, uncertainty basis, correlation model, seed mode, iteration count, and robust-envelope state.
+- Introduced a resolved Monte Carlo display-configuration snapshot used consistently by results, charts, exports, history, console summaries, and shared text.
+- Updated Monte Carlo result labels to distinguish Standard Monte Carlo from Latin Hypercube Sampling and to show the effective uncertainty basis directly in result lines.
+- Updated simulation history so stored runs preserve the resolved Monte Carlo engine and effective basis used at calculation time.
+- Refined distance-basis labels so nearest-neighbour distance estimates report the actual MC engine and q50 count basis.
+
+### Sensitivity Analysis
+
+- Improved Sobol/Saltelli sensitivity-analysis display in Bryson eta-Earth direct mode: the panel now states that eta-Earth is fixed, `N_p_star`/`f_rocky`/`f_HZ` are bypassed, and the chart covers post-eta-Earth sampled factors only.
+
+### Exports
+
+- Expanded JSON and Monte Carlo data exports with full `mc_config` metadata and chart metadata for reproducibility and independent replotting.
+
+### Tests And Tooling
+
+- Added regression checks for Monte Carlo display-configuration consistency and stale-label prevention.
+- Cleaned several UI text separators for more robust rendering and export compatibility.
+
+### Scope
+
+- No scientific parameter registry or scenario preset values were changed in this update.
+
 ## v2.17 - 2026-06-18
 
 ### Release Framing

@@ -399,6 +399,11 @@ let monteCarloUncertaintyBasisLabel = '';
 
 let monteCarloIntervalComparison = null;
 
+// Resolved Monte Carlo display configuration for the latest applied run.
+// Single source of truth for all result/chart/export/history labelling so that
+// changing a control never leaves a stale label behind after recalculation.
+let lastMonteCarloDisplayConfig = null;
+
 let hasDeterministicCalculation = false;
 
 let inputValidationWarnings = [];
@@ -2489,6 +2494,228 @@ function describeSimulationOptions(options = getSimulationOptions(), dist = ((by
   };
 }
 
+// ---------------------------------------------------------------------------
+// Resolved Monte Carlo display configuration (single source of truth).
+//
+// Every place that shows, charts, exports, copies, or stores a stochastic
+// result must derive its labels from getResolvedMonteCarloDisplayConfig() so
+// that the active sampling engine and all major MC settings are explicit and
+// never stale. The numerical engine is unchanged; this is labelling only.
+// ---------------------------------------------------------------------------
+const MC_SIMULATION_CLASS_LABEL = 'Monte Carlo uncertainty propagation';
+
+const MC_SAMPLING_ENGINE_FULL_LABELS = {
+  standard: 'Standard Monte Carlo',
+  lhs: 'Latin Hypercube Sampling'
+};
+
+const MC_SAMPLING_ENGINE_SHORT_LABELS = {
+  standard: 'Standard Monte Carlo',
+  lhs: 'Latin Hypercube'
+};
+
+// Uppercase engine token used in the main result labels (q50 / mean / interval).
+const MC_ENGINE_RESULT_PREFIX = {
+  standard: 'STANDARD MONTE CARLO',
+  lhs: 'LATIN HYPERCUBE'
+};
+
+// Mixed-case engine token used in the distance count-basis line.
+const MC_ENGINE_DISTANCE_PREFIX = {
+  standard: 'Standard Monte Carlo',
+  lhs: 'Latin Hypercube'
+};
+
+const MC_DISTRIBUTION_DISPLAY_LABELS = {
+  lognormal: 'Log-normal / logit-normal',
+  normal: 'Bounded normal',
+  uniform: 'Uniform'
+};
+
+const MC_CORRELATION_DISPLAY_LABELS = {
+  independent: 'Independent factors',
+  heuristic: 'Exploratory heuristic correlation scaffold'
+};
+
+// Clean, readable basis labels (no trailing "/ ..." descriptor).
+const MC_BASIS_DISPLAY_LABELS = {
+  presetLocal: 'Scenario-local preset uncertainty',
+  modifiedPresetLocal: 'Modified preset-local uncertainty',
+  customInput: 'Custom input uncertainty',
+  globalEnvelope: 'Global exploratory envelope'
+};
+
+// What the user actually requested (auto is shown explicitly alongside the resolved basis).
+const MC_BASIS_REQUESTED_LABELS = {
+  auto: 'Auto: preset-local/custom',
+  presetLocal: 'Scenario-local preset uncertainty',
+  modifiedPresetLocal: 'Modified preset-local uncertainty',
+  customInput: 'Custom input uncertainty',
+  globalEnvelope: 'Global exploratory envelope'
+};
+
+// Compact uppercase token folded into the interval label when the basis is not the plain preset-local default.
+const MC_BASIS_INTERVAL_TOKENS = {
+  modifiedPresetLocal: 'MODIFIED PRESET-LOCAL',
+  customInput: 'CUSTOM-INPUT',
+  globalEnvelope: 'GLOBAL-ENVELOPE'
+};
+
+const MC_UNCERTAINTY_PROFILE_LABELS = {
+  conservative: 'Conservative/narrow',
+  baseline: 'Balanced/default',
+  broad: 'Broad exploratory',
+  stress: 'Stress-test extremes'
+};
+
+const MC_INTERVAL_INTERPRETATION_LABEL =
+  'sampled model interval; not an observational confidence interval';
+
+function normalizeMcEngine(engine) {
+  return String(engine || 'standard').toLowerCase() === 'lhs' ? 'lhs' : 'standard';
+}
+
+function normalizeMcCorrelation(correlation) {
+  const v = String(correlation || 'independent').toLowerCase();
+  return (v === 'heuristic' || v === 'scaffold') ? 'heuristic' : 'independent';
+}
+
+function normalizeMcDistribution(dist) {
+  const v = String(dist || 'lognormal').toLowerCase();
+  return (v === 'normal' || v === 'uniform') ? v : 'lognormal';
+}
+
+// Returns every label needed to render/chart/export/store a stochastic result.
+// Reads only from the supplied config objects (falling back to live DOM as a
+// last resort for pre-run previews), so previously saved results stay correctly
+// labelled even after the live controls change.
+function getResolvedMonteCarloDisplayConfig(simulationOptions = {}, resolvedModelState = null, mcDiagnostics = {}) {
+  simulationOptions = simulationOptions || {};
+  mcDiagnostics = mcDiagnostics || {};
+
+  const engine = normalizeMcEngine(
+    simulationOptions.engine ?? mcDiagnostics.engine ?? ((byId('simulation-engine') || {}).value)
+  );
+  const correlation = normalizeMcCorrelation(
+    simulationOptions.correlation ?? mcDiagnostics.correlationModel ?? mcDiagnostics.correlation ?? ((byId('correlation-model') || {}).value)
+  );
+  const distribution = normalizeMcDistribution(
+    simulationOptions.distribution ?? mcDiagnostics.distribution ?? ((byId('distribution') || {}).value)
+  );
+  const profileRaw = String(
+    simulationOptions.profile ?? mcDiagnostics.profile ?? ((byId('uncertainty-profile') || {}).value) ?? 'baseline'
+  ).toLowerCase();
+  const profile = MC_UNCERTAINTY_PROFILE_LABELS[profileRaw] ? profileRaw : 'baseline';
+
+  // Requested basis can be 'auto' or one of the explicit modes.
+  const requestedRaw = mcDiagnostics.requestedBasisMode ?? mcDiagnostics.requestedBasis ?? simulationOptions.mcMode ?? ((byId('mc-basis-mode') || {}).value) ?? 'auto';
+  const requestedBasis = String(requestedRaw).toLowerCase() === 'auto'
+    ? 'auto'
+    : normalizeMonteCarloBasisMode(requestedRaw);
+
+  // Effective/resolved basis: prefer stored diagnostics, then a supplied bounds
+  // descriptor, then a live resolution (pre-run preview only).
+  let effectiveBasis = mcDiagnostics.effectiveBasis
+    || (mcDiagnostics.boundsDescriptor && mcDiagnostics.boundsDescriptor.mode)
+    || null;
+  if (!effectiveBasis) {
+    if (typeof getMonteCarloBoundsDescriptor === 'function') {
+      effectiveBasis = getMonteCarloBoundsDescriptor({
+        engine, correlation,
+        robustBounds: !!(simulationOptions.robustBounds ?? mcDiagnostics.robustEnvelopeEnabled),
+        mcMode: requestedRaw
+      }).mode;
+    } else {
+      effectiveBasis = requestedBasis === 'auto' ? MONTE_CARLO_BASIS_MODES.customInput : requestedBasis;
+    }
+  }
+
+  const seedMode = String(
+    simulationOptions.seedMode ?? mcDiagnostics.seedMode ?? ((byId('monte-carlo-seed-mode') || {}).value) ?? 'random'
+  ).toLowerCase() === 'fixed' ? 'fixed' : 'random';
+  const seedValue = mcDiagnostics.seed ?? simulationOptions.seed ?? null;
+
+  const iterationsRaw = mcDiagnostics.iterations
+    ?? simulationOptions.iterations
+    ?? parseInt((byId('iterations') || {}).value || '2000', 10);
+  const iterations = Number.isFinite(iterationsRaw) ? iterationsRaw : 2000;
+
+  const robustEnvelopeEnabled = !!(
+    simulationOptions.robustBounds ?? mcDiagnostics.robustEnvelopeEnabled ?? ((byId('robust-bounds') || {}).checked)
+  );
+
+  const samplingEngineLabel = MC_SAMPLING_ENGINE_FULL_LABELS[engine];
+  const shortSamplingEngineLabel = MC_SAMPLING_ENGINE_SHORT_LABELS[engine];
+  const distributionLabel = MC_DISTRIBUTION_DISPLAY_LABELS[distribution];
+  const correlationLabel = MC_CORRELATION_DISPLAY_LABELS[correlation];
+  const mcBasisLabel = MC_BASIS_REQUESTED_LABELS[requestedBasis] || MC_BASIS_DISPLAY_LABELS[requestedBasis] || requestedBasis;
+  const resolvedBasisLabel = MC_BASIS_DISPLAY_LABELS[effectiveBasis] || effectiveBasis;
+  const uncertaintyProfileLabel = MC_UNCERTAINTY_PROFILE_LABELS[profile];
+  const seedModeLabel = seedMode === 'fixed' ? 'Fixed' : 'Random';
+  const seedValueLabel = seedMode === 'fixed'
+    ? (seedValue === null || seedValue === undefined ? 'Fixed (unset)' : String(seedValue))
+    : 'Random';
+  const iterationCountLabel = Number(iterations).toLocaleString();
+  const robustEnvelopeLabel = robustEnvelopeEnabled ? 'Enabled' : 'Disabled';
+
+  const resultPrefixLabel = MC_ENGINE_RESULT_PREFIX[engine];
+  const intervalBasisToken = MC_BASIS_INTERVAL_TOKENS[effectiveBasis] || '';
+  const intervalPrefixLabel = [resultPrefixLabel, intervalBasisToken, 'SAMPLED MODEL INTERVAL']
+    .filter(Boolean).join(' ');
+  const distanceBasisLabel = `${MC_ENGINE_DISTANCE_PREFIX[engine]} q50 count basis`;
+  const intervalInterpretationLabel = MC_INTERVAL_INTERPRETATION_LABEL;
+
+  const fullMethodLine =
+    `${MC_SIMULATION_CLASS_LABEL} / ${samplingEngineLabel} / ${distributionLabel} / ` +
+    `${correlationLabel} / ${resolvedBasisLabel}`;
+  const compactMethodBadgeText =
+    `${shortSamplingEngineLabel} · ${resolvedBasisLabel} · ${distributionLabel} · ${correlationLabel}`;
+  const seedSummaryLabel = seedMode === 'fixed'
+    ? `Fixed seed: ${seedValue === null || seedValue === undefined ? 'unset' : seedValue}`
+    : 'Random seed';
+  // Single compact "MC CONFIG" line shown under the main result interval.
+  const compactMethodLine =
+    `${samplingEngineLabel} · ${distributionLabel} · ${resolvedBasisLabel} · ` +
+    `${correlationLabel} · ${seedSummaryLabel} · ${iterationCountLabel} runs`;
+
+  return {
+    // raw resolved values (diagnostics)
+    profile,
+    engine,
+    distribution,
+    correlationModel: correlation,
+    requestedBasis,
+    effectiveBasis,
+    seedMode,
+    seed: seedValue,
+    iterations,
+    robustEnvelopeEnabled,
+    intervalType: `q2.5–q97.5 ${MC_INTERVAL_INTERPRETATION_LABEL}`,
+    // display labels
+    simulationClassLabel: MC_SIMULATION_CLASS_LABEL,
+    samplingEngineLabel,
+    shortSamplingEngineLabel,
+    distributionLabel,
+    mcBasisLabel,
+    resolvedBasisLabel,
+    correlationLabel,
+    uncertaintyProfileLabel,
+    seedModeLabel,
+    seedValueLabel,
+    iterationCountLabel,
+    robustEnvelopeLabel,
+    intervalInterpretationLabel,
+    resultPrefixLabel,
+    intervalPrefixLabel,
+    intervalBasisToken,
+    distanceBasisLabel,
+    fullMethodLine,
+    compactMethodBadgeText,
+    compactMethodLine,
+    seedSummaryLabel
+  };
+}
+
 function shuffleInPlace(values, rng = Math.random) {
   for (let i = values.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
@@ -2909,7 +3136,7 @@ function buildResolvedModelState(options = {}) {
   }
 
   return {
-    version: '2.17',
+    version: '2.18',
     baseScenarioId: scenario.originPreset || (scenario.isPreset ? activePreset : 'custom'),
     baseScenarioLabel: scenario.label,
     scenarioState: scenario.state,
@@ -4186,6 +4413,27 @@ function runMonteCarloSimulation(options = {}) {
   const seedMode = String(options.seedMode || options.seed_mode || 'random').toLowerCase() === 'fixed' ? 'fixed' : 'random';
   const prng = options.prng || MONTE_CARLO_PRNG;
   const prngDescription = options.prngDescription || MONTE_CARLO_PRNG_DESCRIPTION;
+  const profileForRun = String(
+    options.profile || (byId('uncertainty-profile') || {}).value || 'baseline'
+  ).toLowerCase();
+  // Resolved configuration snapshot captured at run time. This is the single
+  // source of truth that all render/export/history/chart code reads from, so a
+  // saved result stays correctly labelled even after live controls change.
+  const mcConfig = {
+    profile: profileForRun,
+    engine: simulationOptions.engine,
+    distribution: dist,
+    requestedBasisMode: simulationOptions.mcMode,
+    effectiveBasis: boundsDescriptor.mode,
+    correlationModel: simulationOptions.correlation,
+    seedMode,
+    seed: seedForRun,
+    iterations,
+    robustEnvelopeEnabled: !!simulationOptions.robustBounds,
+    boundsLabel: boundsDescriptor.label,
+    uncertaintyBasisLabel: boundsDescriptor.uncertaintyBasisLabel,
+    intervalType: `q2.5–q97.5 ${MC_INTERVAL_INTERPRETATION_LABEL}`
+  };
   const rng = typeof options.rng === 'function' ? options.rng : createSeededRng(seedForRun);
   clearBoundIntervalWarnings();
   const astronomyPriorModelAtRun = getAstronomyPriorExportSnapshot();
@@ -4326,6 +4574,7 @@ function runMonteCarloSimulation(options = {}) {
       prngDescription,
       astronomyPriorModel: astronomyPriorModelAtRun,
       resolvedModelState: buildResolvedModelState({ simulationOptions, boundsDescriptor }),
+      mcConfig,
       error: 'NO_VALID_MONTE_CARLO_SAMPLES',
       warnings: [{
         code: 'NO_VALID_MONTE_CARLO_SAMPLES',
@@ -4388,6 +4637,7 @@ function runMonteCarloSimulation(options = {}) {
     prngDescription,
     astronomyPriorModel: astronomyPriorModelAtRun,
     resolvedModelState: buildResolvedModelState({ simulationOptions, boundsDescriptor }),
+    mcConfig,
     warnings: []
   };
 }
@@ -4422,6 +4672,7 @@ function applyMonteCarloSummary(summary) {
       prngDescription: summary.prngDescription || MONTE_CARLO_PRNG_DESCRIPTION,
       astronomyPriorModel: summary.astronomyPriorModel || getAstronomyPriorExportSnapshot(),
       resolvedModelState: summary.resolvedModelState || buildResolvedModelState(),
+      mcConfig: summary.mcConfig || null,
       error: errorCode,
       warnings: summary.warnings || []
     };
@@ -4432,6 +4683,8 @@ function applyMonteCarloSummary(summary) {
     monteCarloBoundsLabel = '';
     monteCarloUncertaintyBasisLabel = '';
     monteCarloIntervalComparison = null;
+    lastMonteCarloDisplayConfig = null;
+    if (typeof renderActiveMonteCarloConfig === 'function') renderActiveMonteCarloConfig(null);
     simulationCompleted = false;
     monteCarloState = 'not-run';
     if (byId('monteCarloResult')) {
@@ -4469,9 +4722,23 @@ function applyMonteCarloSummary(summary) {
     prngDescription: summary.prngDescription || MONTE_CARLO_PRNG_DESCRIPTION,
     astronomyPriorModel: summary.astronomyPriorModel || getAstronomyPriorExportSnapshot(),
     resolvedModelState: summary.resolvedModelState || buildResolvedModelState(),
+    mcConfig: summary.mcConfig || null,
     warnings: summary.warnings || [],
     sampleOrder: 'ascending_candidate_count'
   };
+  // Resolve the display config from the run-time snapshot (single source of truth).
+  lastMonteCarloDisplayConfig = getResolvedMonteCarloDisplayConfig(
+    summary.simulationOptions,
+    summary.resolvedModelState,
+    summary.mcConfig || {
+      effectiveBasis: summary.boundsMode,
+      seedMode: summary.seedMode,
+      seed: summary.seed,
+      iterations: summary.requestedSamples,
+      distribution: summary.distribution
+    }
+  );
+  const mcDisplay = lastMonteCarloDisplayConfig;
   monteCarloYieldStats = summary.yieldStats || null;
   mcMedianQ50 = Number.isFinite(summary.median) ? summary.median : summary.mean;
   mcArithmeticMean = summary.mean;
@@ -4488,26 +4755,30 @@ function applyMonteCarloSummary(summary) {
 
   if (byId('monteCarloResult')) {
     byId('monteCarloResult').innerHTML =
-      `<span class="result-label">MONTE CARLO Q50 MEDIAN /</span> ${fmtN(mcMedianQ50)} modelled Earth-like candidates in ${galaxyName}${lifeLabel()} <span style="font-size:10px;color:var(--text-dim)">(sample median; methodological primary)</span>`;
+      `<span class="result-label">${mcDisplay.resultPrefixLabel} Q50 MEDIAN /</span> ${fmtN(mcMedianQ50)} modelled Earth-like candidates in ${galaxyName}${lifeLabel()} <span style="font-size:10px;color:var(--text-dim)">(sample median; methodological primary)</span>`;
   }
 
   if (byId('monteCarloMedian')) {
     byId('monteCarloMedian').innerHTML =
-      `<span class="result-label">MC ARITHMETIC MEAN /</span> ${fmtN(mcArithmeticMean)} modelled Earth-like candidates in ${galaxyName}${lifeLabel()} <span style="font-size:10px;color:var(--text-dim)">(reference only; drifts above median for multiplicative chains due to Jensen's inequality)</span>`;
+      `<span class="result-label">${mcDisplay.resultPrefixLabel} ARITHMETIC MEAN /</span> ${fmtN(mcArithmeticMean)} modelled Earth-like candidates in ${galaxyName}${lifeLabel()} <span style="font-size:10px;color:var(--text-dim)">(reference only; drifts above median for multiplicative chains due to Jensen's inequality)</span>`;
   }
 
   if (byId('stats')) {
     byId('stats').innerHTML =
-      `<span class="result-label">95% SAMPLED MODEL INTERVAL /</span> [${fmtN(mcQ025)}, ${fmtN(mcQ975)}] <span style="font-size:10px;color:var(--text-dim)">(q2.5–q97.5; not an observational confidence interval)</span>`;
+      `<span class="result-label">95% ${mcDisplay.intervalPrefixLabel} /</span> [${fmtN(mcQ025)}, ${fmtN(mcQ975)}] <span style="font-size:10px;color:var(--text-dim)">(q2.5–q97.5; ${mcDisplay.intervalInterpretationLabel})</span>`;
   }
 
+  // Mark the run complete before rendering the MC CONFIG line: renderActiveMonteCarloConfig()
+  // hides the compact line when simulationCompleted is false, so on a fresh first run the
+  // line must not be rendered until these flags are set.
+  simulationCompleted = true;
+  monteCarloState = 'current';
+  if (typeof renderActiveMonteCarloConfig === 'function') renderActiveMonteCarloConfig(mcDisplay);
   if (typeof renderResultRealityCheck === 'function') renderResultRealityCheck();
   if (byId('distance')) byId('distance').textContent = '';
   if (byId('whereAreTheyBtn')) byId('whereAreTheyBtn').disabled = false;
   if (typeof rebuildCharts === 'function') rebuildCharts(summary.results);
   if (typeof renderConvergenceSummary === 'function') renderConvergenceSummary();
-  simulationCompleted = true;
-  monteCarloState = 'current';
   if (typeof clearMonteCarloExportWarning === 'function') clearMonteCarloExportWarning();
   if (typeof renderSimulationMethodSummary === 'function') renderSimulationMethodSummary();
 
@@ -4687,9 +4958,19 @@ function getDistanceBasisHtml(scenario, countBasisLabel) {
           ? 'no nearest-neighbour distance model active'
           : 'nearest-neighbour distance scale, not a detected planet distance';
 
+  // When the active stochastic basis is global envelope or modified preset-local,
+  // call that out in the explanatory note so the count basis is unambiguous.
+  let basisNote = '';
+  const effBasis = lastMonteCarloDisplayConfig ? lastMonteCarloDisplayConfig.effectiveBasis : null;
+  if (effBasis === MONTE_CARLO_BASIS_MODES.globalEnvelope) {
+    basisNote = ` <span style="font-size:10px;color:var(--text-dim)">(count from ${lastMonteCarloDisplayConfig.resolvedBasisLabel.toLowerCase()}, not local preset uncertainty)</span>`;
+  } else if (effBasis === MONTE_CARLO_BASIS_MODES.modifiedPresetLocal) {
+    basisNote = ` <span style="font-size:10px;color:var(--text-dim)">(count from ${lastMonteCarloDisplayConfig.resolvedBasisLabel.toLowerCase()})</span>`;
+  }
+
   return (
     `<span class="result-label">DISTANCE BASIS /</span> ${modelLabel}; ` +
-    `${countBasisLabel}; ${kindLabel}.<br>`
+    `${countBasisLabel}; ${kindLabel}.${basisNote}<br>`
   );
 }
 
@@ -4872,7 +5153,7 @@ function buildFermiContext(distLy, refModel = null, options = {}) {
 
   const earthRadioBubbleLy = 110;
   const radioBubbleText =
-    `➤ Human radio leakage has only filled roughly <strong>${earthRadioBubbleLy}</strong> light years so far 〰 far smaller than many modelled communication distance scales.<br><br>`;
+    `➤ Human radio leakage has only filled roughly <strong>${earthRadioBubbleLy}</strong> light years so far - far smaller than many modelled communication distance scales.<br><br>`;
 
   const fmtSetiWait = y => {
     if (y >= 1e9) return fmtN(y / 1e9) + ' billion years';
@@ -5055,7 +5336,9 @@ function calculateDistanceToNearestPlanet() {
     const mcScenario = hasCurrentMc ? buildDistanceScenario(mcMedianQ50, mcQ025, mcQ975) : null;
     const dtScenario = buildDistanceScenario(deterministicPlanets);
     const primaryScenario = hasCurrentMc ? mcScenario : dtScenario;
-    const primaryCountBasis = hasCurrentMc ? 'Monte Carlo q50 count basis' : 'deterministic central count basis';
+    const primaryCountBasis = hasCurrentMc
+      ? (lastMonteCarloDisplayConfig ? lastMonteCarloDisplayConfig.distanceBasisLabel : 'Monte Carlo q50 count basis')
+      : 'deterministic central count basis';
 
     byId('distance').innerHTML = getDistanceBasisHtml(primaryScenario, primaryCountBasis) + primaryScenario.html;
     updateActiveDistanceSnapshot(primaryScenario, primaryCountBasis);
@@ -5336,7 +5619,24 @@ function computeSobolIndices(N_samples, rng = Math.random) {
     };
   }
 
-  return { indices: indices, activeIds: activeIds, N_samples: N_samples, varY: varY };
+  // Display-only metadata describing the occurrence mode this run was sampled under.
+  // It does not affect any index/value above; it lets the panel explain Bryson η⊕ direct
+  // runs (where N_p_star × f_composition × f_orbit are bypassed and η⊕ is a fixed,
+  // non-sampled direct term) without re-deriving global state at render time.
+  const occurrenceMode = getActiveOccurrenceMode();
+  const bypassedIds = occurrenceMode === 'eta_earth_direct'
+    ? ['N_p_star', 'f_composition', 'f_orbit']
+    : [];
+
+  return {
+    indices: indices,
+    activeIds: activeIds,
+    N_samples: N_samples,
+    varY: varY,
+    occurrenceMode: occurrenceMode,
+    etaEarthBryson: getActiveEtaEarthBryson(),
+    bypassedIds: bypassedIds
+  };
 }
 
 function runSobolAnalysis(options = {}) {

@@ -85,10 +85,10 @@ function validateOperatorParity(label, html, sourceBundle) {
     'Custom input uncertainty / Uses visible input bounds',
     'Global exploratory envelope / Not local preset uncertainty',
     'Log-sensitivity score: ${d.score.toFixed(0)} / signed correlation',
-    '${summary.engineLabel} / ${summary.distributionShort} / ${summary.correlationLabel} / ${summary.boundsLabel}',
+    '${MC_SIMULATION_CLASS_LABEL} / ${samplingEngineLabel} / ${distributionLabel} / ',
     "result.N_samples + ' base samples / ' + result.activeIds.length + ' uncertain params'",
     'Computed N_GHZ = ${details.N_GHZ.toLocaleString()} stars / GHZ = ${details.innerKpc.toFixed(1)}~${details.outerKpc.toFixed(1)} kpc',
-    'Formula: N̂ = (N<sub>Earth-like</sub> × f<sub>tx</sub> × range-gate) × (L / T<sub>galaxy</sub>) / P(≥1) = 1 − e<sup>−N̂</sup><br>',
+    'Formula: N̂ = (N<sub>Earth-like</sub> × f<sub>tx</sub> × range-gate) × (L / T<sub>galaxy</sub>)<br>P(≥1) = 1 − e<sup>−N̂</sup><br>',
     '1 / within light-travel reach',
     '0 / outside light-travel reach',
     'Step 0 / Civilisation prior',
@@ -105,13 +105,17 @@ function validateOperatorParity(label, html, sourceBundle) {
     }
   }
 
+  // The compact Monte Carlo "MC CONFIG" badge/line intentionally uses middle-dot (·)
+  // separators (canonical UI). The remaining regression guarantee is that the export
+  // reproduces the source middle-dots faithfully — i.e. source and export counts match
+  // — so the generator never drops or invents separators.
   const middleDot = String.fromCharCode(0x00B7);
   const sourceDotCount = countOccurrences(sourceBundle, middleDot);
   const htmlDotCount = countOccurrences(html, middleDot);
-  if (sourceDotCount || htmlDotCount) {
-    fail(`${label}: middle-dot separator remains (${sourceDotCount} in source, ${htmlDotCount} in export).`);
+  if (sourceDotCount !== htmlDotCount) {
+    fail(`${label}: middle-dot separator count drifted (${sourceDotCount} in source, ${htmlDotCount} in export).`);
   } else {
-    pass(`${label}: no middle-dot separators remain in source or export.`);
+    pass(`${label}: middle-dot separators are consistent between source and export (${htmlDotCount}).`);
   }
 
   const intendedFormula = 'ρ<sub>det</sub>/π';
@@ -213,6 +217,33 @@ function smokeTestShareSeedMetadata() {
     MONTE_CARLO_PRNG: 'Mulberry32',
     MONTE_CARLO_PRNG_DESCRIPTION: 'Mulberry32 32-bit deterministic PRNG',
     lastMonteCarloRunMetadata: null,
+    // Resolved MC display config normally lives in calculator-core.js; share.js reads it
+    // in buildJSONExportSnapshot. Provide a complete mock so the `||` short-circuits and
+    // never calls getResolvedMonteCarloDisplayConfig/getSimulationOptions (not loaded here).
+    lastMonteCarloDisplayConfig: {
+      profile: 'baseline',
+      engine: 'standard',
+      distribution: 'lognormal',
+      correlationModel: 'independent',
+      requestedBasis: 'auto',
+      effectiveBasis: 'customInput',
+      seedMode: 'random',
+      seed: null,
+      iterations: 25,
+      robustEnvelopeEnabled: false,
+      intervalType: 'q2.5–q97.5 sampled model interval',
+      simulationClassLabel: 'Monte Carlo simulation',
+      samplingEngineLabel: 'Standard Monte Carlo',
+      shortSamplingEngineLabel: 'Standard Monte Carlo',
+      distributionLabel: 'Log-normal',
+      mcBasisLabel: 'Custom input uncertainty',
+      resolvedBasisLabel: 'Custom-input sampled interval',
+      correlationLabel: 'Independent factors',
+      uncertaintyProfileLabel: 'Baseline',
+      distanceBasisLabel: 'Standard Monte Carlo q50 count basis',
+      fullMethodLine: 'Monte Carlo simulation / Standard Monte Carlo / Log-normal / Independent factors / Custom-input sampled interval',
+      compactMethodBadgeText: 'Standard Monte Carlo · Custom-input sampled interval · Log-normal · Independent factors'
+    },
     simulationCompleted: false,
     activePreset: 'test-preset',
     galaxyName: 'Milky Way',

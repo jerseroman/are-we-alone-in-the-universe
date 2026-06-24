@@ -702,7 +702,7 @@
 
   const SCIENTIFIC_PARAMETER_REGISTRY = Object.freeze({
     version: '1.0.0',
-    calculatorVersion: '2.17',
+    calculatorVersion: '2.18',
     parameterOrder: SCIENTIFIC_PARAMETER_ORDER,
     parameters: SCIENTIFIC_PARAMETERS,
     presets: SCIENTIFIC_PRESETS,

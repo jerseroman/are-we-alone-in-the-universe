@@ -42,7 +42,7 @@ const productionFiles = [
 ].filter((file, index, arr) => arr.indexOf(file) === index && fs.existsSync(path.join(root, file)));
 
 const consoleLogAllowlist = {
-  'src/share.js': ['runGalaxySettingsTests', 'runHistoricalContextTests', 'runAllOccurrenceTests']
+  'src/share.js': ['runGalaxySettingsTests', 'runHistoricalContextTests', 'runAllOccurrenceTests', 'runMonteCarloDisplayConfigTests', 'runExceedanceChartTests']
 };
 
 function consoleLogAllowedLines(rel, text) {
@@ -940,7 +940,7 @@ function buildHarnessHelpers(document, context, errors, warnings, unhandled) {
           monteCarloBoundsLabel: typeof monteCarloBoundsLabel !== 'undefined' ? monteCarloBoundsLabel : null,
           chartStale: {
             monteCarloChart: (document.getElementById('monteCarloChart') || { dataset: {} }).dataset.stale,
-            gaussianChart: (document.getElementById('gaussianChart') || { dataset: {} }).dataset.stale
+            exceedanceChart: (document.getElementById('exceedanceChart') || { dataset: {} }).dataset.stale
           }
         };
       },
@@ -1232,7 +1232,7 @@ await section('Browser Bootstrap and Runtime Smoke Test', () => {
   assert(h.document.querySelectorAll('.preset-btn[data-preset]').length >= 4, 'Preset buttons exist');
   assert(SCIENTIFIC_PARAMETER_ORDER.every(id => !!h.byId(id)), 'Scientific central inputs exist');
   assert(SCIENTIFIC_PARAMETER_ORDER.every(id => !!h.byId(`${id}_min`) && !!h.byId(`${id}_max`)), 'Scientific min/max bounds exist');
-  for (const id of ['deterministicResult', 'monteCarloResult', 'monteCarloChart', 'gaussianChart', 'share-buttons']) {
+  for (const id of ['deterministicResult', 'monteCarloResult', 'monteCarloChart', 'exceedanceChart', 'share-buttons']) {
     assert(!!h.byId(id), `Main UI element exists: ${id}`);
   }
   const state = h.snapshotScenarioState();
@@ -1442,7 +1442,7 @@ await section('MC Reproducibility', () => {
       assert(s1.sampledN_GHZ.every(v => Number.isFinite(v) && v >= 0), `${presetKey}/${mode}: count-like sampled N_GHZ non-negative`);
       assert(Number.isFinite(s1.convergence.finalMean), `${presetKey}/${mode}: convergence metadata finite`, s1.convergence);
       const chartStale = h1.getRuntimeSnapshot().chartStale;
-      assert(chartStale.monteCarloChart === 'false' && chartStale.gaussianChart === 'false', `${presetKey}/${mode}: chart state updated to latest MC`, chartStale);
+      assert(chartStale.monteCarloChart === 'false' && chartStale.exceedanceChart === 'false', `${presetKey}/${mode}: chart state updated to latest MC`, chartStale);
     }
   }
 });
@@ -1765,7 +1765,7 @@ await section('Export Share History', () => {
   const mc = runSeededMc(h, { samples: 64, seed: 202618, mcMode: 'presetLocal' });
   h.calculateDistanceToNearestPlanet();
   const json = h.buildJSONExportSnapshot();
-  assert(json && json.version === '2.17', 'JSON export contains version', json);
+  assert(json && json.version === '2.18', 'JSON export contains version', json);
   assert(json.preset === 'kepler', 'JSON export contains active preset', json);
   assert(json.scenario_state && json.scenario_state.state === 'preset', 'JSON export contains clean scenario state', json.scenario_state);
   assertRelApproxEqual(json.results.deterministic, h.getRuntimeSnapshot().deterministicPlanets, 1e-15, 'JSON deterministic equals current UI state');
@@ -1823,7 +1823,7 @@ await section('Charts State Invalidation', () => {
   const summary1 = runSeededMc(h, { samples: 64, seed: 202620 });
   const afterMc = h.getRuntimeSnapshot();
   assert(afterMc.chartStale.monteCarloChart === 'false', 'Monte Carlo chart marked current after MC run', afterMc.chartStale);
-  assert(afterMc.chartStale.gaussianChart === 'false', 'Gaussian chart marked current after MC run', afterMc.chartStale);
+  assert(afterMc.chartStale.exceedanceChart === 'false', 'Exceedance chart marked current after MC run', afterMc.chartStale);
   h.setInputValue('N_GHZ', '9000000000');
   h.dispatchInput('N_GHZ');
   const stale = h.getRuntimeSnapshot();

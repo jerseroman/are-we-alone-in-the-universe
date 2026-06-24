@@ -32,10 +32,11 @@ node tools/check-syntax.mjs
 
 Expected result: all checks PASS with zero FAIL results.
 
-`npm run test:all` uses the bounded core state-transition regression suite intended for CI and release checks. The slower exhaustive state-transition roundtrip audit remains available with:
+`npm run test:all` uses the bounded core state-transition regression suite intended for CI and release checks. The slower exhaustive state-transition roundtrip audit and the absolute deep audit remain available with:
 
 ```bash
 npm run test:deep
+npm run test:absolute
 ```
 
 Monte Carlo outputs can depend on seed and configuration. Use deterministic seed mode when exact Monte Carlo reproducibility is required.

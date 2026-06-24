@@ -220,9 +220,27 @@ function buildJSONExportSnapshot() {
     ? getRobustEnvelopeCoverageDescriptor()
     : null);
 
+  // Resolved Monte Carlo display config for export — prefer the snapshot captured
+  // at run time so exported metadata matches the visible UI, never live controls.
+  const _mcMeta = lastMonteCarloRunMetadata;
+  const mcDisplayCfg = lastMonteCarloDisplayConfig
+    || (_mcMeta && _mcMeta.mcConfig
+          ? getResolvedMonteCarloDisplayConfig({
+              engine: _mcMeta.mcConfig.engine,
+              correlation: _mcMeta.mcConfig.correlationModel,
+              distribution: _mcMeta.mcConfig.distribution,
+              mcMode: _mcMeta.mcConfig.requestedBasisMode,
+              robustBounds: _mcMeta.mcConfig.robustEnvelopeEnabled,
+              profile: _mcMeta.mcConfig.profile,
+              seedMode: _mcMeta.mcConfig.seedMode,
+              seed: _mcMeta.mcConfig.seed,
+              iterations: _mcMeta.mcConfig.iterations
+            }, _mcMeta.resolvedModelState, _mcMeta.mcConfig)
+          : getResolvedMonteCarloDisplayConfig(getSimulationOptions()));
+
   const snap = {
     calculator: 'Are We Alone in the Universe? Earth-like Planet Calculator',
-    version: '2.17',
+    version: '2.18',
     timestamp: new Date().toISOString(),
     preset: activePreset || 'custom',
     scenario_label: typeof getScenarioExportLabel === 'function' ? getScenarioExportLabel() : (activePreset || 'custom'),
@@ -281,15 +299,25 @@ function buildJSONExportSnapshot() {
       controls: serializeControlTree('detection-panel')
     },
     simulation: {
-      iterations: parseInt((byId('iterations') || {}).value || '2000', 10),
-      engine: (byId('simulation-engine') || {}).value || 'standard',
-      distribution: (byId('distribution') || {}).value || 'lognormal',
-      correlation: (byId('correlation-model') || {}).value || 'independent',
-      robustBounds: !!((byId('robust-bounds') || {}).checked),
+      // Engine/distribution/correlation/robustBounds/iterations are copied from the
+      // resolved run-time config (mc_config), not live DOM, so the simulation block
+      // and mc_config always agree for the run the numbers actually came from.
+      iterations: mcDisplayCfg.iterations,
+      engine: mcDisplayCfg.engine,
+      distribution: mcDisplayCfg.distribution,
+      correlation: mcDisplayCfg.correlationModel,
+      robustBounds: mcDisplayCfg.robustEnvelopeEnabled,
       requestedMcMode: resolvedModelState.monteCarlo.requestedBasisMode,
       resolvedMcMode: resolvedModelState.monteCarlo.resolvedBasisMode,
       mcMode: monteCarloBoundsMode || (typeof getMonteCarloBoundsDescriptor === 'function' ? getMonteCarloBoundsDescriptor().mode : null),
       uncertaintyBasisLabel: monteCarloUncertaintyBasisLabel || (typeof getMonteCarloBoundsDescriptor === 'function' ? getMonteCarloBoundsDescriptor().uncertaintyBasisLabel : null),
+      engineLabel: mcDisplayCfg.samplingEngineLabel,
+      samplingEngineLabel: mcDisplayCfg.samplingEngineLabel,
+      shortSamplingEngineLabel: mcDisplayCfg.shortSamplingEngineLabel,
+      distributionLabel: mcDisplayCfg.distributionLabel,
+      correlationLabel: mcDisplayCfg.correlationLabel,
+      resolvedBasisLabel: mcDisplayCfg.resolvedBasisLabel,
+      boundsLabel: mcDisplayCfg.resolvedBasisLabel,
       seed: lastMonteCarloRunMetadata?.seed ?? null,
       seed_mode: lastMonteCarloRunMetadata?.seedMode || (typeof getMonteCarloSeedMode === 'function' ? getMonteCarloSeedMode() : null),
       prng: lastMonteCarloRunMetadata?.prng || MONTE_CARLO_PRNG,
@@ -300,17 +328,56 @@ function buildJSONExportSnapshot() {
       mcState,
       staleState
     },
+    mc_config: {
+      simulation_class: mcDisplayCfg.simulationClassLabel,
+      profile: mcDisplayCfg.profile,
+      profile_label: mcDisplayCfg.uncertaintyProfileLabel,
+      engine: mcDisplayCfg.engine,
+      engine_label: mcDisplayCfg.samplingEngineLabel,
+      short_engine_label: mcDisplayCfg.shortSamplingEngineLabel,
+      distribution: mcDisplayCfg.distribution,
+      distribution_label: mcDisplayCfg.distributionLabel,
+      requested_basis: mcDisplayCfg.requestedBasis,
+      mc_basis_label: mcDisplayCfg.mcBasisLabel,
+      effective_basis: mcDisplayCfg.effectiveBasis,
+      effective_basis_label: mcDisplayCfg.resolvedBasisLabel,
+      correlation_model: mcDisplayCfg.correlationModel,
+      correlation_label: mcDisplayCfg.correlationLabel,
+      seed_mode: mcDisplayCfg.seedMode,
+      seed: mcDisplayCfg.seed,
+      iterations: mcDisplayCfg.iterations,
+      robust_envelope_enabled: mcDisplayCfg.robustEnvelopeEnabled,
+      interval_type: mcDisplayCfg.intervalType,
+      full_method_line: mcDisplayCfg.fullMethodLine,
+      compact_method_badge: mcDisplayCfg.compactMethodBadgeText
+    },
+    charts: {
+      primary_distribution: {
+        chart_type: 'monte_carlo_histogram',
+        y_quantity: 'frequency_percent',
+        x_quantity: 'candidate_count_bin',
+        source: 'latest finite Monte Carlo candidate-count samples'
+      },
+      secondary: {
+        chart_type: 'exceedance_probability',
+        y_quantity: 'P(N >= threshold)',
+        x_quantity: 'log10_candidate_count_threshold',
+        x_display_quantity: 'candidate_count_threshold',
+        source: 'latest finite Monte Carlo candidate-count samples',
+        sampling_engine_label: mcDisplayCfg.samplingEngineLabel
+      }
+    },
     parameters: params,
     basis_labels: {
       deterministic: 'deterministic central',
-      mc_median_q50: 'Monte Carlo q50/median',
-      mc_mean: 'Monte Carlo arithmetic mean',
-      sampled_interval: 'q2.5/q97.5 sampled interval',
+      mc_median_q50: `${mcDisplayCfg.shortSamplingEngineLabel} q50/median`,
+      mc_mean: `${mcDisplayCfg.shortSamplingEngineLabel} arithmetic mean`,
+      sampled_interval: `q2.5/q97.5 ${mcDisplayCfg.shortSamplingEngineLabel} sampled model interval`,
       detection_count_basis: detectionBasis.label,
       mcMode: monteCarloBoundsMode || null,
       uncertaintyBasisLabel: monteCarloUncertaintyBasisLabel || null,
       distance_model: activeDistanceModelLabel || 'active geometric distance model',
-      distance_basis: distanceSnapshot.activeDistanceCountBasis || (simulationCompleted ? 'Monte Carlo q50/median count with sampled q2.5/q97.5 interval' : 'deterministic central count'),
+      distance_basis: distanceSnapshot.activeDistanceCountBasis || (simulationCompleted ? `${mcDisplayCfg.distanceBasisLabel} with sampled q2.5/q97.5 interval` : 'deterministic central count'),
       mcState,
       staleState
     },
@@ -1351,6 +1418,439 @@ function runAllOccurrenceTests() {
 }
 window.runAllOccurrenceTests = runAllOccurrenceTests;
 
+// ---------------------------------------------------------------------------
+// Monte Carlo resolved-display-config tests.
+// Verifies that the active sampling engine and all major MC settings are
+// explicit and consistent everywhere a stochastic result is shown, charted,
+// exported, copied, or stored — and that switching controls leaves no stale
+// labels. Run from the console: runMonteCarloDisplayConfigTests().
+// ---------------------------------------------------------------------------
+function runMonteCarloDisplayConfigTests() {
+  const results = [];
+  function assert(name, cond, detail) {
+    results.push({ name, passed: !!cond, detail: cond ? 'OK' : (detail || 'FAILED') });
+  }
+  function setVal(id, v) { const el = byId(id); if (el) el.value = String(v); }
+  function setCheck(id, v) { const el = byId(id); if (el) el.checked = !!v; }
+  function txt(id) { return (byId(id) || {}).textContent || ''; }
+
+  const saved = {
+    engine: (byId('simulation-engine') || {}).value,
+    basis: (byId('mc-basis-mode') || {}).value,
+    corr: (byId('correlation-model') || {}).value,
+    profile: (byId('uncertainty-profile') || {}).value,
+    dist: (byId('distribution') || {}).value,
+    iters: (byId('iterations') || {}).value,
+    seedMode: (byId('monte-carlo-seed-mode') || {}).value,
+    seed: (byId('monte-carlo-seed') || {}).value,
+    robust: !!(byId('robust-bounds') || {}).checked
+  };
+
+  // Run a full Monte Carlo + apply cycle synchronously and report whether samples were produced.
+  function runMC() {
+    const summary = monteCarloCalculate({ updateUi: true, seedMode: 'fixed', seed: 123 });
+    return !!(summary && Array.isArray(summary.results) && summary.results.length && simulationCompleted);
+  }
+
+  try {
+    // ---- Pure label logic (independent of a successful run) ----
+    const cLhsMod = getResolvedMonteCarloDisplayConfig({ engine: 'lhs', mcMode: 'modifiedPresetLocal' }, null, { effectiveBasis: 'modifiedPresetLocal' });
+    assert('Pure: LHS + modified preset-local interval label',
+      cLhsMod.intervalPrefixLabel === 'LATIN HYPERCUBE MODIFIED PRESET-LOCAL SAMPLED MODEL INTERVAL', cLhsMod.intervalPrefixLabel);
+    const cStdCustom = getResolvedMonteCarloDisplayConfig({ engine: 'standard', mcMode: 'customInput' }, null, { effectiveBasis: 'customInput' });
+    assert('Pure: Standard + custom-input interval label',
+      cStdCustom.intervalPrefixLabel === 'STANDARD MONTE CARLO CUSTOM-INPUT SAMPLED MODEL INTERVAL', cStdCustom.intervalPrefixLabel);
+    const cLhsGlobal = getResolvedMonteCarloDisplayConfig({ engine: 'lhs', mcMode: 'globalEnvelope' }, null, { effectiveBasis: 'globalEnvelope' });
+    assert('Pure: LHS + global-envelope interval label',
+      cLhsGlobal.intervalPrefixLabel === 'LATIN HYPERCUBE GLOBAL-ENVELOPE SAMPLED MODEL INTERVAL', cLhsGlobal.intervalPrefixLabel);
+    const cLhsPreset = getResolvedMonteCarloDisplayConfig({ engine: 'lhs', mcMode: 'presetLocal' }, null, { effectiveBasis: 'presetLocal' });
+    assert('Pure: preset-local omits basis token',
+      cLhsPreset.intervalPrefixLabel === 'LATIN HYPERCUBE SAMPLED MODEL INTERVAL', cLhsPreset.intervalPrefixLabel);
+    assert('Pure: heuristic correlation label',
+      getResolvedMonteCarloDisplayConfig({ correlation: 'heuristic' }).correlationLabel === 'Exploratory heuristic correlation scaffold');
+    assert('Pure: independent correlation label',
+      getResolvedMonteCarloDisplayConfig({ correlation: 'independent' }).correlationLabel === 'Independent factors');
+    assert('Pure: standard distance basis label',
+      getResolvedMonteCarloDisplayConfig({ engine: 'standard' }).distanceBasisLabel === 'Standard Monte Carlo q50 count basis');
+    assert('Pure: lhs distance basis label',
+      getResolvedMonteCarloDisplayConfig({ engine: 'lhs' }).distanceBasisLabel === 'Latin Hypercube q50 count basis');
+    assert('Pure: interval interpretation present',
+      /sampled model interval; not an observational confidence interval/.test(getResolvedMonteCarloDisplayConfig({}).intervalInterpretationLabel));
+
+    // ---- Regression: MC CONFIG line is visible immediately after the FIRST successful run ----
+    // (renderActiveMonteCarloConfig must run after simulationCompleted/monteCarloState are set.)
+    setVal('uncertainty-profile', 'baseline');
+    setVal('simulation-engine', 'standard');
+    setVal('mc-basis-mode', 'customInput');
+    setVal('correlation-model', 'independent');
+    setVal('distribution', 'lognormal');
+    if (typeof invalidateResults === 'function') invalidateResults(false, false); // simulate a fresh/not-run page
+    assert('Fresh start: MC CONFIG line hidden before any run',
+      (byId('mcConfigLine') || {}).style.display === 'none', (byId('mcConfigLine') || {}).style.display);
+    const freshRan = runMC();
+    assert('Fresh run: MC produced samples', freshRan, 'no samples in test environment');
+    if (freshRan) {
+      assert('Fresh run: MC CONFIG line visible immediately',
+        (byId('mcConfigLine') || {}).style.display !== 'none', (byId('mcConfigLine') || {}).style.display);
+      assert('Fresh run: MC CONFIG line has prefix + engine label',
+        txt('mcConfigLine').includes('MC CONFIG /') && txt('mcConfigLine').includes('Standard Monte Carlo'),
+        txt('mcConfigLine'));
+      assert('Fresh run: mc-details exists, displayed, collapsed by default',
+        !!byId('mc-details')
+        && byId('mc-details').style.display !== 'none'
+        && !byId('mc-details').hasAttribute('open'),
+        byId('mc-details') ? ('display=' + byId('mc-details').style.display + ' open=' + byId('mc-details').hasAttribute('open')) : 'no element');
+    }
+
+    // ---- Standard Monte Carlo end-to-end ----
+    const stdRan = runMC();
+    assert('Standard: MC produced samples', stdRan, 'no samples in test environment');
+    if (stdRan) {
+      const cfg = lastMonteCarloDisplayConfig;
+      assert('Standard: q50 label', txt('monteCarloResult').includes('STANDARD MONTE CARLO Q50 MEDIAN'), txt('monteCarloResult'));
+      assert('Standard: mean label', txt('monteCarloMedian').includes('STANDARD MONTE CARLO ARITHMETIC MEAN'), txt('monteCarloMedian'));
+      assert('Standard: interval label', txt('stats').includes('STANDARD MONTE CARLO') && txt('stats').includes('CUSTOM-INPUT'), txt('stats'));
+      assert('Standard: distance basis label', cfg.distanceBasisLabel === 'Standard Monte Carlo q50 count basis', cfg.distanceBasisLabel);
+      // Compact MC CONFIG line (always visible) + collapsible details body.
+      assert('Standard: compact MC CONFIG line visible + engine',
+        (byId('mcConfigLine') || {}).style.display !== 'none' && txt('mcConfigLine').includes('MC CONFIG /') && txt('mcConfigLine').includes('Standard Monte Carlo'),
+        txt('mcConfigLine'));
+      assert('Standard: compact line shows runs + seed',
+        txt('mcConfigLine').includes('runs') && /seed/i.test(txt('mcConfigLine')), txt('mcConfigLine'));
+      assert('Standard: details body has full config (engine/basis/correlation/interval)',
+        txt('mc-details-body').includes('Standard Monte Carlo')
+        && txt('mc-details-body').includes('Effective basis')
+        && txt('mc-details-body').includes('Correlation model')
+        && txt('mc-details-body').includes('Interval type'),
+        txt('mc-details-body'));
+      assert('Standard: details collapsed by default (no open attr)',
+        byId('mc-details') && !byId('mc-details').hasAttribute('open'),
+        'details should start closed');
+      const exp = buildJSONExportSnapshot();
+      assert('Standard: export mc_config engine label', exp.mc_config.engine_label === 'Standard Monte Carlo', exp.mc_config.engine_label);
+      assert('Standard: export basis_labels not generic',
+        exp.basis_labels.mc_median_q50 === 'Standard Monte Carlo q50/median', exp.basis_labels.mc_median_q50);
+      // Export consistency: simulation block agrees with mc_config (both from resolved run-time config).
+      assert('Standard: export simulation/mc_config agree',
+        exp.simulation.engine === exp.mc_config.engine
+        && exp.simulation.distribution === exp.mc_config.distribution
+        && exp.simulation.correlation === exp.mc_config.correlation_model
+        && exp.simulation.iterations === exp.mc_config.iterations,
+        JSON.stringify({ sim: exp.simulation.engine, cfg: exp.mc_config.engine }));
+      const dataSnap = buildMonteCarloDataExportSnapshot();
+      const spec = dataSnap ? buildMonteCarloChartSpec(dataSnap) : null;
+      assert('Standard: chart marker label',
+        !!spec && spec.markers.some(m => m.label === 'Standard Monte Carlo q50 median'),
+        spec ? JSON.stringify(spec.markers.map(m => m.label)) : 'no spec');
+      const readme = dataSnap ? buildMonteCarloPackageReadme(dataSnap) : '';
+      assert('Standard: copy/readme engine', readme.includes('Sampling engine: Standard Monte Carlo'), 'readme missing engine');
+      // LaTeX export uses dynamic engine labels (saved run-time config, not live DOM).
+      const latexStd = typeof buildLatexExportText === 'function' ? buildLatexExportText() : '';
+      assert('Standard: LaTeX uses dynamic engine labels',
+        latexStd.includes('Standard Monte Carlo q50 median')
+        && latexStd.includes('Standard Monte Carlo arithmetic mean')
+        && latexStd.includes('Standard Monte Carlo sampled model interval'),
+        'latex missing dynamic labels');
+      // Calculation console distance basis uses the resolved distanceBasisLabel.
+      if (typeof renderCalculationConsole === 'function') {
+        renderCalculationConsole();
+        const consoleText = (byId('calc-console') || {}).textContent || '';
+        assert('Standard: console distance basis dynamic',
+          !consoleText.includes('Current distance basis = Monte Carlo q50 median'),
+          'console still uses generic distance basis');
+      }
+      saveHistoryEntry();
+      if (typeof renderHistory === 'function') renderHistory();
+      const histStd = readHistoryStore().items.slice(-1)[0];
+      assert('Standard: history mcConfig engine', histStd && histStd.mcConfig && histStd.mcConfig.engineLabel === 'Standard Monte Carlo',
+        histStd && histStd.mcConfig ? histStd.mcConfig.engineLabel : 'no mcConfig');
+      assert('Standard: history table visibly shows engine + basis',
+        ((byId('history-body') || {}).textContent || '').includes('Standard Monte Carlo'),
+        (byId('history-body') || {}).textContent || 'no history body');
+    }
+
+    // ---- Latin Hypercube end-to-end ----
+    setVal('simulation-engine', 'lhs');
+    const lhsRan = runMC();
+    assert('LHS: MC produced samples', lhsRan, 'no samples in test environment');
+    if (lhsRan) {
+      const cfg = lastMonteCarloDisplayConfig;
+      assert('LHS: q50 label', txt('monteCarloResult').includes('LATIN HYPERCUBE Q50 MEDIAN'), txt('monteCarloResult'));
+      assert('LHS: mean label', txt('monteCarloMedian').includes('LATIN HYPERCUBE ARITHMETIC MEAN'), txt('monteCarloMedian'));
+      assert('LHS: interval label', txt('stats').includes('LATIN HYPERCUBE'), txt('stats'));
+      assert('LHS: distance basis label', cfg.distanceBasisLabel === 'Latin Hypercube q50 count basis', cfg.distanceBasisLabel);
+      assert('LHS: SIMULATION MODEL line agrees', txt('simulationModel').includes('Latin Hypercube Sampling'), txt('simulationModel'));
+      assert('LHS: compact MC CONFIG line updates to LHS',
+        txt('mcConfigLine').includes('Latin Hypercube Sampling') && !txt('mcConfigLine').includes('Standard Monte Carlo'),
+        txt('mcConfigLine'));
+      assert('LHS: details body updates to LHS', txt('mc-details-body').includes('Latin Hypercube Sampling'), txt('mc-details-body'));
+      const latexLhs = typeof buildLatexExportText === 'function' ? buildLatexExportText() : '';
+      assert('LHS: LaTeX uses dynamic engine labels',
+        latexLhs.includes('Latin Hypercube q50 median') && latexLhs.includes('95\\% Latin Hypercube sampled model interval'),
+        'latex missing dynamic LHS labels');
+      const exp = buildJSONExportSnapshot();
+      assert('LHS: export mc_config engine label', exp.mc_config.engine_label === 'Latin Hypercube Sampling', exp.mc_config.engine_label);
+      assert('LHS: export not generic Monte Carlo q50',
+        exp.basis_labels.mc_median_q50 === 'Latin Hypercube q50/median', exp.basis_labels.mc_median_q50);
+      const dataSnap = buildMonteCarloDataExportSnapshot();
+      const spec = dataSnap ? buildMonteCarloChartSpec(dataSnap) : null;
+      assert('LHS: chart marker label',
+        !!spec && spec.markers.some(m => m.label === 'Latin Hypercube q50 median'),
+        spec ? JSON.stringify(spec.markers.map(m => m.label)) : 'no spec');
+      assert('LHS: chart subtitle engine', !!spec && spec.subtitle.includes('Latin Hypercube Sampling'), spec ? spec.subtitle : 'no spec');
+      saveHistoryEntry();
+      if (typeof renderHistory === 'function') renderHistory();
+      const histLhs = readHistoryStore().items.slice(-1)[0];
+      assert('LHS: history mcConfig engine', histLhs && histLhs.mcConfig && histLhs.mcConfig.engineLabel === 'Latin Hypercube Sampling',
+        histLhs && histLhs.mcConfig ? histLhs.mcConfig.engineLabel : 'no mcConfig');
+      assert('LHS: history table visibly shows Latin Hypercube + basis',
+        ((byId('history-body') || {}).textContent || '').includes('Latin Hypercube'),
+        (byId('history-body') || {}).textContent || 'no history body');
+    }
+
+    // ---- MC basis change → global exploratory envelope ----
+    if (lhsRan) {
+      setVal('mc-basis-mode', 'globalEnvelope');
+      if (runMC()) {
+        assert('Global envelope: details effective basis',
+          txt('mc-details-body').includes('Global exploratory envelope'), txt('mc-details-body'));
+        assert('Global envelope: interval description', txt('stats').includes('GLOBAL-ENVELOPE'), txt('stats'));
+      }
+      // ---- MC basis change → custom input uncertainty ----
+      setVal('mc-basis-mode', 'customInput');
+      if (runMC()) {
+        assert('Custom input: details effective basis',
+          txt('mc-details-body').includes('Custom input uncertainty'), txt('mc-details-body'));
+        assert('Custom input: interval description', txt('stats').includes('CUSTOM-INPUT'), txt('stats'));
+      }
+      // ---- Correlation model change ----
+      setVal('correlation-model', 'heuristic');
+      if (runMC()) {
+        assert('Correlation change: details show scaffold',
+          txt('mc-details-body').includes('Exploratory heuristic correlation scaffold'), txt('mc-details-body'));
+      }
+      setVal('correlation-model', 'independent');
+      // ---- Uncertainty profile change updates derived labels ----
+      setVal('uncertainty-profile', 'broad');
+      if (runMC()) {
+        assert('Profile change: details show broad',
+          lastMonteCarloDisplayConfig.uncertaintyProfileLabel === 'Broad exploratory'
+          && txt('mc-details-body').includes('Broad exploratory'),
+          lastMonteCarloDisplayConfig.uncertaintyProfileLabel);
+      }
+      setVal('uncertainty-profile', 'baseline');
+
+      // ---- Repeated LHS → Standard → LHS switching leaves no stale labels ----
+      setVal('mc-basis-mode', 'customInput');
+      setVal('simulation-engine', 'lhs'); runMC();
+      setVal('simulation-engine', 'standard'); runMC();
+      setVal('simulation-engine', 'lhs'); const finalRan = runMC();
+      if (finalRan) {
+        assert('No stale labels: final is LHS, not Standard',
+          txt('monteCarloResult').includes('LATIN HYPERCUBE') && !txt('monteCarloResult').includes('STANDARD MONTE CARLO'),
+          txt('monteCarloResult'));
+        assert('No stale labels: compact line, model line, result and export all agree on engine',
+          txt('mcConfigLine').includes('Latin Hypercube Sampling')
+          && txt('simulationModel').includes('Latin Hypercube Sampling')
+          && buildJSONExportSnapshot().mc_config.engine_label === 'Latin Hypercube Sampling',
+          txt('mcConfigLine'));
+      }
+    }
+  } catch (e) {
+    assert('Suite threw', false, String(e && e.message || e));
+  } finally {
+    // Restore controls and recalc so the page is left in its original state.
+    setVal('simulation-engine', saved.engine);
+    setVal('mc-basis-mode', saved.basis);
+    setVal('correlation-model', saved.corr);
+    setVal('uncertainty-profile', saved.profile);
+    setVal('distribution', saved.dist);
+    setVal('iterations', saved.iters);
+    setVal('monte-carlo-seed-mode', saved.seedMode);
+    setVal('monte-carlo-seed', saved.seed);
+    setCheck('robust-bounds', saved.robust);
+    if (typeof invalidateResults === 'function') invalidateResults(false, false);
+  }
+
+  const failed = results.filter(r => !r.passed);
+  /* eslint-disable no-console */
+  console.log(`Monte Carlo display-config tests: ${results.length - failed.length}/${results.length} passed.`);
+  if (failed.length) console.table(failed.map(r => ({ name: r.name, detail: r.detail })));
+  /* eslint-enable no-console */
+  return results;
+}
+window.runMonteCarloDisplayConfigTests = runMonteCarloDisplayConfigTests;
+
+// ---------------------------------------------------------------------------
+// Exceedance-probability chart tests.
+// Verifies the second chart now renders an empirical P(N >= threshold) curve
+// from the live MC candidate-count samples (no KDE/Gaussian), that the main
+// histogram is untouched, and that empty/invalid states show a message rather
+// than fake data. Run from the console: runExceedanceChartTests().
+// ---------------------------------------------------------------------------
+function runExceedanceChartTests() {
+  const results = [];
+  function assert(name, cond, detail) {
+    results.push({ name, passed: !!cond, detail: cond ? 'OK' : (detail || 'FAILED') });
+  }
+  function setVal(id, v) { const el = byId(id); if (el) el.value = String(v); }
+  function arrEq(a, b) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) { if (a[i] !== b[i]) return false; }
+    return true;
+  }
+  function chartTitle() {
+    const el = byId('exceedanceChart');
+    const t = el && el.querySelector('.apexcharts-title-text');
+    return t ? t.textContent : '';
+  }
+  function histRendered() {
+    return !!(monteCarloChart && monteCarloChart.w && monteCarloChart.w.globals
+      && Array.isArray(monteCarloChart.w.globals.series)
+      && monteCarloChart.w.globals.series[0]
+      && monteCarloChart.w.globals.series[0].length > 0);
+  }
+  function runMC() {
+    const summary = monteCarloCalculate({ updateUi: true, seedMode: 'fixed', seed: 123 });
+    return !!(summary && Array.isArray(summary.results) && summary.results.length && simulationCompleted);
+  }
+
+  const saved = {
+    engine: (byId('simulation-engine') || {}).value,
+    seedMode: (byId('monte-carlo-seed-mode') || {}).value,
+    seed: (byId('monte-carlo-seed') || {}).value
+  };
+
+  try {
+    // ---- Pure series logic (no run required) ----
+    const tooFew = buildExceedanceSeries([1, 2, 3]);
+    assert('Pure: <20 finite samples => not ok (no fake data)',
+      tooFew.ok === false && tooFew.exceedance.length === 0, JSON.stringify(tooFew.reason));
+    const noneFinite = buildExceedanceSeries([NaN, Infinity, null, undefined]);
+    assert('Pure: no finite samples => reason invalid',
+      noneFinite.ok === false && noneFinite.reason === 'invalid', noneFinite.reason);
+
+    // Synthetic spread of >=20 finite samples for deterministic structural checks.
+    const synth = [];
+    for (let i = 0; i < 500; i++) synth.push(Math.pow(10, (i % 50) / 10)); // 1 .. ~10^4.9
+    const s = buildExceedanceSeries(synth);
+    assert('Pure: synthetic run is ok', s.ok === true, s.reason);
+    assert('Pure: exceedance monotonically non-increasing',
+      s.exceedance.every((v, i) => i === 0 || v <= s.exceedance[i - 1] + 1e-9), 'not monotonic');
+    assert('Pure: first exceedance >= last',
+      s.exceedance[0] >= s.exceedance[s.exceedance.length - 1], `${s.exceedance[0]} vs ${s.exceedance[s.exceedance.length - 1]}`);
+    assert('Pure: all exceedance values within [0,100]',
+      s.exceedance.every(v => v >= 0 && v <= 100), 'out of range');
+    assert('Pure: thresholds strictly ascending',
+      s.thresholds.every((v, i) => i === 0 || v > s.thresholds[i - 1]), 'not ascending');
+
+    // ---- Numeric log10 x-axis point structure ----
+    assert('Pure: every point stores both threshold and logThreshold',
+      s.points.length === s.thresholds.length
+      && s.points.every(p => Number.isFinite(p.threshold) && Number.isFinite(p.logThreshold)),
+      'missing threshold/logThreshold');
+    assert('Pure: point.x equals Math.log10(threshold)',
+      s.points.every(p => Math.abs(p.x - Math.log10(p.threshold)) < 1e-12), 'x != log10(threshold)');
+    assert('Pure: point.logThreshold equals point.x',
+      s.points.every(p => p.logThreshold === p.x), 'logThreshold != x');
+    assert('Pure: point.x strictly ascending (true log spacing)',
+      s.points.every((p, i) => i === 0 || p.x > s.points[i - 1].x), 'x not ascending');
+    assert('Pure: point.threshold stays in real units (>= 1)',
+      s.points.every(p => p.threshold >= 1), 'threshold not real');
+    assert('Pure: reference markers use log10 x but display real thresholds',
+      s.refMarkers.every(m => Math.abs(m.x - Math.log10(m.threshold)) < 1e-12
+        && m.label === '≥' + (m.threshold >= 1 ? Math.round(m.threshold).toLocaleString() : m.threshold.toExponential(1))),
+      JSON.stringify(s.refMarkers));
+
+    // ---- End-to-end with Standard Monte Carlo ----
+    setVal('simulation-engine', 'standard');
+    const stdRan = runMC();
+    assert('Standard: MC produced samples', stdRan, 'no samples in test environment');
+    if (stdRan) {
+      assert('Standard: main histogram still renders', histRendered(), 'histogram empty');
+      assert('Standard: new chart title is MODEL EXCEEDANCE PROBABILITY',
+        chartTitle().includes('MODEL EXCEEDANCE PROBABILITY'), chartTitle());
+      assert('Standard: old KDE/Gaussian wording gone from chart',
+        !/KDE|Gaussian|Relative Density/i.test((byId('exceedanceChart') || {}).textContent || ''),
+        (byId('exceedanceChart') || {}).textContent);
+      const fromState = exceedanceState.exceedance;
+      const recomputed = buildExceedanceSeries(lastResults).exceedance;
+      assert('Standard: chart uses the same finite MC sample array as the run',
+        arrEq(fromState, recomputed), 'state vs recompute mismatch');
+      assert('Standard: chart exceedance non-increasing',
+        fromState.every((v, i) => i === 0 || v <= fromState[i - 1] + 1e-9), 'not monotonic');
+      assert('Standard: chart first >= last & within [0,100]',
+        fromState.length > 0 && fromState[0] >= fromState[fromState.length - 1]
+        && fromState.every(v => v >= 0 && v <= 100), 'range/order failed');
+      assert('Standard: engine label is stored runtime label',
+        exceedanceState.engineLabel === (lastMonteCarloDisplayConfig || {}).samplingEngineLabel
+        && exceedanceState.engineLabel === 'Standard Monte Carlo', exceedanceState.engineLabel);
+      const sec = buildJSONExportSnapshot().charts.secondary;
+      assert('Standard: export marks second chart as exceedance_probability with log10 x',
+        sec.chart_type === 'exceedance_probability'
+        && sec.y_quantity === 'P(N >= threshold)'
+        && sec.x_quantity === 'log10_candidate_count_threshold'
+        && sec.x_display_quantity === 'candidate_count_threshold',
+        JSON.stringify(sec));
+
+      // Tooltip must show the REAL threshold, never the log10 value.
+      const midIdx = Math.floor(exceedanceState.points.length / 2);
+      const midPt = exceedanceState.points[midIdx];
+      const ttHtml = exceedanceTooltip({ dataPointIndex: midIdx });
+      const realLabel = formatExceedanceThreshold(midPt.threshold);
+      assert('Standard: tooltip shows real threshold, not log10',
+        ttHtml.includes(realLabel) && !ttHtml.includes(`≥${String(midPt.logThreshold)}`)
+        && ttHtml.includes(`${midPt.exceedancePercent}%`), ttHtml);
+
+      // #9 stored label survives a live DOM control change with no re-run.
+      setVal('simulation-engine', 'lhs');
+      assert('Stored label not overwritten by stale live DOM control',
+        exceedanceState.engineLabel === 'Standard Monte Carlo', exceedanceState.engineLabel);
+    }
+
+    // ---- End-to-end with Latin Hypercube Sampling ----
+    setVal('simulation-engine', 'lhs');
+    const lhsRan = runMC();
+    assert('LHS: MC produced samples', lhsRan, 'no samples in test environment');
+    if (lhsRan) {
+      assert('LHS: main histogram still renders', histRendered(), 'histogram empty');
+      assert('LHS: chart title still MODEL EXCEEDANCE PROBABILITY',
+        chartTitle().includes('MODEL EXCEEDANCE PROBABILITY'), chartTitle());
+      assert('LHS: engine label is Latin Hypercube Sampling',
+        exceedanceState.engineLabel === 'Latin Hypercube Sampling', exceedanceState.engineLabel);
+      const lhsState = exceedanceState.exceedance;
+      assert('LHS: chart exceedance valid & non-increasing',
+        lhsState.length > 0
+        && lhsState.every((v, i) => (i === 0 || v <= lhsState[i - 1] + 1e-9) && v >= 0 && v <= 100),
+        'invalid LHS exceedance');
+    }
+
+    // ---- #10 empty state shows a message instead of fake data ----
+    updateExceedanceChart([]);
+    assert('Empty input => no fake data points in state',
+      exceedanceState.exceedance.length === 0, 'state not cleared');
+    const noDataText = (byId('exceedanceChart') || {}).textContent || '';
+    assert('Empty input => empty-state message visible',
+      /Run Monte Carlo to generate exceedance probabilities|Exceedance chart unavailable/i.test(noDataText),
+      noDataText);
+  } catch (e) {
+    assert('Suite threw', false, String(e && e.message || e));
+  } finally {
+    setVal('simulation-engine', saved.engine);
+    setVal('monte-carlo-seed-mode', saved.seedMode);
+    setVal('monte-carlo-seed', saved.seed);
+    if (typeof invalidateResults === 'function') invalidateResults(false, false);
+  }
+
+  const failed = results.filter(r => !r.passed);
+  /* eslint-disable no-console */
+  console.log(`Exceedance-probability chart tests: ${results.length - failed.length}/${results.length} passed.`);
+  if (failed.length) console.table(failed.map(r => ({ name: r.name, detail: r.detail })));
+  /* eslint-enable no-console */
+  return results;
+}
+window.runExceedanceChartTests = runExceedanceChartTests;
+
 function getCurrentMonteCarloSamplesForExport() {
   if (!Array.isArray(lastResults)) return [];
   return lastResults.filter(v => typeof v === 'number' && Number.isFinite(v));
@@ -1416,11 +1916,25 @@ function buildMonteCarloDataExportSnapshot() {
     ? runMeta.deterministic
     : (hasUsableDeterministicCalculation() ? deterministicPlanets : null);
   const resolvedModelState = runMeta.resolvedModelState || getResolvedModelStateForExport();
+  const mcDisplayCfg = lastMonteCarloDisplayConfig
+    || (runMeta.mcConfig
+          ? getResolvedMonteCarloDisplayConfig({
+              engine: runMeta.mcConfig.engine,
+              correlation: runMeta.mcConfig.correlationModel,
+              distribution: runMeta.mcConfig.distribution,
+              mcMode: runMeta.mcConfig.requestedBasisMode,
+              robustBounds: runMeta.mcConfig.robustEnvelopeEnabled,
+              profile: runMeta.mcConfig.profile,
+              seedMode: runMeta.mcConfig.seedMode,
+              seed: runMeta.mcConfig.seed,
+              iterations: runMeta.mcConfig.iterations
+            }, resolvedModelState, runMeta.mcConfig)
+          : getResolvedMonteCarloDisplayConfig(getSimulationOptions()));
 
   return {
     calculator: 'Are We Alone in the Universe? Earth-like Planet Calculator',
     export_type: 'monte_carlo_data',
-    version: '2.17',
+    version: '2.18',
     timestamp: new Date().toISOString(),
     preset: activePreset || 'custom',
     scenario_label: scenarioLabel,
@@ -1448,14 +1962,20 @@ function buildMonteCarloDataExportSnapshot() {
         ? Number(runMeta.validSamples)
         : samples.length,
       engine: runMeta.engine || null,
+      engineLabel: mcDisplayCfg.samplingEngineLabel,
+      samplingEngineLabel: mcDisplayCfg.samplingEngineLabel,
+      shortSamplingEngineLabel: mcDisplayCfg.shortSamplingEngineLabel,
       distribution: runMeta.distribution || null,
+      distributionLabel: mcDisplayCfg.distributionLabel,
       correlation: runMeta.correlation || null,
+      correlationLabel: mcDisplayCfg.correlationLabel,
       robustBounds: !!runMeta.robustBounds,
       requestedMcMode: resolvedModelState.monteCarlo.requestedBasisMode,
       resolvedMcMode: resolvedModelState.monteCarlo.resolvedBasisMode,
       mcMode: runMeta.mcMode ?? null,
       boundsMode: runMeta.boundsMode ?? null,
       boundsLabel: runMeta.boundsLabel ?? null,
+      resolvedBasisLabel: mcDisplayCfg.resolvedBasisLabel,
       uncertaintyBasisLabel: runMeta.uncertaintyBasisLabel ?? null,
       robustEnvelopeCoverage: runMeta.robustEnvelopeCoverage || null,
       seed: Object.prototype.hasOwnProperty.call(runMeta, 'seed') ? runMeta.seed : null,
@@ -1463,6 +1983,29 @@ function buildMonteCarloDataExportSnapshot() {
       prng: runMeta.prng || MONTE_CARLO_PRNG,
       prngDescription: runMeta.prngDescription || MONTE_CARLO_PRNG_DESCRIPTION,
       sample_order: runMeta.sampleOrder || 'ascending_candidate_count'
+    },
+    mc_config: {
+      simulation_class: mcDisplayCfg.simulationClassLabel,
+      profile: mcDisplayCfg.profile,
+      profile_label: mcDisplayCfg.uncertaintyProfileLabel,
+      engine: mcDisplayCfg.engine,
+      engine_label: mcDisplayCfg.samplingEngineLabel,
+      short_engine_label: mcDisplayCfg.shortSamplingEngineLabel,
+      distribution: mcDisplayCfg.distribution,
+      distribution_label: mcDisplayCfg.distributionLabel,
+      requested_basis: mcDisplayCfg.requestedBasis,
+      mc_basis_label: mcDisplayCfg.mcBasisLabel,
+      effective_basis: mcDisplayCfg.effectiveBasis,
+      effective_basis_label: mcDisplayCfg.resolvedBasisLabel,
+      correlation_model: mcDisplayCfg.correlationModel,
+      correlation_label: mcDisplayCfg.correlationLabel,
+      seed_mode: mcDisplayCfg.seedMode,
+      seed: mcDisplayCfg.seed,
+      iterations: mcDisplayCfg.iterations,
+      robust_envelope_enabled: mcDisplayCfg.robustEnvelopeEnabled,
+      interval_type: mcDisplayCfg.intervalType,
+      full_method_line: mcDisplayCfg.fullMethodLine,
+      compact_method_badge: mcDisplayCfg.compactMethodBadgeText
     },
     parameters: buildParameterExportSnapshot(),
     N_GHZ_resolved: (function() {
@@ -1599,7 +2142,11 @@ function getMonteCarloSeedLabel(simulation = {}) {
 
 function buildMonteCarloChartCaption(snapshot = {}) {
   const title = buildMonteCarloChartTitle(snapshot);
-  return `${title}. The histogram shows valid Monte Carlo samples of the candidate count implied by the selected model assumptions. The shaded region marks the q2.5-q97.5 sampled model interval. Vertical markers show the deterministic central estimate, Monte Carlo median, and arithmetic mean. The result is conditional on the selected preset and should not be interpreted as an observational census, detection claim, or validated habitability estimate.`;
+  const mcCfg = snapshot.mc_config || {};
+  const engineShort = mcCfg.short_engine_label || 'Monte Carlo';
+  const engineFull = mcCfg.engine_label || 'Monte Carlo';
+  const basis = mcCfg.effective_basis_label ? ` on a ${mcCfg.effective_basis_label.toLowerCase()} basis` : '';
+  return `${title}. The histogram shows valid ${engineFull} samples${basis} of the candidate count implied by the selected model assumptions. The shaded region marks the q2.5-q97.5 ${engineShort} sampled model interval (not an observational confidence interval). Vertical markers show the deterministic central estimate, ${engineShort} q50 median, and ${engineShort} arithmetic mean. The result is conditional on the selected preset and should not be interpreted as an observational census, detection claim, or validated habitability estimate.`;
 }
 
 function buildMonteCarloChartSpec(snapshot = buildMonteCarloDataExportSnapshot()) {
@@ -1665,10 +2212,13 @@ function buildMonteCarloChartSpec(snapshot = buildMonteCarloDataExportSnapshot()
     };
   });
 
+  const mcCfg = snapshot.mc_config || {};
+  const engineShortLabel = mcCfg.short_engine_label || 'Monte Carlo';
+  const engineFullLabel = mcCfg.engine_label || 'Monte Carlo';
   const markerInput = [
     { key: 'deterministic', label: 'Deterministic central estimate', value: summary.deterministic, color: '#8b5cf6', dash: '10 8' },
-    { key: 'median', label: 'Monte Carlo q50 median', value: summary.mc_median_q50, color: '#047857', dash: '' },
-    { key: 'mean', label: 'Monte Carlo arithmetic mean', value: summary.mc_mean, color: '#b45309', dash: '3 6' }
+    { key: 'median', label: `${engineShortLabel} q50 median`, value: summary.mc_median_q50, color: '#047857', dash: '' },
+    { key: 'mean', label: `${engineShortLabel} arithmetic mean`, value: summary.mc_mean, color: '#b45309', dash: '3 6' }
   ];
   const markers = markerInput
     .filter(m => Number.isFinite(m.value) && (!canUseLog || m.value > 0))
@@ -1686,14 +2236,14 @@ function buildMonteCarloChartSpec(snapshot = buildMonteCarloDataExportSnapshot()
       ? {
           x0: xPixel(toScale(summary.mc_q025)),
           x1: xPixel(toScale(summary.mc_q975)),
-          label: `q2.5-q97.5 sampled model interval`
+          label: `q2.5-q97.5 ${engineShortLabel} sampled model interval`
         }
       : null;
 
   const simulation = snapshot.simulation || {};
   const galaxyLabel = getMonteCarloGalaxyLabel(snapshot.galaxy);
   const seedLabel = getMonteCarloSeedLabel(simulation);
-  const subtitle = `Scenario: ${snapshot.scenario_label || snapshot.preset || 'custom'} | ${formatPublicationNumber(samples.length)} valid samples | ${simulation.engine || 'Monte Carlo'} engine | ${simulation.distribution || 'distribution n/a'} distribution | ${seedLabel}`;
+  const subtitle = `Scenario: ${snapshot.scenario_label || snapshot.preset || 'custom'} | ${formatPublicationNumber(samples.length)} valid samples | ${engineFullLabel} engine | ${mcCfg.distribution_label || simulation.distribution || 'distribution n/a'} distribution | ${mcCfg.effective_basis_label || 'basis n/a'} | ${seedLabel}`;
 
   return {
     width,
@@ -1984,6 +2534,9 @@ window.downloadMonteCarloChart = downloadMonteCarloChart;
 function buildMonteCarloPackageReadme(snapshot) {
   const summary = snapshot.summary || {};
   const simulation = snapshot.simulation || {};
+  const mcCfg = snapshot.mc_config || {};
+  const engineShort = mcCfg.short_engine_label || 'Monte Carlo';
+  const engineFull = mcCfg.engine_label || simulation.engine || 'Monte Carlo';
   return [
     'Are We Alone in the Universe? Earth-like Planet Calculator',
     'Monte Carlo export package',
@@ -1994,18 +2547,22 @@ function buildMonteCarloPackageReadme(snapshot) {
     `Scenario: ${snapshot.scenario_label}`,
     `Galaxy: ${snapshot.galaxy}`,
     `Samples exported: ${simulation.samples_exported}`,
-    `Engine: ${simulation.engine}`,
-    `Distribution: ${simulation.distribution}`,
-    `Correlation: ${simulation.correlation}`,
+    `Simulation class: ${mcCfg.simulation_class || 'Monte Carlo uncertainty propagation'}`,
+    `Sampling engine: ${engineFull}`,
+    `Uncertainty profile: ${mcCfg.profile_label || 'n/a'}`,
+    `Distribution: ${mcCfg.distribution_label || simulation.distribution}`,
+    `MC basis: ${mcCfg.mc_basis_label || 'n/a'}`,
+    `Effective basis: ${mcCfg.effective_basis_label || simulation.boundsLabel}`,
+    `Correlation: ${mcCfg.correlation_label || simulation.correlation}`,
     `Seed: ${simulation.seed} (${simulation.seed_mode || 'random'})`,
+    `Iterations: ${Number.isFinite(Number(mcCfg.iterations ?? simulation.iterations)) ? Number(mcCfg.iterations ?? simulation.iterations).toLocaleString() : 'n/a'}`,
     `PRNG: ${simulation.prng || MONTE_CARLO_PRNG} - ${simulation.prngDescription || MONTE_CARLO_PRNG_DESCRIPTION}`,
-    `Bounds: ${simulation.boundsLabel}`,
-    `Uncertainty basis: ${simulation.uncertaintyBasisLabel}`,
+    `Interval type: ${mcCfg.interval_type || 'q2.5-q97.5 sampled model interval, not an observational confidence interval'}`,
     '',
     'Summary statistics:',
     `Deterministic central estimate: ${formatPublicationNumber(summary.deterministic)}`,
-    `Monte Carlo q50 median: ${formatPublicationNumber(summary.mc_median_q50)}`,
-    `Monte Carlo arithmetic mean: ${formatPublicationNumber(summary.mc_mean)}`,
+    `${engineShort} q50 median: ${formatPublicationNumber(summary.mc_median_q50)}`,
+    `${engineShort} arithmetic mean: ${formatPublicationNumber(summary.mc_mean)}`,
     `q2.5: ${formatPublicationNumber(summary.mc_q025)}`,
     `q97.5: ${formatPublicationNumber(summary.mc_q975)}`,
     `Stddev: ${formatPublicationNumber(summary.mc_stddev)}`,
@@ -2195,15 +2752,22 @@ function buildLatexExportText() {
     ? (monteCarloUncertaintyBasisLabel || boundsDescriptor?.uncertaintyBasisLabel || 'not-run')
     : mcState;
 
+  // Use the saved run-time config (not live DOM) for the engine-aware result labels.
+  const mcLatexEngine = hasCurrentMc && lastMonteCarloDisplayConfig
+    ? lastMonteCarloDisplayConfig.shortSamplingEngineLabel
+    : 'Monte Carlo';
+
   const distanceSnapshot = typeof getActiveDistanceSnapshot === 'function' ? getActiveDistanceSnapshot() : {};
   const distanceModelLabel = distanceSnapshot.activeDistanceModel || 'not calculated';
   const distanceBasisLabel = distanceSnapshot.activeDistanceCountBasis
-    || (hasCurrentMc ? 'Monte Carlo q50/median count' : 'deterministic central count');
+    || (hasCurrentMc && lastMonteCarloDisplayConfig
+          ? lastMonteCarloDisplayConfig.distanceBasisLabel
+          : (hasCurrentMc ? 'Monte Carlo q50/median count' : 'deterministic central count'));
 
   const astronomyPriorLabel = getAstronomyPriorModel().shortLabel || 'Scenario astronomy values';
 
   return (
-    '% Are We Alone in the Universe? Earth-like Planet Calculator v2.17\n' +
+    '% Are We Alone in the Universe? Earth-like Planet Calculator v2.18\n' +
     '% Exported: ' + new Date().toISOString() + '\n' +
     '% Scenario: ' + (typeof getScenarioExportLabel === 'function' ? getScenarioExportLabel() : (activePreset || 'custom')) + ' | Galaxy: ' + galaxyName + ' | Occurrence model: ' + astronomyPriorLabel + '\n\n' +
     '% MC mode: ' + exportedMcMode + ' | Uncertainty basis: ' + exportedBasis + ' | simulationCompleted: ' + String(!!simulationCompleted) + ' | MC state: ' + mcState + '\n' +
@@ -2217,9 +2781,9 @@ function buildLatexExportText() {
     rows + '\n\\hline\n' +
     '\\multicolumn{4}{l}{\\textit{Results}} \\\\\n\\hline\n' +
     '  Deterministic central & $N_{\\mathrm{det}}$ & ' + det + ' & -- \\\\\n' +
-    '  MC q50 median & $N_{50}$ & ' + mcMedian + ' & -- \\\\\n' +
-    '  MC arithmetic mean & $\\bar{N}$ & ' + mcMean + ' & -- \\\\\n' +
-    '  95\\% sampled interval & $[N_{2.5}, N_{97.5}]$ & [' + lo + ', ' + hi + '] & -- \\\\\n' +
+    '  ' + mcLatexEngine + ' q50 median & $N_{50}$ & ' + mcMedian + ' & -- \\\\\n' +
+    '  ' + mcLatexEngine + ' arithmetic mean & $\\bar{N}$ & ' + mcMean + ' & -- \\\\\n' +
+    '  95\\% ' + mcLatexEngine + ' sampled model interval & $[N_{2.5}, N_{97.5}]$ & [' + lo + ', ' + hi + '] & -- \\\\\n' +
     '\\hline\n\\end{tabular}\n\\end{table}'
   );
 }
@@ -2241,7 +2805,7 @@ window.exportLatex = exportLatex;
 // This BibTeX list repeats the source registry. Update both, or wire this to the registry.
 function exportBibtex() {
   const bib =
-    '% BibTeX references - Are We Alone in the Universe? Earth-like Planet Calculator v2.17\n' +
+    '% BibTeX references - Are We Alone in the Universe? Earth-like Planet Calculator v2.18\n' +
     '% Exported: ' + new Date().toISOString() + '\n\n' +
     '@article{Drake1965,\n  author={Drake, Frank},\n  title={The Radio Search for Intelligent Extraterrestrial Life},\n  journal={Current Aspects of Exobiology},\n  year={1965},\n  pages={323--345}\n}\n\n' +
     '@article{Lineweaver2004,\n  author={Lineweaver, Charles H.},\n  title={The Galactic Habitable Zone and the Age Distribution of Complex Life in the Milky Way},\n  journal={Science},\n  volume={303},\n  number={5654},\n  pages={59--62},\n  year={2004},\n  doi={10.1126/science.1092322}\n}\n\n' +

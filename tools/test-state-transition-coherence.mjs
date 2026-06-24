@@ -203,7 +203,7 @@ function createHarness() {
     'convergence-meta',
     'robustEnvelopeResult',
     'monteCarloChart',
-    'gaussianChart',
+    'exceedanceChart',
     'adv-tornado-container',
     'model-radial',
     'model-2d',
@@ -832,17 +832,17 @@ if (RUN_DEEP) {
 {
   const harness = createHarness();
   harness.setDataset('monteCarloChart', 'stale', 'false');
-  harness.setDataset('gaussianChart', 'stale', 'false');
+  harness.setDataset('exceedanceChart', 'stale', 'false');
   harness.loadPreset('consensus');
   harness.setValue('N_GHZ', '12000000000');
   harness.invalidateResults();
 
-  if (harness.getDataset('monteCarloChart', 'stale') === 'true' && harness.getDataset('gaussianChart', 'stale') === 'true') {
-    pass('Chart invalidation marks histogram and KDE charts stale after input changes.');
+  if (harness.getDataset('monteCarloChart', 'stale') === 'true' && harness.getDataset('exceedanceChart', 'stale') === 'true') {
+    pass('Chart invalidation marks histogram and exceedance charts stale after input changes.');
   } else {
     fail(
       `Chart invalidation did not mark both charts stale: histogram=${harness.getDataset('monteCarloChart', 'stale')}, ` +
-      `kde=${harness.getDataset('gaussianChart', 'stale')}.`
+      `exceedance=${harness.getDataset('exceedanceChart', 'stale')}.`
     );
   }
 }
@@ -955,7 +955,7 @@ runRoundtripCase(
   harness.loadPreset('kepler');
   harness.calculateDeterministic();
   const tex = harness.buildLatexExportText();
-  if (/MC state: not-run\b/.test(tex) && /MC q50 median[^\n]+not run/.test(tex) && !/0\.000e\+0/i.test(tex)) {
+  if (/MC state: not-run\b/.test(tex) && /Monte Carlo q50 median[^\n]+not run/.test(tex) && !/0\.000e\+0/i.test(tex)) {
     pass('LaTeX deterministic-only export marks MC as not-run, not zero.');
   } else {
     fail('LaTeX deterministic-only export did not mark MC as not-run correctly.');
@@ -963,7 +963,7 @@ runRoundtripCase(
 
   harness.runSeededMc(202737);
   const validTex = harness.buildLatexExportText();
-  if (/simulationCompleted: true/.test(validTex) && /MC state: current\b/.test(validTex) && !/MC q50 median[^\n]+not run/.test(validTex)) {
+  if (/simulationCompleted: true/.test(validTex) && /MC state: current\b/.test(validTex) && !/Monte Carlo q50 median[^\n]+not run/.test(validTex)) {
     pass('LaTeX valid MC export includes current MC rows.');
   } else {
     fail('LaTeX valid MC export did not include current MC rows.');
@@ -974,7 +974,7 @@ runRoundtripCase(
   const staleTex = harness.buildLatexExportText();
   if (
     /MC state: stale\b/.test(staleTex) &&
-    staleTex.includes('MC q50 median & $N_{50}$ & stale') &&
+    staleTex.includes('Monte Carlo q50 median & $N_{50}$ & stale') &&
     !/MC state: current\b/.test(staleTex) &&
     !/MC state: not-run\b/.test(staleTex) &&
     !/0\.000e\+0/i.test(staleTex)
@@ -1229,7 +1229,7 @@ for (const presetKey of presetKeys) {
     json.simulation.mcState !== 'current' &&
     json.results.mc_median_q50 === null &&
     /MC state: (not-run|stale)\b/.test(tex) &&
-    /MC q50 median & \$N_\{50\}\$ & (not run|stale)/.test(tex);
+    /Monte Carlo q50 median & \$N_\{50\}\$ & (not run|stale)/.test(tex);
 
   if (blocked) {
     pass(`${presetKey}: invalid N_GHZ bounds (central > max) block Monte Carlo; no current MC exported.`);

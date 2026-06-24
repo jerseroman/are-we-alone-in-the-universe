@@ -116,7 +116,8 @@ function scanFiles() {
     path.join(root, 'CHANGELOG.md'),
     path.join(root, 'RELEASE_NOTES_v2.14.md'),
     path.join(root, 'RELEASE_NOTES_v2.15.md'),
-    path.join(root, 'RELEASE_NOTES_v2.17.md')
+    path.join(root, 'RELEASE_NOTES_v2.17.md'),
+    path.join(root, 'RELEASE_NOTES_v2.18.md')
   ];
 
   files.push(...walk(path.join(root, 'src'), file => file.endsWith('.js')));
@@ -583,8 +584,11 @@ if (
   fail('JSON export is missing explicit MC, detection-basis, Fermi, historical-context, uncertainty-basis, or radial-distance fields.');
 }
 
-if (!shareJs.includes('MC q50 median') || !shareJs.includes('MC arithmetic mean')) {
-  fail('LaTeX/share export does not expose separate MC q50 median and arithmetic mean labels.');
+// MC central-tendency labels are now dynamic (engine-prefixed) in the share/LaTeX export,
+// e.g. "<engine> q50/median" and "<engine> arithmetic mean". The invariant is that the
+// q50/median and arithmetic-mean labels remain separate and explicit.
+if (!shareJs.includes('q50/median') || !shareJs.includes('arithmetic mean')) {
+  fail('LaTeX/share export does not expose separate q50/median and arithmetic mean labels.');
 }
 
 if (!shareJs.includes('LaTeX export is a compact parameter/result table')) {

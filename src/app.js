@@ -745,6 +745,8 @@ function invalidateResults(markCustom = true, clearDeterministic = true) {
   monteCarloBoundsLabel = '';
   monteCarloUncertaintyBasisLabel = '';
   monteCarloIntervalComparison = null;
+  lastMonteCarloDisplayConfig = null;
+  if (typeof renderActiveMonteCarloConfig === 'function') renderActiveMonteCarloConfig(null);
 
   if (markCustom) {
     markScenarioModified();
@@ -1362,7 +1364,7 @@ function renderCalculationConsole() {
   pushSection('Distance Trace');
   if (distanceScenario.kind === 'geometric' && distanceScenario.metrics) {
     pushLine(
-      `Current distance basis = ${simulationCompleted ? 'Monte Carlo q50 median' : 'deterministic preview'} = ${fmtConsoleValue(basisCount)}`,
+      `Current distance basis = ${simulationCompleted ? ((lastMonteCarloDisplayConfig && lastMonteCarloDisplayConfig.distanceBasisLabel) || 'Monte Carlo q50 count basis') : 'deterministic preview'} = ${fmtConsoleValue(basisCount)}`,
       'calc-console-muted'
     );
     if (distanceScenario.metrics.modelRadial) {
@@ -1414,10 +1416,10 @@ function renderCalculationConsole() {
   }
 
   if (simulationCompleted && lastResults.length) {
-    const simulationSummary = describeSimulationOptions();
+    const cfg = lastMonteCarloDisplayConfig || getResolvedMonteCarloDisplayConfig(getSimulationOptions());
     pushSection('Latest Monte Carlo Run');
-    pushLine(`Iterations=${parseInt((byId('iterations') || {}).value || '2000', 10).toLocaleString()} | Engine=${((byId('simulation-engine') || {}).value || 'standard')} | Distribution=${((byId('distribution') || {}).value || 'lognormal')} | MC basis=${simulationSummary.boundsLabel}`);
-    pushLine(`MC q50 median=${fmtConsoleValue(mcMedianQ50)} | MC arithmetic mean=${fmtConsoleValue(mcArithmeticMean)} | 95% sampled model interval=[${fmtConsoleValue(mcQ025)}, ${fmtConsoleValue(mcQ975)}] | StdDev=${fmtConsoleValue(stdDev)} | Mode≈${fmtConsoleValue(mostFrequent)}`);
+    pushLine(`Iterations=${cfg.iterationCountLabel} | Engine=${cfg.samplingEngineLabel} | Distribution=${cfg.distributionLabel} | MC basis=${cfg.resolvedBasisLabel} | Correlation=${cfg.correlationLabel} | Seed=${cfg.seedMode === 'fixed' ? 'fixed (' + cfg.seedValueLabel + ')' : 'random'}`);
+    pushLine(`${cfg.shortSamplingEngineLabel} q50 median=${fmtConsoleValue(mcMedianQ50)} | ${cfg.shortSamplingEngineLabel} arithmetic mean=${fmtConsoleValue(mcArithmeticMean)} | 95% ${cfg.intervalPrefixLabel.toLowerCase()}=[${fmtConsoleValue(mcQ025)}, ${fmtConsoleValue(mcQ975)}] | StdDev=${fmtConsoleValue(stdDev)} | Mode≈${fmtConsoleValue(mostFrequent)}`);
     if (monteCarloIntervalComparison && monteCarloIntervalComparison.warning) {
       pushLine(monteCarloIntervalComparison.warning, 'calc-console-warn');
     }
@@ -1441,6 +1443,52 @@ function renderCalculationConsole() {
   typesetMathInElement(el);
 }
 
+// Renders the compact "MC CONFIG" line plus an on-demand collapsible details
+// section, from the resolved display config captured at run time (never from
+// live DOM controls), so they agree with the numbers shown and never go stale
+// until the next run. The detailed configuration is hidden unless the user
+// opens the "MC details" disclosure.
+function renderActiveMonteCarloConfig(cfg = lastMonteCarloDisplayConfig) {
+  const line = byId('mcConfigLine');
+  const details = byId('mc-details');
+  const body = byId('mc-details-body');
+  if (!line || !details || !body) return;
+
+  if (!cfg || !simulationCompleted) {
+    line.style.display = 'none';
+    line.innerHTML = '';
+    details.style.display = 'none';
+    body.innerHTML = '';
+    return;
+  }
+
+  line.style.display = 'block';
+  line.innerHTML =
+    `<span class="result-label">MC CONFIG /</span> ${escapeHtml(cfg.compactMethodLine)}`;
+
+  const row = (key, val) =>
+    `<div class="mc-details-row"><span class="mc-config-key">${escapeHtml(key)}</span>` +
+    `<span class="mc-config-val">${escapeHtml(val)}</span></div>`;
+
+  const seedLine = cfg.seedMode === 'fixed'
+    ? `Fixed (${cfg.seedValueLabel})`
+    : 'Random';
+
+  body.innerHTML = [
+    row('Profile', cfg.uncertaintyProfileLabel),
+    row('Sampling engine', cfg.samplingEngineLabel),
+    row('Distribution', cfg.distributionLabel),
+    row('MC basis', cfg.mcBasisLabel),
+    row('Effective basis', cfg.resolvedBasisLabel),
+    row('Correlation model', cfg.correlationLabel),
+    row('Seed', seedLine),
+    row('Iterations', cfg.iterationCountLabel),
+    row('Robust envelope', cfg.robustEnvelopeLabel),
+    row('Interval type', `q2.5–q97.5 ${cfg.intervalInterpretationLabel}`)
+  ].join('');
+  details.style.display = 'block';
+}
+
 function renderSimulationMethodSummary() {
   const modelLine = byId('simulationModel');
   const envelopeLine = byId('robustEnvelopeResult');
@@ -1451,17 +1499,18 @@ function renderSimulationMethodSummary() {
     envelopeLine.textContent = '';
     modelLine.style.display = 'none';
     envelopeLine.style.display = 'none';
+    if (typeof renderActiveMonteCarloConfig === 'function') renderActiveMonteCarloConfig(null);
     return;
   }
 
-  const summary = describeSimulationOptions();
+  // Read from the resolved config captured at run time (single source of truth).
+  const cfg = lastMonteCarloDisplayConfig || getResolvedMonteCarloDisplayConfig(getSimulationOptions());
   modelLine.style.display = 'block';
   modelLine.innerHTML =
     `<span class="result-label">SIMULATION MODEL /</span> ` +
-    `${summary.engineLabel} / ${summary.distributionShort} / ${summary.correlationLabel} / ${summary.boundsLabel}`;
-  if (summary.uncertaintyBasisLabel) {
-    modelLine.innerHTML += ` <span style="font-size:10px;color:var(--text-dim)">(${summary.uncertaintyBasisLabel})</span>`;
-  }
+    `${cfg.samplingEngineLabel} / ${cfg.distributionLabel} / ${cfg.correlationLabel} / ${cfg.resolvedBasisLabel}`;
+  modelLine.innerHTML += ` <span style="font-size:10px;color:var(--text-dim)">(${cfg.intervalInterpretationLabel})</span>`;
+  if (typeof renderActiveMonteCarloConfig === 'function') renderActiveMonteCarloConfig(cfg);
 
   if (simulationEnvelope) {
     const fixedAdvanced = simulationEnvelope.coverage && simulationEnvelope.coverage.fixedActiveAdvancedControls
@@ -2155,9 +2204,35 @@ function saveHistoryEntry() {
       scenarioLabel: getScenarioExportLabel(),
       scenarioState: typeof getScenarioState === 'function' ? getScenarioState() : null,
       galaxy: galaxyName,
-      basis: isCurrentMc ? 'MC q50 median' : 'deterministic central',
+      basis: isCurrentMc
+        ? `${(lastMonteCarloDisplayConfig && lastMonteCarloDisplayConfig.shortSamplingEngineLabel) || 'Monte Carlo'} q50 median`
+        : 'deterministic central',
       mcMode: monteCarloBoundsMode || null,
       uncertaintyBasisLabel: monteCarloUncertaintyBasisLabel || null,
+      // Resolved MC configuration active at the time of this run — preserved so
+      // saved history entries stay correctly labelled regardless of later control changes.
+      mcConfig: isCurrentMc && lastMonteCarloDisplayConfig
+        ? {
+            profile: lastMonteCarloDisplayConfig.profile,
+            profileLabel: lastMonteCarloDisplayConfig.uncertaintyProfileLabel,
+            engine: lastMonteCarloDisplayConfig.engine,
+            engineLabel: lastMonteCarloDisplayConfig.samplingEngineLabel,
+            shortEngineLabel: lastMonteCarloDisplayConfig.shortSamplingEngineLabel,
+            distribution: lastMonteCarloDisplayConfig.distribution,
+            distributionLabel: lastMonteCarloDisplayConfig.distributionLabel,
+            requestedBasis: lastMonteCarloDisplayConfig.requestedBasis,
+            effectiveBasis: lastMonteCarloDisplayConfig.effectiveBasis,
+            effectiveBasisLabel: lastMonteCarloDisplayConfig.resolvedBasisLabel,
+            correlationModel: lastMonteCarloDisplayConfig.correlationModel,
+            correlationLabel: lastMonteCarloDisplayConfig.correlationLabel,
+            seedMode: lastMonteCarloDisplayConfig.seedMode,
+            seed: lastMonteCarloDisplayConfig.seed,
+            iterations: lastMonteCarloDisplayConfig.iterations,
+            robustEnvelopeEnabled: lastMonteCarloDisplayConfig.robustEnvelopeEnabled,
+            intervalType: lastMonteCarloDisplayConfig.intervalType,
+            compactMethodBadge: lastMonteCarloDisplayConfig.compactMethodBadgeText
+          }
+        : null,
       simulationCompleted,
       mcState,
       staleState: mcState,
@@ -2483,6 +2558,13 @@ function buildInterpretationHtml(mode = fermiMode) {
     mostFrequent < 1 ? mostFrequent.toExponential(2) : Math.round(mostFrequent).toLocaleString();
   const simulationOptions = getSimulationOptions();
   const simulationSummary = describeSimulationOptions(simulationOptions);
+  // Prefer the resolved config from the latest run so narrative wording matches
+  // the displayed result and never goes stale when controls change pre-recalc.
+  const mcNarr = (simulationCompleted && lastMonteCarloDisplayConfig) ? lastMonteCarloDisplayConfig : null;
+  const narrEngineLabel = mcNarr ? mcNarr.samplingEngineLabel : simulationSummary.engineLabel;
+  const narrDistributionLabel = mcNarr ? mcNarr.distributionLabel : simulationSummary.distributionLong;
+  const narrCorrelationLabel = (mcNarr ? mcNarr.correlationLabel : simulationSummary.correlationLabel).toLowerCase();
+  const narrBasisLabel = (mcNarr ? mcNarr.resolvedBasisLabel : simulationSummary.boundsLabel).toLowerCase();
 
   const bayesLabel = !astronomyOverrideMode
     ? `(scenario astronomy values; no occurrence overlay)`
@@ -2543,10 +2625,10 @@ function buildInterpretationHtml(mode = fermiMode) {
     text:
       currentMode === 'dt'
         ? `The deterministic calculation using the current central parameter values yields <span class="bold-number">${fmtN(basisCount)}</span> modelled Earth-like candidates${lifeLabel()} in ${galaxyName}.<br><br>` +
-          `For reference, the latest Monte Carlo run based on ${itr.toLocaleString()} ${simulationSummary.engineLabel} draws with ${simulationSummary.distributionLong}, ${simulationSummary.correlationLabel.toLowerCase()}, and ${simulationSummary.boundsLabel.toLowerCase()} ${bayesLabel} gives q50 median <span class="bold-number">${fmtN(mcMedianQ50)}</span> and arithmetic mean <span class="bold-number">${fmtN(mcArithmeticMean)}</span>, ` +
+          `For reference, the latest Monte Carlo run based on ${itr.toLocaleString()} ${narrEngineLabel} draws with ${narrDistributionLabel}, ${narrCorrelationLabel}, and ${narrBasisLabel} ${bayesLabel} gives q50 median <span class="bold-number">${fmtN(mcMedianQ50)}</span> and arithmetic mean <span class="bold-number">${fmtN(mcArithmeticMean)}</span>, ` +
           `with a 95% sampled model interval of [<span class="bold-number">${fmtN(mcQ025)}</span>, <span class="bold-number">${fmtN(mcQ975)}</span>] (q2.5–q97.5; not an observational confidence interval). ` +
           `Mode estimate: ~<span class="bold-number">${modalLabel}</span>. Sample standard deviation: <span class="bold-number">${fmtN(stdDev)}</span>.`
-        : `Based on ${itr.toLocaleString()} ${simulationSummary.engineLabel} draws with ${simulationSummary.distributionLong}, ${simulationSummary.correlationLabel.toLowerCase()}, and ${simulationSummary.boundsLabel.toLowerCase()} ${bayesLabel}, ` +
+        : `Based on ${itr.toLocaleString()} ${narrEngineLabel} draws with ${narrDistributionLabel}, ${narrCorrelationLabel}, and ${narrBasisLabel} ${bayesLabel}, ` +
           `the model estimates <span class="bold-number">${fmtN(basisCount)}</span> modelled Earth-like candidates${lifeLabel()} in ${galaxyName}.<br><br>` +
           `MC arithmetic mean: <span class="bold-number">${fmtN(mcArithmeticMean)}</span>. ` +
           `95% sampled model interval: [<span class="bold-number">${fmtN(mcQ025)}</span>, ` +
@@ -2845,26 +2927,57 @@ function renderHistory() {
     return;
   }
 
+  const shortBasisLabel = basis => {
+    switch (basis) {
+      case MONTE_CARLO_BASIS_MODES.presetLocal: return 'Scenario-local';
+      case MONTE_CARLO_BASIS_MODES.modifiedPresetLocal: return 'Modified preset-local';
+      case MONTE_CARLO_BASIS_MODES.customInput: return 'Custom input';
+      case MONTE_CARLO_BASIS_MODES.globalEnvelope: return 'Global envelope';
+      default: return null;
+    }
+  };
+
   hist
     .slice()
     .reverse()
     .forEach(e => {
       const r = document.createElement('tr');
-      [
-        e.date,
-        e.scenario,
-        e.galaxy,
-        e.mcMedianQ50 ?? e.average,
-        e.ciLow,
-        e.ciHigh,
-        e.displayedDistanceValue !== null && e.displayedDistanceValue !== undefined
-          ? `${e.displayedDistanceValue} (${e.activeDistanceModel || e.displayedDistanceLabel || 'distance'})`
-          : (e.activeDistanceBasis || e.distance2D || 'N/A')
-      ].forEach(value => {
+      const distanceText = e.displayedDistanceValue !== null && e.displayedDistanceValue !== undefined
+        ? `${e.displayedDistanceValue} (${e.activeDistanceModel || e.displayedDistanceLabel || 'distance'})`
+        : (e.activeDistanceBasis || e.distance2D || 'N/A');
+
+      // Plain text cells.
+      [e.date, e.scenario, e.galaxy].forEach(value => {
         const cell = document.createElement('td');
         cell.textContent = String(value);
         r.appendChild(cell);
       });
+
+      // MC q50 cell, with the active engine · basis folded in beneath the value.
+      const mcCell = document.createElement('td');
+      const mcValue = document.createElement('div');
+      mcValue.textContent = String(e.mcMedianQ50 ?? e.average);
+      mcCell.appendChild(mcValue);
+      if (e.mcConfig && e.mcConfig.shortEngineLabel) {
+        const method = document.createElement('div');
+        method.style.fontSize = '9px';
+        method.style.color = 'var(--text-dim)';
+        method.style.marginTop = '2px';
+        const sb = shortBasisLabel(e.mcConfig.effectiveBasis);
+        method.textContent = sb
+          ? `${e.mcConfig.shortEngineLabel} · ${sb}`
+          : e.mcConfig.shortEngineLabel;
+        mcCell.appendChild(method);
+      }
+      r.appendChild(mcCell);
+
+      // Remaining plain text cells.
+      [e.ciLow, e.ciHigh, distanceText].forEach(value => {
+        const cell = document.createElement('td');
+        cell.textContent = String(value);
+        r.appendChild(cell);
+      });
+
       tbody.appendChild(r);
     });
 }
@@ -3185,7 +3298,47 @@ function renderSobolPanel(result) {
   panel.style.display = 'block';
   if (nLabel) nLabel.textContent = result.N_samples + ' base samples / ' + result.activeIds.length + ' uncertain params';
 
-  
+  // Bryson η⊕ direct mode: the three factorized occurrence factors are bypassed and η⊕ is a
+  // fixed, non-sampled direct term. Make the panel say so explicitly. These IDs are surfaced
+  // to the user as f_rocky / f_HZ (matching the occurrence-card banner wording).
+  const isDirectOccurrence = result.occurrenceMode === 'eta_earth_direct';
+  const etaFixed = Number(result.etaEarthBryson).toFixed(3);
+  const bypassDisplay = { N_p_star: 'N_p_star', f_composition: 'f_rocky', f_orbit: 'f_HZ' };
+  const bypassedIds = result.bypassedIds || [];
+  const bypassedNames = bypassedIds.map(function(id){ return bypassDisplay[id] || id; }).join(', ');
+
+  const subheadingEl = byId('sobol-subheading');
+  if (subheadingEl) {
+    subheadingEl.textContent = isDirectOccurrence
+      ? '  / Sensitivity Analysis — post-η⊕ factors only · Sobol / Saltelli 2010; η⊕ fixed at ' + etaFixed + ' in this run.'
+      : '  / Sensitivity Analysis (Sobol / Saltelli 2010)';
+  }
+
+  const modeStatusEl = byId('sobol-mode-status');
+  if (modeStatusEl) {
+    if (isDirectOccurrence) {
+      modeStatusEl.style.display = 'block';
+      modeStatusEl.innerHTML = '<strong style="color:var(--text-bright);">Active occurrence mode:</strong> Bryson η⊕ direct replacement. ' +
+        'η⊕ = ' + etaFixed + ' is fixed. ' + bypassedNames + ' are bypassed and excluded from Sobol indices. ' +
+        result.activeIds.length + ' sampled parameters included.';
+    } else {
+      modeStatusEl.style.display = 'none';
+      modeStatusEl.innerHTML = '';
+    }
+  }
+
+  const excludedEl = byId('sobol-excluded-note');
+  if (excludedEl) {
+    if (isDirectOccurrence) {
+      excludedEl.style.display = 'block';
+      excludedEl.innerHTML = 'Excluded from this Sobol run: ' + bypassedNames + ' — bypassed by η⊕; η⊕ — fixed direct term, not sampled.';
+    } else {
+      excludedEl.style.display = 'none';
+      excludedEl.innerHTML = '';
+    }
+  }
+
+
   const sorted = result.activeIds.slice().sort(function(a, b){ return result.indices[b].T - result.indices[a].T; });
   const maxT = Math.max.apply(null, sorted.map(function(id){ return result.indices[id].T; }).concat([0.001]));
 
@@ -3220,7 +3373,7 @@ function renderSobolPanel(result) {
     if (topT > 0.5) {
       interp = '<strong style="color:var(--text-bright);">Key finding: "' + topName + '" dominates the result.</strong> ' +
         'Changing this one parameter moves the final number of planets more than all other parameters combined. ' +
-        'This means the biggest scientific uncertainty in your model is not the astrophysics 〰 it is this single assumption. ';
+        'This means the biggest scientific uncertainty in your model is not the astrophysics - it is this single assumption. ';
       if (topT - topS > 0.1) {
         interp += 'It also interacts strongly with other parameters (green bar larger than blue), meaning its effect is amplified or suppressed depending on the values of other factors. ';
       }
@@ -3232,12 +3385,16 @@ function renderSobolPanel(result) {
     }
 
     if (sumS > 1.0) {
-      interp += '<span style="color:var(--yellow);">Note: the sum of direct effects (' + sumS.toFixed(2) + ') exceeds 1.0 〰 a known artifact when one parameter is so dominant that the statistical estimator becomes noisy with finite samples. The ranking is still reliable; the absolute values are approximate.</span> ';
+      interp += '<span style="color:var(--yellow);">Note: the sum of direct effects (' + sumS.toFixed(2) + ') exceeds 1.0 - a known artifact when one parameter is so dominant that the statistical estimator becomes noisy with finite samples. The ranking is still reliable; the absolute values are approximate.</span> ';
     } else if (sumS < 0.85) {
-      interp += 'The sum of direct effects (' + sumS.toFixed(2) + ') is below 1 〰 this means a significant portion of the total variance comes from <em>interactions between parameters</em>, not from any single parameter acting alone. ';
+      interp += 'The sum of direct effects (' + sumS.toFixed(2) + ') is below 1 - this means a significant portion of the total variance comes from <em>interactions between parameters</em>, not from any single parameter acting alone. ';
     }
 
-    interp += '<br><span style="font-size:9px;opacity:.7;">Technical: Saltelli 2010 estimator / ' + result.N_samples + ' base samples / ' + (result.N_samples * (2 + result.activeIds.length)) + ' total model evaluations / ' + result.activeIds.length + ' uncertain parameters included.</span>';
+    const totalEvals = result.N_samples * (2 + result.activeIds.length);
+    const techDetail = isDirectOccurrence
+      ? result.N_samples + ' base samples / ' + totalEvals + ' model evaluations / ' + result.activeIds.length + ' sampled parameters; ' + bypassedIds.length + ' occurrence factors bypassed by η⊕; η⊕ fixed, not sampled.'
+      : result.N_samples + ' base samples / ' + totalEvals + ' total model evaluations / ' + result.activeIds.length + ' uncertain parameters included.';
+    interp += '<br><span style="font-size:9px;opacity:.7;">Technical: Saltelli 2010 estimator / ' + techDetail + '</span>';
     noteEl.innerHTML = interp;
   }
 }
@@ -3374,7 +3531,7 @@ function renderDetectionPanel() {
   } else if (r.p_detect_pct >= 0.1) {
     verdictText = 'The probability is low. Even if many modelled Earth-like candidates exist, the timing and distance constraints make an overlapping active detectable transmitter rare under these settings.';
   } else {
-    verdictText = 'The probability is extremely low 〰 consistent with the silence we observe. Most potentially inhabited planets are either too far away, or their transmission window does not overlap with ours.';
+    verdictText = 'The probability is extremely low - consistent with the silence we observe. Most potentially inhabited planets are either too far away, or their transmission window does not overlap with ours.';
   }
 
   const distanceBarrierValue = r.is_external_reference && Number.isFinite(r.earth_distance)
@@ -3392,8 +3549,8 @@ function renderDetectionPanel() {
     ? '= (' + fmtHuman(r.N_planets) + ' modelled Earth-like candidates × f_tx ' + r.f_tx.toFixed(4).replace(/\.?0+$/, '') + ') × range gate × ' + fmtPct(r.p_temporal_pct)
     : '= (' + fmtHuman(r.N_planets) + ' modelled Earth-like candidates × f_tx ' + r.f_tx.toFixed(4).replace(/\.?0+$/, '') + ') × area fraction × ' + fmtPct(r.p_temporal_pct);
   const formulaCopy = r.is_external_reference
-    ? 'Formula: N̂ = (N<sub>Earth-like</sub> × f<sub>tx</sub> × range-gate) × (L / T<sub>galaxy</sub>) / P(≥1) = 1 − e<sup>−N̂</sup><br>'
-    : 'Formula: N̂ = (N<sub>Earth-like</sub> × f<sub>tx</sub> × A<sub>horizon</sub> / A<sub>GHZ</sub>) × (L / T<sub>galaxy</sub>) / P(≥1) = 1 − e<sup>−N̂</sup><br>';
+    ? 'Formula: N̂ = (N<sub>Earth-like</sub> × f<sub>tx</sub> × range-gate) × (L / T<sub>galaxy</sub>)<br>P(≥1) = 1 − e<sup>−N̂</sup><br>'
+    : 'Formula: N̂ = (N<sub>Earth-like</sub> × f<sub>tx</sub> × A<sub>horizon</sub> / A<sub>GHZ</sub>) × (L / T<sub>galaxy</sub>)<br>P(≥1) = 1 − e<sup>−N̂</sup><br>';
   const geometryFactor = r.is_external_reference
     ? (r.N_within > 0 ? 1 : 0)
     : (r.N_tx_total > 0 ? Math.max(0, Math.min(1, r.N_within / r.N_tx_total)) : 0);
@@ -3427,7 +3584,7 @@ function renderDetectionPanel() {
       '<div style="' + detectionCardStyle + '">' +
         '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:4px;">Step 2 / Timing barrier</div>' +
         '<div style="font-size:11px;font-weight:700;color:var(--text-bright);">' + fmtPct(r.p_temporal_pct) + '</div>' +
-        '<div style="font-size:9.5px;color:var(--text-dim);margin-top:3px;">Temporal-overlap probability for a transmitter-bearing world <strong>right now</strong> 〰 L ÷ galaxy age. This model-derived timing factor does not include f_tx, which separately represents whether a planet ever produces a detectable transmitter.</div>' +
+        '<div style="font-size:9.5px;color:var(--text-dim);margin-top:3px;">Temporal-overlap probability for a transmitter-bearing world <strong>right now</strong> - L ÷ galaxy age. This model-derived timing factor does not include f_tx, which separately represents whether a planet ever produces a detectable transmitter.</div>' +
         '<div style="font-size:10px;color:' + detectionPositiveColor + ';font-weight:700;margin-top:5px;">Both barriers multiply together →</div>' +
       '</div>' +
     '</div>' +
@@ -3445,7 +3602,7 @@ function renderDetectionPanel() {
         : '';
       if (r.is_external_reference && Number.isFinite(r.earth_distance)) {
         if (r.nearest_beyond_horizon) {
-          distLabel = '〰';
+          distLabel = '-';
           distSub = 'The target galaxy sits about ' + (r.earth_distance < 1e6 ? Math.round(r.earth_distance).toLocaleString() + ' light-years' : (r.earth_distance / 1e6).toFixed(2) + ' million light-years') + ' away, which is beyond the current detection horizon set by L. No signal from it can have reached us yet.';
         } else {
           distLabel = r.earth_distance < 1e6 ? Math.round(r.earth_distance).toLocaleString() + ' light-years' : (r.earth_distance / 1e6).toFixed(2) + ' million light-years';
@@ -3454,7 +3611,7 @@ function renderDetectionPanel() {
             : 'The target galaxy is finally within light-travel range, but the overlap probability is still low because the temporal window remains restrictive.';
         }
       } else if (!Number.isFinite(r.d_nearest_det) || r.N_det < 1e-9) {
-        distLabel = '〰';
+        distLabel = '-';
         distSub = 'Too few expected active detectable transmitters to estimate a nearest-detectable distance scale. Try increasing L or the number of planets.';
       } else {
         var d = r.d_nearest_det;
@@ -3497,7 +3654,7 @@ function renderDetectionPanel() {
     '</div>' +
     '<div style="font-size:10.5px;color:var(--text-dim);margin-top:10px;line-height:1.65;border-top:1px solid var(--border);padding-top:8px;">' +
       verdictText +
-      ' <span style="opacity:.7;">Try changing <strong>L</strong> above 〰 even a tenfold increase can shift the result by orders of magnitude.</span>' +
+      ' <span style="opacity:.7;">Try changing <strong>L</strong> above - even a tenfold increase can shift the result by orders of magnitude.</span>' +
     '</div>' +
     '<div style="font-size:8.5px;color:var(--text-dim);margin-top:6px;opacity:.65;line-height:1.6;">' +
       formulaCopy +
