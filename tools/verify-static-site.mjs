@@ -50,7 +50,7 @@ function consoleLogAllowedLines(rel, text) {
   }
   return allowed;
 }
-const skipDirs = new Set(['.git', 'node_modules', 'dist', 'build', '.cache']);
+const skipDirs = new Set(['.git', 'node_modules', 'dist', 'build', '.cache', 'audit-output']);
 let failures = 0;
 function fail(message) { failures += 1; process.stderr.write('FAIL: ' + message + '\n'); }
 function pass(message) { process.stdout.write('PASS: ' + message + '\n'); }

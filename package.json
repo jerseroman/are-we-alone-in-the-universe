@@ -30,6 +30,12 @@
     "test:biogeo-sources": "node tools/test-bio-geophysical-sources.mjs",
     "test:absolute": "node tools/test-absolute-deep-audit.mjs",
     "test:deep": "npm run test:state-transition:deep",
-    "test:all": "npm run verify && npm run test:canonical-sync && npm run check:syntax && npm run test:numerics && npm run test:strings && npm run test:standalone-export && npm run test:presets && npm run test:montecarlo && npm run test:pessimist-mc && npm run test:scenario-coherence && npm run test:universe-scale && npm run test:state-transition:core && npm run test:preset-state-reset && npm run test:calibration && npm run test:source-links && npm run test:biogeo-sources"
+    "test:all": "npm run verify && npm run test:canonical-sync && npm run check:syntax && npm run test:numerics && npm run test:strings && npm run test:standalone-export && npm run test:presets && npm run test:montecarlo && npm run test:pessimist-mc && npm run test:scenario-coherence && npm run test:universe-scale && npm run test:state-transition:core && npm run test:preset-state-reset && npm run test:calibration && npm run test:source-links && npm run test:biogeo-sources",
+    "audit:vvuq:smoke": "node tools/vvuq-audit/run-vvuq-audit.mjs --mode smoke",
+    "audit:vvuq:10h": "node tools/vvuq-audit/run-vvuq-audit.mjs --mode 10h --hours 10 --slice-minutes 5",
+    "audit:vvuq:24h": "node tools/vvuq-audit/run-vvuq-audit.mjs --mode 24h --hours 24 --slice-minutes 5",
+    "audit:vvuq:compile": "node tools/vvuq-audit/compile-report.mjs",
+    "audit:vvuq:mutation": "node tools/vvuq-audit/mutation-runner.mjs",
+    "audit:vvuq:coverage": "node tools/vvuq-audit/coverage-runner.mjs"
   }
 }

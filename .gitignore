@@ -12,6 +12,8 @@ ZENODO_RELEASE_*
 .env
 .env.*
 node_modules/
+__pycache__/
+*.py[cod]
 dist/
 build/
 .cache/
