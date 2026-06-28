@@ -20,6 +20,25 @@ import {
   writeText
 } from './lib/audit-utils.mjs';
 
+async function emitEvent(runDir, event, live = false) {
+  const enriched = {
+    at: new Date().toISOString(),
+    ...event
+  };
+  await appendJsonl(path.join(runDir, 'events.jsonl'), enriched);
+  if (live) {
+    const details = [
+      enriched.type,
+      enriched.profile_id ? `profile=${enriched.profile_id}` : null,
+      enriched.execution_index ? `#${enriched.execution_index}` : null,
+      enriched.command ? `cmd=${enriched.command}` : null,
+      enriched.status ? `status=${enriched.status}` : null,
+      enriched.count ? `count=${enriched.count}` : null
+    ].filter(Boolean).join(' ');
+    process.stdout.write(`[VVUQ] ${enriched.at} ${details}\n`);
+  }
+}
+
 function modeDefaults(mode, args) {
   if (mode === '10h') return { hours: Number(args.hours || 10), rotating: true };
   if (mode === '24h') return { hours: Number(args.hours || 24), rotating: true };
@@ -35,8 +54,30 @@ function replacePlaceholders(args, context) {
 
 async function runStep(runDir, name, step, context, timeoutMs) {
   const args = replacePlaceholders(step.args || [], context);
-  const result = await runCommand(step.command, args, { timeoutMs });
+  await emitEvent(runDir, {
+    type: 'command_start',
+    name,
+    command: [step.command, ...args].join(' '),
+    profile_id: context.profileId,
+    execution_index: context.executionIndex
+  }, context.live);
+  const result = await runCommand(step.command, args, {
+    timeoutMs,
+    live: context.live,
+    livePrefix: name,
+    liveLogFile: context.liveLogFile
+  });
   await recordCommandResult(runDir, name, result);
+  await emitEvent(runDir, {
+    type: 'command_end',
+    name,
+    command: result.commandLine,
+    profile_id: context.profileId,
+    execution_index: context.executionIndex,
+    status: result.status,
+    duration_ms: result.durationMs,
+    exit_code: result.exitCode
+  }, context.live);
   return result;
 }
 
@@ -44,13 +85,27 @@ async function runProfile(runDir, profile, options) {
   const startedAt = new Date();
   const profileOut = path.join(runDir, 'profiles', `${String(options.executionIndex).padStart(5, '0')}-${profile.id}`);
   await ensureDir(profileOut);
+  await emitEvent(runDir, {
+    type: 'profile_start',
+    profile_id: profile.id,
+    title: profile.title,
+    execution_index: options.executionIndex,
+    count: options.executionIndex
+  }, options.live);
   const stepResults = [];
   const timeoutMs = Math.max(30000, Number(options.sliceMinutes || 5) * 60 * 1000);
 
   for (let i = 0; i < profile.steps.length; i += 1) {
     const step = profile.steps[i];
     const name = `${String(options.executionIndex).padStart(5, '0')}-${profile.id}-step-${i + 1}`;
-    const result = await runStep(runDir, name, step, { runDir, profileOut }, timeoutMs);
+    const result = await runStep(runDir, name, step, {
+      runDir,
+      profileOut,
+      profileId: profile.id,
+      executionIndex: options.executionIndex,
+      live: options.live,
+      liveLogFile: options.liveLogFile
+    }, timeoutMs);
     stepResults.push({
       name,
       command: result.commandLine,
@@ -70,6 +125,14 @@ async function runProfile(runDir, profile, options) {
     steps: stepResults
   };
   await writeJson(path.join(profileOut, 'profile-summary.json'), summary);
+  await emitEvent(runDir, {
+    type: 'profile_end',
+    profile_id: profile.id,
+    title: profile.title,
+    execution_index: options.executionIndex,
+    status,
+    count: options.executionIndex
+  }, options.live);
   return summary;
 }
 
@@ -79,9 +142,29 @@ async function runSmoke(runDir) {
     { name: 'absolute-deep-audit', command: 'npm', args: ['run', 'test:absolute'], timeoutMs: 180000 }
   ];
   const results = [];
+  const live = !!globalThis.__VVUQ_LIVE__;
+  const liveLogFile = globalThis.__VVUQ_LIVE_LOG_FILE__;
   for (const spec of commands) {
-    const result = await runCommand(spec.command, spec.args, { timeoutMs: spec.timeoutMs });
+    await emitEvent(runDir, {
+      type: 'command_start',
+      name: spec.name,
+      command: [spec.command, ...spec.args].join(' ')
+    }, live);
+    const result = await runCommand(spec.command, spec.args, {
+      timeoutMs: spec.timeoutMs,
+      live,
+      livePrefix: spec.name,
+      liveLogFile
+    });
     await recordCommandResult(runDir, spec.name, result);
+    await emitEvent(runDir, {
+      type: 'command_end',
+      name: spec.name,
+      command: result.commandLine,
+      status: result.status,
+      duration_ms: result.durationMs,
+      exit_code: result.exitCode
+    }, live);
     results.push({ name: spec.name, ...summarizeOutput(result) });
     if (result.status !== 'PASS') break;
   }
@@ -115,21 +198,30 @@ async function runRotating(runDir, args, defaults) {
   const seed = args.seed || String(Date.now());
   const workers = args.workers || 'sequential';
   const maxProfiles = args['max-profiles'] ? Number(args['max-profiles']) : null;
+  const live = !!args.live;
+  const liveLogFile = path.join(runDir, 'live-output.log');
   const deadline = Date.now() + hours * 60 * 60 * 1000;
   const failuresFile = path.join(runDir, 'failures', 'profile-failures.jsonl');
   await ensureDir(path.join(runDir, 'checkpoints'));
   await ensureDir(path.join(runDir, 'failures'));
 
+  await emitEvent(runDir, { type: 'audit_start', mode: 'rotating', hours, slice_minutes: sliceMinutes, max_profiles: maxProfiles }, live);
+  await emitEvent(runDir, { type: 'preflight_start', name: 'static-scan' }, live);
   await runStaticScan({ outDir: runDir });
+  await emitEvent(runDir, { type: 'preflight_end', name: 'static-scan', status: 'PASS' }, live);
+  await emitEvent(runDir, { type: 'preflight_start', name: 'traceability' }, live);
   await writeTraceability(runDir);
-  await runOracle(runDir);
+  await emitEvent(runDir, { type: 'preflight_end', name: 'traceability', status: 'PASS' }, live);
+  await emitEvent(runDir, { type: 'preflight_start', name: 'oracle' }, live);
+  const oracleSummary = await runOracle(runDir);
+  await emitEvent(runDir, { type: 'preflight_end', name: 'oracle', status: oracleSummary.status }, live);
 
   const executions = [];
   let executionIndex = 0;
   while (Date.now() < deadline && (!maxProfiles || executions.length < maxProfiles)) {
     const profile = ROTATING_PROFILES[executionIndex % ROTATING_PROFILES.length];
     executionIndex += 1;
-    const result = await runProfile(runDir, profile, { executionIndex, sliceMinutes });
+    const result = await runProfile(runDir, profile, { executionIndex, sliceMinutes, live, liveLogFile });
     executions.push({
       id: result.id,
       title: result.title,
@@ -182,6 +274,13 @@ async function runRotating(runDir, args, defaults) {
     '| ---: | --- | --- |',
     ...executions.map(e => `| ${e.execution_index} | ${e.id} | ${e.status} |`)
   ].join('\n'));
+  await emitEvent(runDir, {
+    type: 'audit_end',
+    mode: summary.mode,
+    status: summary.status,
+    profile_executions: summary.profile_executions,
+    failed_profile_executions: summary.failed_profile_executions
+  }, live);
   return summary;
 }
 
@@ -193,7 +292,10 @@ export async function runAudit(args = parseArgs()) {
     ? path.resolve(repoRoot, args.out)
     : path.join(repoRoot, 'audit-output', sanitizeFilePart(runId));
   await ensureDir(runDir);
+  globalThis.__VVUQ_LIVE__ = !!args.live;
+  globalThis.__VVUQ_LIVE_LOG_FILE__ = path.join(runDir, 'live-output.log');
 
+  await emitEvent(runDir, { type: 'run_directory', run_dir: runDir }, !!args.live);
   await collectEnvironment(runDir);
   const summary = defaults.rotating
     ? await runRotating(runDir, args, defaults)

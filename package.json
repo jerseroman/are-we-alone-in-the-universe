@@ -34,6 +34,7 @@
     "audit:vvuq:smoke": "node tools/vvuq-audit/run-vvuq-audit.mjs --mode smoke",
     "audit:vvuq:10h": "node tools/vvuq-audit/run-vvuq-audit.mjs --mode 10h --hours 10 --slice-minutes 5",
     "audit:vvuq:24h": "node tools/vvuq-audit/run-vvuq-audit.mjs --mode 24h --hours 24 --slice-minutes 5",
+    "audit:vvuq:watch24h": "powershell -ExecutionPolicy Bypass -File tools/vvuq-audit/watch-vvuq-24h.ps1",
     "audit:vvuq:compile": "node tools/vvuq-audit/compile-report.mjs",
     "audit:vvuq:mutation": "node tools/vvuq-audit/mutation-runner.mjs",
     "audit:vvuq:coverage": "node tools/vvuq-audit/coverage-runner.mjs"

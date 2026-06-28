@@ -94,6 +94,24 @@ export async function runCommand(command, args = [], options = {}) {
   let stdout = '';
   let stderr = '';
   let timedOut = false;
+  const live = !!options.live;
+  const livePrefix = options.livePrefix ? `[${options.livePrefix}] ` : '';
+  const liveLogFile = options.liveLogFile || null;
+
+  function writeLive(chunk, streamName) {
+    if (!live) return;
+    const text = chunk.toString();
+    const prefixed = text
+      .split(/(\r?\n)/)
+      .map(part => (/^\r?\n$/.test(part) || part === '' ? part : `${livePrefix}${part}`))
+      .join('');
+    if (streamName === 'stderr') process.stderr.write(prefixed);
+    else process.stdout.write(prefixed);
+    if (liveLogFile) {
+      fs.mkdirSync(path.dirname(liveLogFile), { recursive: true });
+      fs.appendFileSync(liveLogFile, prefixed, 'utf8');
+    }
+  }
 
   return await new Promise(resolve => {
     const spec = spawnSpec(command, args);
@@ -113,8 +131,14 @@ export async function runCommand(command, args = [], options = {}) {
       }
     }, timeoutMs);
 
-    child.stdout.on('data', chunk => { stdout += chunk.toString(); });
-    child.stderr.on('data', chunk => { stderr += chunk.toString(); });
+    child.stdout.on('data', chunk => {
+      stdout += chunk.toString();
+      writeLive(chunk, 'stdout');
+    });
+    child.stderr.on('data', chunk => {
+      stderr += chunk.toString();
+      writeLive(chunk, 'stderr');
+    });
     child.on('error', err => {
       clearTimeout(timer);
       resolve({
