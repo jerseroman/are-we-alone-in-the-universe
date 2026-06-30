@@ -1731,6 +1731,27 @@ await section('Distance Models', () => {
   });
 });
 
+await section('SETI/Fermi Bottleneck', () => {
+  const h = createHarness();
+  h.loadPreset('kepler');
+  h.setInputValue('detection-L', '30000');
+  h.setInputValue('detection-f_tx', '1');
+  h.runDeterministic();
+  runSeededMc(h, { samples: 32, seed: 202624, mcMode: 'presetLocal' });
+  const metrics = h.runExistingFunction('buildDistanceMetrics', 1e6);
+  const context = h.runExistingFunction(
+    'buildFermiContext',
+    1000,
+    { modelLabel: 'test radial reference', distance: 1000 },
+    { count: 1e6, mode: 'dt', metrics }
+  );
+  assert(
+    context && /temporal mismatch/i.test(context.html || ''),
+    'Fermi bottleneck diagnosis preserves the small temporal-overlap term instead of flooring it to 1',
+    { html: context && context.html ? context.html.slice(0, 1600) : context }
+  );
+});
+
 await section('Universe Scaling', () => {
   const values = {};
   for (const presetKey of Object.keys(SCIENTIFIC_PRESETS)) {

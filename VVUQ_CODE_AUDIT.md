@@ -1,8 +1,88 @@
-﻿# Full V&V/UQ Model Audit Report
+﻿# Internal V&V/UQ-Informed Model Audit Report
 
-Final status: ![GREEN](https://img.shields.io/badge/GREEN-green)
+Final internal status:
 
-This audit verifies implementation robustness and internal consistency. It does not constitute empirical astronomical validation, peer review, proof of life, confirmed Earth-like planets, or SETI detection evidence.
+![GREEN](https://img.shields.io/badge/GREEN-green)
+
+This report documents an internal verification, robustness, uncertainty-quantification, and consistency audit inspired by V&V/UQ practices. It should not be interpreted as a complete formal V&V certification, external peer review, empirical astronomical validation, or independent software assurance assessment.
+
+The audit was executed through a combination of automated test suites, Node.js scripts, Python scripts, and Codex-assisted code-review/audit workflows. These procedures were designed to test implementation consistency, numerical stability, regression behaviour, edge cases, and internal model logic.
+
+Despite extensive and repeated testing, residual errors may still exist. Passing this audit means that the tested implementation satisfied the defined internal checks at the recorded repository state; it does not prove that the model is empirically correct, exhaustive, free of defects, or scientifically validated against observed astronomical reality.
+
+## Latest 24h Internal Audit Update
+
+This section updates the existing audit record with the latest completed 24-hour run. The detailed historical audit evidence below this section is intentionally retained.
+
+| Item | Value |
+| --- | --- |
+| Run directory | `audit-output\live-24h-20260628-111833` |
+| Timeboxed status | ![PASS](https://img.shields.io/badge/PASS-green) |
+| Final compiled status | ![GREEN](https://img.shields.io/badge/GREEN-green) |
+| Mode | `24h` |
+| Hours requested | `24` |
+| Slice minutes | `5` |
+| Workers | `sequential` |
+| Seed | `1782638315889` |
+| Started | `2026-06-28T09:18:35.889Z` |
+| Ended | `2026-06-29T09:18:38.214Z` |
+| Profile catalogue size | `24` |
+| Profile executions | `7,213` |
+| Failed profile executions | `0` |
+| Evidence channels | `8,418` |
+| Command records | `8,414` |
+| Failed command records | `0` |
+| Static scan status | ![PASS](https://img.shields.io/badge/PASS-green) |
+| Traceability rows | `17` |
+| Independent oracle status | ![PASS](https://img.shields.io/badge/PASS-green) |
+| Independent oracle checks | `20` |
+| Limited by max profile cap | `false` |
+
+### Latest 24h Profile Results
+
+| Profile | Title | Executions | Failures | Status |
+| --- | --- | ---: | ---: | --- |
+| 01-realistic-core-fuzz | Realistic core parameter fuzz | 301 | 0 | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 02-additional-modules-matrix | Additional Scientific Modules matrix | 301 | 0 | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 03-preset-mc-transition | Preset and MC-mode transition fuzz | 301 | 0 | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 04-seti-fermi-extremes | SETI/Fermi extreme assumptions | 301 | 0 | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 05-boundary-corrupted | Boundary and corrupted input fuzz | 301 | 0 | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 06-strict-oracle-no-modules | Strict no-module independent oracle comparison | 301 | 0 | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 07-mc-reproducibility | Monte Carlo reproducibility | 301 | 0 | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 08-interval-ordering | Interval ordering | 301 | 0 | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 09-preset-reset-stale | Preset reset / stale-state | 301 | 0 | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 10-full-preset-snapshot-diff | Full preset snapshot diff | 301 | 0 | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 11-json-export-parity | JSON export parity | 301 | 0 | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 12-latex-markdown-export-parity | LaTeX / Markdown export parity | 301 | 0 | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 13-ui-browser-dom | UI/browser DOM | 301 | 0 | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 14-mobile-vs-desktop | Mobile vs desktop parity proxy | 300 | 0 | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 15-forbidden-wording | Forbidden wording | 300 | 0 | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 16-source-provenance | Source/provenance | 300 | 0 | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 17-distance-model-nearest-candidate | Distance model / nearest candidate | 300 | 0 | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 18-universe-scale | Universe scale | 300 | 0 | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 19-seti-sparse-display | SETI sparse display | 300 | 0 | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 20-module-overlap-warning | Module overlap warning | 300 | 0 | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 21-performance-memory | Performance / memory | 300 | 0 | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 22-security-static-scan | Security/static scan | 300 | 0 | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 23-mutation-style-formula-trap | Mutation-style formula trap | 300 | 0 | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 24-regression-golden-outputs | Regression against golden outputs | 300 | 0 | ![PASS](https://img.shields.io/badge/PASS-green) |
+
+### Latest 24h Reproducibility Artifacts
+
+| Artifact | Path |
+| --- | --- |
+| Full generated report | `audit-output\live-24h-20260628-111833\FULL_VVUQ_MODEL_AUDIT_REPORT.md` |
+| Timeboxed summary | `audit-output\live-24h-20260628-111833\timeboxed-summary.json` |
+| Compiled summary | `audit-output\live-24h-20260628-111833\full-vvuq-summary.json` |
+| Run summary | `audit-output\live-24h-20260628-111833\run-summary.json` |
+| Event log | `audit-output\live-24h-20260628-111833\events.jsonl` |
+| Live output log | `audit-output\live-24h-20260628-111833\live-output.log` |
+| PowerShell monitor log | `audit-output\live-24h-20260628-111833\powershell-monitor.log` |
+| Static scan summary | `audit-output\live-24h-20260628-111833\static-scan-summary.json` |
+| Traceability matrix | `audit-output\live-24h-20260628-111833\requirements-traceability-matrix.json` |
+| Independent oracle summary | `audit-output\live-24h-20260628-111833\oracle-comparison-summary.json` |
+
+## Previous Audit Evidence
 
 ## Local Repository State
 

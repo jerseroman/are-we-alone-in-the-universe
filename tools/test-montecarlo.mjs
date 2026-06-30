@@ -412,6 +412,17 @@ if (
 }
 
 {
+  const expectedRadialLy = 324.04297476114874;
+  const actualRadialLy = distanceMetrics?.modelRadial?.distance;
+  const toleranceLy = 1e-6;
+  if (Number.isFinite(actualRadialLy) && Math.abs(actualRadialLy - expectedRadialLy) <= toleranceLy) {
+    pass('Radial-density nearest-neighbour absolute scale matches the kpc-to-light-year regression anchor.');
+  } else {
+    fail(`Radial-density absolute scale changed: actual=${fmt(actualRadialLy)}, expected=${fmt(expectedRadialLy)}.`);
+  }
+}
+
+{
   const counts = [1, 10, 100, 1e3, 1e4, 1e5, 1e6, 1e8, 1e10];
   const radialDistances = counts.map(count => distanceHarness.buildDistanceMetrics(count).modelRadial.distance);
   const diskDistances = counts.map(count => distanceHarness.buildDistanceMetrics(count).model3dDisk.distance);

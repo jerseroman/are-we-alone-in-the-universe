@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { ensureDir, parseArgs, repoRoot, runCommand, writeJson, writeText } from './lib/audit-utils.mjs';
@@ -73,47 +74,59 @@ async function applyMutation(tempRoot, mutation) {
   return true;
 }
 
+function selectMutations(options = {}) {
+  const pool = options.quick ? MUTATIONS.slice(0, 3) : MUTATIONS;
+  const hasWindow = options.startIndex !== undefined || options.limit !== undefined;
+  if (!hasWindow) return pool;
+  const start = Number.isFinite(Number(options.startIndex)) ? Math.max(0, Number(options.startIndex)) : 0;
+  const limit = Number.isFinite(Number(options.limit)) ? Math.max(1, Number(options.limit)) : pool.length;
+  const selected = [];
+  for (let i = 0; i < Math.min(limit, pool.length); i += 1) {
+    selected.push(pool[(start + i) % pool.length]);
+  }
+  return selected;
+}
+
 export async function runMutations(outDir, options = {}) {
   await ensureDir(outDir);
-  const tempBase = path.resolve(outDir, 'temp-mutants');
-  const resolvedOut = path.resolve(outDir);
-  if (!tempBase.startsWith(resolvedOut)) {
-    throw new Error(`Refusing unsafe temp path: ${tempBase}`);
-  }
-  await fsp.rm(tempBase, { recursive: true, force: true });
-  await ensureDir(tempBase);
+  const tempBase = await fsp.mkdtemp(path.join(os.tmpdir(), 'vvuq-mutants-'));
 
-  const selected = options.quick ? MUTATIONS.slice(0, 3) : MUTATIONS;
+  const selected = selectMutations(options);
   const results = [];
+  const timeoutMs = Number(options.timeoutMs || (options.quick ? 120000 : 300000));
 
-  for (const mutation of selected) {
-    const mutantRoot = path.join(tempBase, mutation.id);
-    await copyRepo(mutantRoot);
-    const applied = await applyMutation(mutantRoot, mutation);
-    if (!applied) {
-      results.push({ id: mutation.id, status: 'INVALID', reason: 'mutation target pattern not found' });
-      continue;
-    }
+  try {
+    for (const mutation of selected) {
+      const mutantRoot = path.join(tempBase, mutation.id);
+      await copyRepo(mutantRoot);
+      const applied = await applyMutation(mutantRoot, mutation);
+      if (!applied) {
+        results.push({ id: mutation.id, status: 'INVALID', reason: 'mutation target pattern not found' });
+        continue;
+      }
 
-    const testResults = [];
-    for (const [command, args] of mutation.tests) {
-      const result = await runCommand(command, args, { cwd: mutantRoot, timeoutMs: options.quick ? 120000 : 300000 });
-      testResults.push({
-        command: result.commandLine,
-        status: result.status,
-        exitCode: result.exitCode,
-        timedOut: result.timedOut,
-        durationMs: result.durationMs
+      const testResults = [];
+      for (const [command, args] of mutation.tests) {
+        const result = await runCommand(command, args, { cwd: mutantRoot, timeoutMs });
+        testResults.push({
+          command: result.commandLine,
+          status: result.status,
+          exitCode: result.exitCode,
+          timedOut: result.timedOut,
+          durationMs: result.durationMs
+        });
+        if (result.status !== 'PASS') break;
+      }
+
+      const killed = testResults.some(r => r.status !== 'PASS');
+      results.push({
+        id: mutation.id,
+        status: killed ? 'KILLED' : 'SURVIVED',
+        tests: testResults
       });
-      if (result.status !== 'PASS') break;
     }
-
-    const killed = testResults.some(r => r.status !== 'PASS');
-    results.push({
-      id: mutation.id,
-      status: killed ? 'KILLED' : 'SURVIVED',
-      tests: testResults
-    });
+  } finally {
+    await fsp.rm(tempBase, { recursive: true, force: true });
   }
 
   const valid = results.filter(r => r.status !== 'INVALID');
@@ -121,7 +134,12 @@ export async function runMutations(outDir, options = {}) {
   const survived = results.filter(r => r.status === 'SURVIVED');
   const summary = {
     status: survived.length === 0 ? 'PASS' : 'FAIL',
-    mode: options.quick ? 'quick' : 'full',
+    mode: options.quick ? 'quick' : (options.limit || options.startIndex !== undefined ? 'rotating-window' : 'full'),
+    catalog_mutants: MUTATIONS.length,
+    selected_mutants: selected.map(item => item.id),
+    start_index: options.startIndex === undefined ? null : Number(options.startIndex),
+    limit: options.limit === undefined ? null : Number(options.limit),
+    timeout_ms: timeoutMs,
     total_mutants: results.length,
     valid_mutants: valid.length,
     killed_mutants: killed.length,
@@ -138,6 +156,8 @@ export async function runMutations(outDir, options = {}) {
     `Status: **${summary.status}**`,
     '',
     `Mode: ${summary.mode}`,
+    `Catalog mutants: ${summary.catalog_mutants}`,
+    `Selected mutants: ${summary.selected_mutants.join(', ')}`,
     `Mutation score: ${summary.mutation_score === null ? 'n/a' : summary.mutation_score.toFixed(3)}`,
     '',
     '| Mutant | Status |',
@@ -151,7 +171,12 @@ export async function runMutations(outDir, options = {}) {
 async function main() {
   const args = parseArgs();
   const outDir = args.out ? path.resolve(repoRoot, args.out) : path.join(repoRoot, 'audit-output', `mutation-${Date.now()}`);
-  const summary = await runMutations(outDir, { quick: !!args.quick });
+  const summary = await runMutations(outDir, {
+    quick: !!args.quick,
+    startIndex: args['start-index'] || args.startIndex,
+    limit: args.limit,
+    timeoutMs: args['timeout-ms'] || args.timeoutMs
+  });
   process.stdout.write(`MUTATION ${summary.status}: killed ${summary.killed_mutants}/${summary.valid_mutants} valid mutants\n`);
   process.exit(summary.status === 'PASS' ? 0 : 1);
 }
@@ -162,4 +187,3 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     process.exit(1);
   });
 }
-

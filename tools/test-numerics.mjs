@@ -40,7 +40,7 @@ function loadRuntimeCalculator() {
   const source = fs.readFileSync(corePath, 'utf8');
   const context = vm.createContext({ console });
   vm.runInContext(
-    `${source}\n;globalThis.__NUMERIC_TEST_EXPORTS__ = { PRESETS, computePlanetsAdvanced, fmtExistencePct, fmtPct, nearlyEqual };`,
+    `${source}\n;globalThis.__NUMERIC_TEST_EXPORTS__ = { PRESETS, computePlanetsAdvanced, fmtExistencePct, fmtPct, nearlyEqual, buildDistanceScenario };`,
     context,
     { filename: corePath }
   );
@@ -437,7 +437,7 @@ for (const testCase of boundCases) {
 
 // ─── fmtExistencePct: sparse probability display precision ───────────────────
 {
-  const { fmtExistencePct, fmtPct } = loadRuntimeCalculator();
+  const { fmtExistencePct, fmtPct, buildDistanceScenario } = loadRuntimeCalculator();
 
   // λ = 1.28e-6  →  P ≈ 1.28e-6, pct ≈ 1.28e-4 %  (well below 0.01 %)
   const lambda = 1.28e-6;
@@ -483,6 +483,19 @@ for (const testCase of boundCases) {
     fail(`Pessimist existence probability: displayed as "${pessimistResult}" — looks like zero.`);
   } else {
     pass(`Pessimist existence probability: "${pessimistResult}" — nonzero display confirmed.`);
+  }
+
+  const sparseScenario = buildDistanceScenario(0.01);
+  const sparseHtml = sparseScenario && sparseScenario.html ? sparseScenario.html : '';
+  if (
+    sparseScenario &&
+    sparseScenario.kind === 'sparse' &&
+    sparseHtml.includes('0.995%') &&
+    !/\b99(?:\.0+)?%/.test(sparseHtml)
+  ) {
+    pass('Sparse distance scenario uses P(at least one) = 1 - exp(-count), not the inverted survival probability.');
+  } else {
+    fail(`Sparse distance scenario probability regression failed: kind=${sparseScenario?.kind}, html="${sparseHtml}".`);
   }
 }
 

@@ -152,6 +152,16 @@ const scale5e10 = deterministicUniverseScaleForStars(5e10);
 const yieldRatio = scale5e10.perStarYield / scale5e9.perStarYield;
 const lowerRatio = scale5e10.scale.min / scale5e9.scale.min;
 
+{
+  const { api } = loadCalculator();
+  const unitYieldScale = api.computeUniverseScaleFromYield(1);
+  if (unitYieldScale.minStars === 1e22 && unitYieldScale.maxStars === 1e24) {
+    pass('Observable-universe star-count range remains anchored at 1e22..1e24.');
+  } else {
+    fail(`Observable-universe star-count range changed: min=${unitYieldScale.minStars}, max=${unitYieldScale.maxStars}.`);
+  }
+}
+
 if (Math.abs(yieldRatio - 1) <= 1e-12 && Math.abs(lowerRatio - 1) <= 1e-12) {
   pass(
     `Universe per-star scaling is stable when only N_GHZ changes: ` +

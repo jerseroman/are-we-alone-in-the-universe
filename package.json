@@ -37,6 +37,16 @@
     "audit:vvuq:watch24h": "powershell -ExecutionPolicy Bypass -File tools/vvuq-audit/watch-vvuq-24h.ps1",
     "audit:vvuq:compile": "node tools/vvuq-audit/compile-report.mjs",
     "audit:vvuq:mutation": "node tools/vvuq-audit/mutation-runner.mjs",
-    "audit:vvuq:coverage": "node tools/vvuq-audit/coverage-runner.mjs"
+    "audit:vvuq:coverage": "node tools/vvuq-audit/coverage-runner.mjs",
+    "audit:vvuq:raw-core-fuzz": "node tools/vvuq-audit/high-throughput-random-core-fuzz.mjs",
+    "audit:vvuq:random-fuzz": "node tools/vvuq-audit/random-ui-oracle-fuzz.mjs",
+    "audit:vvuq:replay": "node tools/vvuq-audit/deterministic-replay-audit.mjs",
+    "audit:vvuq:boundary": "node tools/vvuq-audit/boundary-extreme-audit.mjs",
+    "audit:vvuq:state-soak": "node tools/vvuq-audit/state-transition-soak.mjs",
+    "audit:vvuq:export-consistency": "node tools/vvuq-audit/export-consistency-audit.mjs",
+    "audit:vvuq:cross-oracle": "node tools/vvuq-audit/cross-implementation-formula-audit.mjs",
+    "audit:vvuq:report-integrity": "node tools/vvuq-audit/report-integrity-audit.mjs",
+    "audit:vvuq:extended24h": "node tools/vvuq-audit/run-extended-rotating-24h.mjs --hours 24 --slice-minutes 5 --live",
+    "audit:vvuq:extended:smoke": "node tools/vvuq-audit/run-extended-rotating-24h.mjs --hours 24 --slice-minutes 0.08 --max-slices 1 --skip-preflight --live"
   }
 }
