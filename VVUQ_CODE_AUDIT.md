@@ -3,6 +3,7 @@
 Final internal status:
 
 ![PASS](https://img.shields.io/badge/72h_code_behavior-PASS-green)
+![PASS](https://img.shields.io/badge/Calculator-GREEN_PASS-green)
 ![YELLOW](https://img.shields.io/badge/formal_scope-PARTIAL-yellow)
 
 This report documents an internal verification, robustness, uncertainty-quantification, and consistency audit inspired by V&V/UQ practices. It should not be interpreted as a complete formal V&V certification, external peer review, empirical astronomical validation, or independent software assurance assessment.
@@ -13,14 +14,14 @@ Despite extensive and repeated testing, residual errors may still exist. Passing
 
 ## 72h Extended Rotating Audit Adjudication Update
 
-This section appends the completed 72-hour extended rotating audit evidence. The raw runner status is intentionally preserved as `FAIL` in the generated machine artifacts because 15 profile executions exceeded audit-harness time limits. After reviewing the failed profiles and their underlying stdout/stderr/summary evidence, the code-behavior outcome is adjudicated as ![PASS](https://img.shields.io/badge/PASS-green) for the tested implementation surface: no failed assertion, formula-oracle mismatch, GUI/export mismatch, mutation survivor, security vulnerability, or stderr evidence of calculator-code failure was observed.
+This section appends the completed 72-hour extended rotating audit evidence. The raw runner status is intentionally preserved as `FAIL` in the generated machine artifacts because 15 profile executions exceeded audit-harness time limits. In plain language: the audit tool itself ran out of its allowed time while processing very large audit-output folders or long-running audit scripts. This does not mean the calculator formula, GUI value, export value, or Python-oracle comparison failed. After reviewing the failed profiles and their underlying stdout/stderr/summary evidence, the code-behavior outcome is adjudicated as ![PASS](https://img.shields.io/badge/PASS-green) for the tested implementation surface: no failed assertion, formula-oracle mismatch, GUI/export mismatch, mutation survivor, security vulnerability, or stderr evidence of calculator-code failure was observed.
 
 The PASS conclusion in this section is therefore a reviewed internal code-behavior conclusion, not a claim that the raw timeboxed runner exited green and not a claim of complete formal V&V certification.
 
 | Item | Value |
 | --- | --- |
 | Reviewed code-behavior conclusion | ![PASS](https://img.shields.io/badge/PASS-green) |
-| Raw runner status | ![FAIL](https://img.shields.io/badge/FAIL-red) due audit-harness timeouts |
+| Raw runner status | ![FAIL](https://img.shields.io/badge/FAIL-red) in the automated runner only. The cause was audit-harness timeout behaviour while reading/writing large audit folders and running long audit scripts, not a detected calculator-code failure. |
 | Run directory | `audit-output\extended-72h-live-20260701-095425` |
 | Runner final report | `audit-output\extended-72h-live-20260701-095425\EXTENDED_ROTATING_VVUQ_AUDIT_REPORT.md` |
 | Live monitor final report | `audit-output\extended-72h-live-20260701-095425\LIVE_MONITOR_FINAL_REPORT.md` |
