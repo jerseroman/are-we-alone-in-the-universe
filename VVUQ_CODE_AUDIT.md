@@ -3,7 +3,7 @@
 Final internal status:
 
 ![PASS](https://img.shields.io/badge/72h_code_behavior-PASS-green)
-![PASS](https://img.shields.io/badge/Calculator-GREEN_PASS-green)
+![PASS](https://img.shields.io/badge/Calculator-PASS-green)
 ![YELLOW](https://img.shields.io/badge/formal_scope-PARTIAL-yellow)
 
 This report documents an internal verification, robustness, uncertainty-quantification, and consistency audit inspired by V&V/UQ practices. It should not be interpreted as a complete formal V&V certification, external peer review, empirical astronomical validation, or independent software assurance assessment.
@@ -41,44 +41,44 @@ The PASS conclusion in this section is therefore a reviewed internal code-behavi
 
 ### 72h Evidence Counters
 
-| Evidence channel | Count |
-| --- | ---: |
-| Raw random calculations | `3,259,893,413` |
-| Raw Python oracle sample cases | `288,990` |
-| Raw advanced-factor cases | `3,179,104,386` |
-| Raw occurrence-direct cases | `912,705,824` |
-| Random GUI calculations / steps | `547,871` |
-| GUI deterministic checks | `547,871` |
-| Python oracle cases | `95,460` |
-| Monte Carlo GUI checks | `16,540` |
-| Advanced module checks | `528,817` |
-| Occurrence/Bryson checks | `136,234` |
-| Galaxy checks | `448,207` |
-| Replay trace rows | `10,440` |
-| Boundary edge steps | `12,760` |
-| Cross-oracle cases | `69,000` |
-| State-soak checks | `5,919` |
-| Export checks | `173` |
-| Mutants executed | `57` |
-| Mutants killed | `57` |
-| Mutants survived | `0` |
-| Performance executions | `7,837` |
-| Report-integrity findings | `0` |
-| Coverage threshold runs | `58` |
-| Coverage partial runs | `58` |
-| Last coverage lines | `60.17%` |
-| Last coverage branches | `53.57%` |
-| UQ convergence runs | `57` |
-| UQ convergence rows | `1,140` |
-| UQ worst mean drift percent | `11.00` |
-| Sobol validation runs | `57` |
-| Sobol validation warnings | `38` |
-| Independent model scope runs | `57` |
-| Independent model covered areas accumulated | `228` |
-| Methodology governance runs | `57` |
-| Security/supply-chain runs | `57` |
-| Security vulnerabilities | `0` |
-| Security warnings | `114` |
+| Evidence channel | Count | Status |
+| --- | ---: | --- |
+| Raw random calculations | `3,259,893,413` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Raw Python oracle sample cases | `288,990` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Raw advanced-factor cases | `3,179,104,386` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Raw occurrence-direct cases | `912,705,824` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Random GUI calculations / steps | `547,871` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| GUI deterministic checks | `547,871` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Python oracle cases | `95,460` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Monte Carlo GUI checks | `16,540` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Advanced module checks | `528,817` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Occurrence/Bryson checks | `136,234` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Galaxy checks | `448,207` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Replay trace rows | `10,440` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Boundary edge steps | `12,760` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Cross-oracle cases | `69,000` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| State-soak checks | `5,919` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Export checks | `173` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Mutants executed | `57` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Mutants killed | `57` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Mutants survived | `0` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Performance executions | `7,837` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Report-integrity findings | `0` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Coverage threshold runs | `58` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Coverage partial runs | `58` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Last coverage lines | `60.17%` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Last coverage branches | `53.57%` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| UQ convergence runs | `57` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| UQ convergence rows | `1,140` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| UQ worst mean drift percent | `11.00` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Sobol validation runs | `57` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Sobol validation warnings | `38` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Independent model scope runs | `57` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Independent model covered areas accumulated | `228` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Methodology governance runs | `57` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Security/supply-chain runs | `57` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Security vulnerabilities | `0` | ![PASS](https://img.shields.io/badge/-PASS-green) |
+| Security warnings | `114` | ![PASS](https://img.shields.io/badge/-PASS-green) |
 
 ### 72h Failed Profile Adjudication
 
