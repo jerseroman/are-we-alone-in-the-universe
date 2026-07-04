@@ -9,6 +9,19 @@ function localBin(name) {
   return fs.existsSync(file) ? file : null;
 }
 
+function parseCoverageSummary(text) {
+  const readPct = label => {
+    const match = text.match(new RegExp(`^${label}\\s*:\\s*([0-9]+(?:\\.[0-9]+)?)%`, 'im'));
+    return match ? Number(match[1]) : null;
+  };
+  return {
+    statement_coverage: readPct('Statements'),
+    branch_coverage: readPct('Branches'),
+    function_coverage: readPct('Functions'),
+    line_coverage: readPct('Lines')
+  };
+}
+
 export async function runCoverage(outDir) {
   await ensureDir(outDir);
   const c8 = localBin('c8');
@@ -37,16 +50,20 @@ export async function runCoverage(outDir) {
 
   const tool = c8 ? 'c8' : 'nyc';
   const command = c8 || nyc;
+  const reportsDir = path.join(outDir, 'coverage');
   const args = tool === 'c8'
-    ? ['--reporter=text-summary', '--reporter=json-summary', 'npm', 'run', 'test:all']
-    : ['--reporter=text-summary', '--reporter=json-summary', 'npm', 'run', 'test:all'];
+    ? ['--reporter=text-summary', '--reporter=json-summary', `--reports-dir=${reportsDir}`, 'npm', 'run', 'test:all']
+    : ['--reporter=text-summary', '--reporter=json-summary', `--report-dir=${reportsDir}`, 'npm', 'run', 'test:all'];
   const result = await runCommand(command, args, { timeoutMs: 300000 });
+  const parsed = parseCoverageSummary(`${result.stdout}\n${result.stderr}`);
   const summary = {
     status: result.status,
     tool,
     command: result.commandLine,
     exitCode: result.exitCode,
     durationMs: result.durationMs,
+    ...parsed,
+    reports_dir: reportsDir,
     stdout: result.stdout,
     stderr: result.stderr
   };
@@ -57,6 +74,10 @@ export async function runCoverage(outDir) {
     `Status: **${summary.status}**`,
     '',
     `Tool: ${tool}`,
+    `Statements: ${summary.statement_coverage ?? 'n/a'}%`,
+    `Branches: ${summary.branch_coverage ?? 'n/a'}%`,
+    `Functions: ${summary.function_coverage ?? 'n/a'}%`,
+    `Lines: ${summary.line_coverage ?? 'n/a'}%`,
     '',
     '```text',
     result.stdout,
@@ -80,4 +101,3 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     process.exit(1);
   });
 }
-

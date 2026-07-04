@@ -2,13 +2,226 @@
 
 Final internal status:
 
-![GREEN](https://img.shields.io/badge/GREEN-green)
+![PASS](https://img.shields.io/badge/72h_code_behavior-PASS-green)
+![YELLOW](https://img.shields.io/badge/formal_scope-PARTIAL-yellow)
 
 This report documents an internal verification, robustness, uncertainty-quantification, and consistency audit inspired by V&V/UQ practices. It should not be interpreted as a complete formal V&V certification, external peer review, empirical astronomical validation, or independent software assurance assessment.
 
 The audit was executed through a combination of automated test suites, Node.js scripts, Python scripts, and Codex-assisted code-review/audit workflows. These procedures were designed to test implementation consistency, numerical stability, regression behaviour, edge cases, and internal model logic.
 
 Despite extensive and repeated testing, residual errors may still exist. Passing this audit means that the tested implementation satisfied the defined internal checks at the recorded repository state; it does not prove that the model is empirically correct, exhaustive, free of defects, or scientifically validated against observed astronomical reality.
+
+## 72h Extended Rotating Audit Adjudication Update
+
+This section appends the completed 72-hour extended rotating audit evidence. The raw runner status is intentionally preserved as `FAIL` in the generated machine artifacts because 15 profile executions exceeded audit-harness time limits. After reviewing the failed profiles and their underlying stdout/stderr/summary evidence, the code-behavior outcome is adjudicated as ![PASS](https://img.shields.io/badge/PASS-green) for the tested implementation surface: no failed assertion, formula-oracle mismatch, GUI/export mismatch, mutation survivor, security vulnerability, or stderr evidence of calculator-code failure was observed.
+
+The PASS conclusion in this section is therefore a reviewed internal code-behavior conclusion, not a claim that the raw timeboxed runner exited green and not a claim of complete formal V&V certification.
+
+| Item | Value |
+| --- | --- |
+| Reviewed code-behavior conclusion | ![PASS](https://img.shields.io/badge/PASS-green) |
+| Raw runner status | ![FAIL](https://img.shields.io/badge/FAIL-red) due audit-harness timeouts |
+| Run directory | `audit-output\extended-72h-live-20260701-095425` |
+| Runner final report | `audit-output\extended-72h-live-20260701-095425\EXTENDED_ROTATING_VVUQ_AUDIT_REPORT.md` |
+| Live monitor final report | `audit-output\extended-72h-live-20260701-095425\LIVE_MONITOR_FINAL_REPORT.md` |
+| Started | `2026-07-01T09:54:27.1617353+02:00` |
+| Ended | `2026-07-04T09:56:09.6652365+02:00` |
+| Elapsed | `03.00:01:42` |
+| Hours requested | `72` |
+| Slice minutes | `5` |
+| Profile catalogue size | `24` |
+| Profile executions | `1387` |
+| Failed profile executions | `15` |
+| Commands completed | `106198` |
+| PASS commands | `106183` |
+| FAIL commands | `15` |
+| stderr | Empty |
+| Failed assertion lines observed | `0` |
+
+### 72h Evidence Counters
+
+| Evidence channel | Count |
+| --- | ---: |
+| Raw random calculations | `3,259,893,413` |
+| Raw Python oracle sample cases | `288,990` |
+| Raw advanced-factor cases | `3,179,104,386` |
+| Raw occurrence-direct cases | `912,705,824` |
+| Random GUI calculations / steps | `547,871` |
+| GUI deterministic checks | `547,871` |
+| Python oracle cases | `95,460` |
+| Monte Carlo GUI checks | `16,540` |
+| Advanced module checks | `528,817` |
+| Occurrence/Bryson checks | `136,234` |
+| Galaxy checks | `448,207` |
+| Replay trace rows | `10,440` |
+| Boundary edge steps | `12,760` |
+| Cross-oracle cases | `69,000` |
+| State-soak checks | `5,919` |
+| Export checks | `173` |
+| Mutants executed | `57` |
+| Mutants killed | `57` |
+| Mutants survived | `0` |
+| Performance executions | `7,837` |
+| Report-integrity findings | `0` |
+| Coverage threshold runs | `58` |
+| Coverage partial runs | `58` |
+| Last coverage lines | `60.17%` |
+| Last coverage branches | `53.57%` |
+| UQ convergence runs | `57` |
+| UQ convergence rows | `1,140` |
+| UQ worst mean drift percent | `11.00` |
+| Sobol validation runs | `57` |
+| Sobol validation warnings | `38` |
+| Independent model scope runs | `57` |
+| Independent model covered areas accumulated | `228` |
+| Methodology governance runs | `57` |
+| Security/supply-chain runs | `57` |
+| Security vulnerabilities | `0` |
+| Security warnings | `114` |
+
+### 72h Failed Profile Adjudication
+
+| Failed profile type | Count | Reviewed cause | Code-behavior impact |
+| --- | ---: | --- | --- |
+| `16-report-integrity` | `12` | Timeout while scanning a large, still-growing live audit directory. Completed report-integrity summaries showed `failures: 0` and `warnings: 0`. | No calculator-code failure observed. |
+| `04-state-transition-soak` | `1` | Timeout after successful random UI edge sweep and deep state-transition output. The captured deep-test stdout included `386` PASS lines, `0` FAIL lines, and `State-transition deep regression test completed.` | No calculator-code failure observed. |
+| `05-export-consistency` | `1` | Wrapper returned FAIL because nested `test:deep` exceeded the time window. `standalone-export-consistency` passed and captured deep-test output had `0` FAIL lines. | No export mismatch or calculator-code failure observed. |
+| `18-coverage-threshold` | `1` | Timeout at the end of the overall 72h run while the audit window was expiring. Earlier coverage threshold runs completed and were consistently `PARTIAL`, not formula failures. | No calculator-code failure observed. |
+
+### 72h Reviewed Conclusion
+
+The 72-hour run is recorded as raw runner `FAIL` for reproducibility, because the generated runner summary must reflect actual timeout exits. After reviewing the failed profiles, the tested implementation itself is recorded here as code-behavior ![PASS](https://img.shields.io/badge/PASS-green): all observed failures were attributable to timebox/harness behavior or known non-blocking formal-scope limitations, not to a detected calculator, GUI, export, oracle, mutation, or security defect.
+
+The broader formal scope remains ![YELLOW](https://img.shields.io/badge/YELLOW-yellow) because independent whole-model reimplementation coverage is incomplete, formal coverage thresholds are not met, Sobol warnings remain documented, and supply-chain hardening warnings remain open.
+
+## Formal Deep Audit Update
+
+This section appends the expanded one-time formal/deep audit performed before launching the next 72-hour rotating audit. It does not replace or delete the older 24-hour and pre-24-hour evidence retained below.
+
+| Item | Value |
+| --- | --- |
+| Composite status after this update | ![YELLOW](https://img.shields.io/badge/YELLOW-yellow) / PARTIAL |
+| Run directory | `audit-output\formal-deep-20260701-062656` |
+| Report artifact | `audit-output\formal-deep-20260701-062656\FORMAL_DEEP_AUDIT_REPORT.md` |
+| Evidence manifest | `audit-output\formal-deep-20260701-062656\evidence-pack-manifest.json` |
+| Evidence files hashed | `183` |
+| Git commit captured by manifest | `a199e8d3d7897bf14ada682fe540d2ee8e1832cf` |
+| 72h audit started by this section | `false` |
+
+### Formal Deep Audit Results
+
+| Check | Status | Result |
+| --- | --- | --- |
+| Full independent Python/R reimplementation scope | ![PARTIAL](https://img.shields.io/badge/PARTIAL-yellow) | Existing Python oracle evidence covers `4/10` model areas. Snapshot oracle PASS `20/20`; JS/Python cross-oracle PASS `1200/1200`. A full independent Python/R implementation of the entire calculator model is not yet implemented. |
+| Formal coverage thresholds | ![PARTIAL](https://img.shields.io/badge/PARTIAL-yellow) | `c8` over `npm run test:all`: statements `60.17%`, branches `53.57%`, functions `52.23%`, lines `60.17%`. Formal thresholds `90/85/90/90` are not met. |
+| Expanded mutation framework | ![PASS](https://img.shields.io/badge/PASS-green) | `15/15` valid mutants killed, `0` survived, mutation score `1.000`. Two Monte Carlo regression tests were added to kill the previously surviving percentile and seeded-PRNG mutants. |
+| Scientific prior audit | ![PASS](https://img.shields.io/badge/PASS-green) | `16` parameters, `4` presets, `52` source links, `0` failures, `0` warnings. |
+| Dependency/overlap/independence matrix | ![PASS](https://img.shields.io/badge/PASS-green) | Dependency, overlap, and independence evidence generated from `SCIENTIFIC_PARAMETER_REGISTRY`. |
+| Requirements traceability extension | ![PASS](https://img.shields.io/badge/PASS-green) | `17` extended requirements with REQ-ID, tolerance policy, severity, expected evidence, and source references. |
+| UI → State → Calculation → Display → Export trace | ![PASS](https://img.shields.io/badge/PASS-green) | `5` trace rows generated. |
+| Golden-output governance rules | ![PASS](https://img.shields.io/badge/PASS-green) | `5` governance rules generated. |
+| Version-to-version scientific delta audit | ![PASS](https://img.shields.io/badge/PASS-green) | `5` version-delta rows generated; no missing release notes reported. |
+| GREEN means / does not mean table | ![PASS](https://img.shields.io/badge/PASS-green) | `7` scope-semantics rows generated. |
+| Formal NASA/ASME-style structure | ![PASS](https://img.shields.io/badge/PASS-green) | `8` structure rows generated. |
+| UQ convergence to 100k samples | ![PASS](https://img.shields.io/badge/PASS-green) | `4` presets x `5` sample sizes through `100000` samples; worst mean drift vs the `100000`-sample reference was `4.429%`. |
+| Sensitivity/Sobol validation | ![PARTIAL](https://img.shields.io/badge/PARTIAL-yellow) | `12` Sobol rows, `0` failures, `1` warning: pessimist top total-order parameter changed across sample sizes (`f_complex_life`, `N_GHZ`). |
+| Security / supply-chain audit | ![PARTIAL](https://img.shields.io/badge/PARTIAL-yellow) | `npm audit` reported `0` vulnerabilities. Remaining warnings: GitHub Actions lacks explicit permissions and actions are version-pinned but not SHA-pinned. |
+| Public evidence pack / SHA256 manifest | ![PASS](https://img.shields.io/badge/PASS-green) | `183` artifacts hashed with SHA256. |
+
+### Formal Deep Audit Artifacts
+
+| Artifact | Path |
+| --- | --- |
+| Formal deep report | `audit-output\formal-deep-20260701-062656\FORMAL_DEEP_AUDIT_REPORT.md` |
+| Independent model scope summary | `audit-output\formal-deep-20260701-062656\independent-model\independent-model-scope-summary.json` |
+| Coverage threshold summary | `audit-output\formal-deep-20260701-062656\coverage-threshold\coverage-threshold-summary.json` |
+| Expanded mutation summary | `audit-output\formal-deep-20260701-062656\mutation-expanded\mutation-summary.json` |
+| Prior/dependency summary | `audit-output\formal-deep-20260701-062656\prior-dependency\prior-dependency-summary.json` |
+| Deep scientific prior table | `audit-output\formal-deep-20260701-062656\prior-dependency\scientific-prior-deep-table.md` |
+| Dependency/independence matrix | `audit-output\formal-deep-20260701-062656\prior-dependency\dependency-independence-matrix.md` |
+| Methodology governance summary | `audit-output\formal-deep-20260701-062656\methodology-governance\methodology-governance-summary.json` |
+| Requirements traceability extension | `audit-output\formal-deep-20260701-062656\methodology-governance\requirements-traceability-extended.md` |
+| UI/state/calculation/display/export trace | `audit-output\formal-deep-20260701-062656\methodology-governance\ui-state-calculation-display-export-trace.md` |
+| Golden-output governance | `audit-output\formal-deep-20260701-062656\methodology-governance\golden-output-governance.md` |
+| GREEN semantics table | `audit-output\formal-deep-20260701-062656\methodology-governance\green-means-does-not-mean.md` |
+| Formal V&V/UQ structure | `audit-output\formal-deep-20260701-062656\methodology-governance\formal-vvuq-structure.md` |
+| Version delta summary | `audit-output\formal-deep-20260701-062656\methodology-governance\version-to-version-delta-summary.md` |
+| UQ convergence summary | `audit-output\formal-deep-20260701-062656\uq-convergence\uq-convergence-summary.json` |
+| Sobol validation summary | `audit-output\formal-deep-20260701-062656\sensitivity-sobol\sensitivity-sobol-summary.json` |
+| Security/supply-chain summary | `audit-output\formal-deep-20260701-062656\security-supply-chain\security-supply-chain-summary.json` |
+| Evidence SHA256 manifest | `audit-output\formal-deep-20260701-062656\evidence-pack-manifest.json` |
+
+### Formal Deep Audit Limitations
+
+The new tests strengthen the audit surface, especially mutation sensitivity, UQ convergence, traceability, governance, and evidence packaging. They do not make the audit a complete external V&V certification or empirical astronomical validation.
+
+The composite status remains ![YELLOW](https://img.shields.io/badge/YELLOW-yellow) because the audit still lacks a full independent Python/R whole-model implementation, formal coverage thresholds are not met, one Sobol stability warning remains, and supply-chain hardening warnings remain.
+
+## Pre-24h Formal Fix And Mini Audit Update
+
+This section appends the targeted mini audit performed before starting the next 24-hour extended rotating audit. It does not replace or delete the older audit evidence retained below. No new 24-hour audit was started for this mini audit.
+
+| Item | Value |
+| --- | --- |
+| Mini audit status | ![YELLOW](https://img.shields.io/badge/YELLOW-yellow) / PASS-with-limitations |
+| Run directory | `audit-output\pre24h-formal-20260701-054258` |
+| Report artifact | `audit-output\pre24h-formal-20260701-054258\PRE_24H_FORMAL_FIX_REPORT.md` |
+| Evidence manifest | `audit-output\pre24h-formal-20260701-054258\evidence-pack-manifest.json` |
+| Scope | Targeted audit-harness fixes, one-time dependency/security/coverage/mutation/oracle checks, scientific prior/dependency artifacts, and SHA256 evidence manifest. |
+| 24h audit started by this step | `false` |
+
+### Pre-24h Harness Fixes
+
+| Area | Status | Evidence |
+| --- | --- | --- |
+| Mutation rotation timeout guard | ![PASS](https://img.shields.io/badge/PASS-green) | `14-mutation-rotation` now requires `260000 ms` remaining before starting another mutant command, matching the `240000 ms` mutant timeout with buffer. |
+| Report integrity scheduling guard | ![PASS](https://img.shields.io/badge/PASS-green) | `16-report-integrity` now requires `45000 ms` remaining before starting another integrity check. |
+| Report badge integrity rule | ![PASS](https://img.shields.io/badge/PASS-green) | `report-integrity-audit.mjs` now checks the top-level final status badge, so per-profile `PASS` badges no longer invalidate a non-PASS final report. |
+| Coverage summary structure | ![PASS](https://img.shields.io/badge/PASS-green) | `coverage-runner.mjs` now records statement, branch, function, and line coverage percentages in JSON. |
+| Scientific prior/dependency evidence | ![PASS](https://img.shields.io/badge/PASS-green) | Added `prior-and-dependency-matrix.mjs` to generate prior and dependency/overlap artifacts from `SCIENTIFIC_PARAMETER_REGISTRY`. |
+| Evidence pack manifest | ![PASS](https://img.shields.io/badge/PASS-green) | Added `evidence-pack-manifest.mjs` to hash audit artifacts with SHA256. |
+
+### Pre-24h Mini Audit Results
+
+| Check | Status | Result |
+| --- | --- | --- |
+| Previous 24h report-integrity rerun | ![PASS](https://img.shields.io/badge/PASS-green) | `REPORT_INTEGRITY PASS: profiles=358, commands=35703` against `audit-output\extended-24h-raw-live-20260629-230313`. |
+| `npm install` / dependency setup | ![PASS](https://img.shields.io/badge/PASS-green) | Added local dev dependency `c8` so formal coverage can run reproducibly. |
+| `npm ci` | ![PASS](https://img.shields.io/badge/PASS-green) | Exit code `0`; logged in `audit-output\pre24h-formal-20260701-054258\npm\npm-ci.log`. |
+| `npm audit` | ![PASS](https://img.shields.io/badge/PASS-green) | `0` vulnerabilities: info `0`, low `0`, moderate `0`, high `0`, critical `0`. |
+| Formal coverage | ![PASS](https://img.shields.io/badge/PASS-green) | `c8` over `npm run test:all`: statements `60.10%`, branches `53.54%`, functions `52.23%`, lines `60.10%`. |
+| Formal mutation score | ![PASS](https://img.shields.io/badge/PASS-green) | Current catalog: `6` valid mutants, `6` killed, `0` survived, mutation score `1.000`. |
+| Fixed Python oracle snapshot | ![PASS](https://img.shields.io/badge/PASS-green) | `20` checks, `0` failures. |
+| Cross-implementation JS/Python oracle | ![PASS](https://img.shields.io/badge/PASS-green) | `1200/1200` oracle cases, `12/12` oracle batches, `0` failed batches, `1200` GUI deterministic checks. |
+| Scientific prior table | ![PASS](https://img.shields.io/badge/PASS-green) | `16` parameters generated from registry; `0` validation failures. |
+| Dependency/overlap matrix | ![PASS](https://img.shields.io/badge/PASS-green) | `16` parameters checked against presets, MC/export/UI paths, and Bryson direct replacement terms; `0` validation failures. |
+| Evidence pack + SHA256 | ![PASS](https://img.shields.io/badge/PASS-green) | `248` files hashed in `evidence-pack-manifest.json`. |
+
+### Pre-24h Mini Audit Artifacts
+
+| Artifact | Path |
+| --- | --- |
+| Mini audit report | `audit-output\pre24h-formal-20260701-054258\PRE_24H_FORMAL_FIX_REPORT.md` |
+| Coverage summary | `audit-output\pre24h-formal-20260701-054258\coverage\coverage-summary.json` |
+| Mutation summary | `audit-output\pre24h-formal-20260701-054258\mutation\mutation-summary.json` |
+| Python oracle snapshot | `audit-output\pre24h-formal-20260701-054258\python-oracle-snapshot\oracle-comparison-summary.json` |
+| Cross-oracle summary | `audit-output\pre24h-formal-20260701-054258\cross-oracle-1200\cross-implementation-formula-summary.json` |
+| Random GUI oracle summary | `audit-output\pre24h-formal-20260701-054258\cross-oracle-1200\cross-oracle-fuzz\random-ui-fuzz-summary.json` |
+| Static scan summary | `audit-output\pre24h-formal-20260701-054258\static-scan\static-scan-summary.json` |
+| Traceability matrix | `audit-output\pre24h-formal-20260701-054258\traceability\requirements-traceability-matrix.json` |
+| Prior/dependency summary | `audit-output\pre24h-formal-20260701-054258\prior-dependency\prior-dependency-summary.json` |
+| Scientific prior table | `audit-output\pre24h-formal-20260701-054258\prior-dependency\scientific-prior-table.md` |
+| Dependency/overlap matrix | `audit-output\pre24h-formal-20260701-054258\prior-dependency\dependency-overlap-matrix.md` |
+| Evidence SHA256 manifest | `audit-output\pre24h-formal-20260701-054258\evidence-pack-manifest.json` |
+| npm summary | `audit-output\pre24h-formal-20260701-054258\npm\npm-summary.json` |
+
+### Pre-24h Mini Audit Limitations
+
+The completed oracle checks are independent Python-oracle evidence for defined formulas and randomized GUI states, but they are not yet a full independent Python or R reimplementation of the entire calculator and UI model.
+
+The first attempted cross-oracle run with `5000` requested cases exceeded the local command timeout and is not counted as PASS evidence. The completed evidence for this section is the subsequent `1200`-case run.
+
+Coverage was measured, but no minimum coverage threshold was enforced in this mini audit. The result is a formal measurement, not a coverage gate.
 
 ## Latest 24h Internal Audit Update
 

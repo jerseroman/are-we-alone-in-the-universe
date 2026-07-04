@@ -52,6 +52,19 @@ function countByStatus(items) {
   return counts;
 }
 
+function topLevelReportText(reportText) {
+  const lines = reportText.split(/\r?\n/);
+  const firstSection = lines.findIndex((line, index) => index > 0 && /^##\s+/.test(line));
+  return lines.slice(0, firstSection === -1 ? Math.min(lines.length, 40) : firstSection).join('\n');
+}
+
+function expectedTopLevelBadgePattern(status) {
+  if (status === 'PASS') return /badge\/PASS-green/;
+  if (status === 'FAIL') return /badge\/FAIL-red/;
+  if (status === 'YELLOW') return /badge\/YELLOW-yellow/;
+  return null;
+}
+
 export async function runReportIntegrityAudit(outDir, options = {}) {
   await ensureDir(outDir);
   const runDir = options.runDir ? path.resolve(repoRoot, options.runDir) : outDir;
@@ -144,11 +157,13 @@ export async function runReportIntegrityAudit(outDir, options = {}) {
       failures.push({ file: reportFile, message: 'final summary exists but final markdown report is missing' });
     } else {
       const reportText = await fsp.readFile(reportFile, 'utf8');
-      if (finalSummary.status === 'PASS' && !/badge\/PASS-green/.test(reportText)) {
-        failures.push({ file: reportFile, message: 'PASS final report does not contain a green PASS badge' });
+      const topMatter = topLevelReportText(reportText);
+      const expectedBadge = expectedTopLevelBadgePattern(finalSummary.status);
+      if (expectedBadge && !expectedBadge.test(topMatter)) {
+        failures.push({ file: reportFile, message: `${finalSummary.status} final report does not contain the expected top-level status badge` });
       }
-      if (finalSummary.status === 'FAIL' && /badge\/PASS-green/.test(reportText)) {
-        failures.push({ file: reportFile, message: 'FAIL final report contains a green PASS badge' });
+      if (finalSummary.status !== 'PASS' && /badge\/PASS-green/.test(topMatter)) {
+        failures.push({ file: reportFile, message: `${finalSummary.status} final report contains a green PASS top-level badge` });
       }
     }
   }

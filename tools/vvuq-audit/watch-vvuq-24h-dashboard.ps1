@@ -223,6 +223,76 @@ function Get-AuditCounters {
     if ($item.status -ne 'PASS') { $reportIntegrity.FailedRuns += 1 }
   }
 
+  $coverage = [ordered]@{ Runs = 0; PartialRuns = 0; Failures = 0; LastLines = 0; LastBranches = 0 }
+  foreach ($file in Get-SummaryFiles $RunDir 'coverage-threshold-summary.json') {
+    $item = Read-JsonFile $file.FullName
+    if ($null -eq $item) { continue }
+    $coverage.Runs += 1
+    if ($item.status -eq 'PARTIAL') { $coverage.PartialRuns += 1 }
+    if ($item.status -eq 'FAIL') { $coverage.Failures += 1 }
+    if ($item.total) {
+      $coverage.LastLines = [double](Value-OrDefault $item.total.lines 0)
+      $coverage.LastBranches = [double](Value-OrDefault $item.total.branches 0)
+    }
+  }
+
+  $uq = [ordered]@{ Runs = 0; Rows = 0; Failures = 0; WorstMeanDriftPct = 0 }
+  foreach ($file in Get-SummaryFiles $RunDir 'uq-convergence-summary.json') {
+    $item = Read-JsonFile $file.FullName
+    if ($null -eq $item) { continue }
+    $uq.Runs += 1
+    $uq.Rows = Add-Number $uq.Rows (Value-OrDefault $item.row_count 0)
+    if ($item.failures) { $uq.Failures = Add-Number $uq.Failures $item.failures.Count }
+    $drift = 100 * [double](Value-OrDefault $item.worst_mean_drift_vs_reference 0)
+    $uq.WorstMeanDriftPct = [math]::Max($uq.WorstMeanDriftPct, $drift)
+    if ($item.status -eq 'FAIL') { $uq.Failures += 1 }
+  }
+
+  $sobol = [ordered]@{ Runs = 0; Rows = 0; Failures = 0; Warnings = 0; PartialRuns = 0 }
+  foreach ($file in Get-SummaryFiles $RunDir 'sensitivity-sobol-summary.json') {
+    $item = Read-JsonFile $file.FullName
+    if ($null -eq $item) { continue }
+    $sobol.Runs += 1
+    $sobol.Rows = Add-Number $sobol.Rows $item.rows.Count
+    if ($item.failures) { $sobol.Failures = Add-Number $sobol.Failures $item.failures.Count }
+    if ($item.warnings) { $sobol.Warnings = Add-Number $sobol.Warnings $item.warnings.Count }
+    if ($item.status -eq 'PARTIAL') { $sobol.PartialRuns += 1 }
+    if ($item.status -eq 'FAIL') { $sobol.Failures += 1 }
+  }
+
+  $independent = [ordered]@{ Runs = 0; CoveredAreas = 0; TotalAreas = 0; PartialRuns = 0; Failures = 0 }
+  foreach ($file in Get-SummaryFiles $RunDir 'independent-model-scope-summary.json') {
+    $item = Read-JsonFile $file.FullName
+    if ($null -eq $item) { continue }
+    $independent.Runs += 1
+    $independent.CoveredAreas = Add-Number $independent.CoveredAreas $item.covered_areas
+    $independent.TotalAreas = Add-Number $independent.TotalAreas $item.total_areas
+    if ($item.status -eq 'PARTIAL') { $independent.PartialRuns += 1 }
+    if ($item.status -eq 'FAIL') { $independent.Failures += 1 }
+  }
+
+  $methodology = [ordered]@{ Runs = 0; Requirements = 0; VersionDeltas = 0; Failures = 0 }
+  foreach ($file in Get-SummaryFiles $RunDir 'methodology-governance-summary.json') {
+    $item = Read-JsonFile $file.FullName
+    if ($null -eq $item) { continue }
+    $methodology.Runs += 1
+    $methodology.Requirements = Add-Number $methodology.Requirements $item.extended_requirements
+    $methodology.VersionDeltas = Add-Number $methodology.VersionDeltas $item.version_delta_rows
+    if ($item.status -ne 'PASS') { $methodology.Failures += 1 }
+  }
+
+  $security = [ordered]@{ Runs = 0; Vulnerabilities = 0; Findings = 0; Warnings = 0; PartialRuns = 0; Failures = 0 }
+  foreach ($file in Get-SummaryFiles $RunDir 'security-supply-chain-summary.json') {
+    $item = Read-JsonFile $file.FullName
+    if ($null -eq $item) { continue }
+    $security.Runs += 1
+    if ($item.vulnerabilities) { $security.Vulnerabilities = Add-Number $security.Vulnerabilities $item.vulnerabilities.total }
+    if ($item.findings) { $security.Findings = Add-Number $security.Findings $item.findings.Count }
+    if ($item.warnings) { $security.Warnings = Add-Number $security.Warnings $item.warnings.Count }
+    if ($item.status -eq 'PARTIAL') { $security.PartialRuns += 1 }
+    if ($item.status -eq 'FAIL') { $security.Failures += 1 }
+  }
+
   return [pscustomobject]@{
     Latest = $latest
     FinalSummary = $summary
@@ -242,6 +312,12 @@ function Get-AuditCounters {
     Export = [pscustomobject]$export
     Performance = [pscustomobject]$performance
     ReportIntegrity = [pscustomobject]$reportIntegrity
+    Coverage = [pscustomobject]$coverage
+    Uq = [pscustomobject]$uq
+    Sobol = [pscustomobject]$sobol
+    Independent = [pscustomobject]$independent
+    Methodology = [pscustomobject]$methodology
+    Security = [pscustomobject]$security
   }
 }
 
@@ -259,10 +335,12 @@ function Write-Dashboard {
   if (-not $NoClear) { Clear-Host }
 
   $elapsed = New-TimeSpan -Start $StartedAt -End (Get-Date)
+  $requestedDuration = [TimeSpan]::FromHours([double]$Hours)
   $remaining = if ($counters.Latest -and $null -ne $counters.Latest.remaining_ms) {
     [TimeSpan]::FromMilliseconds([double]$counters.Latest.remaining_ms)
   } else {
-    [TimeSpan]::Zero
+    $fallbackRemaining = $requestedDuration - $elapsed
+    if ($fallbackRemaining.TotalMilliseconds -gt 0) { $fallbackRemaining } else { [TimeSpan]::Zero }
   }
   $state = if ($Completed) { 'COMPLETED' } elseif ($Process.HasExited) { 'EXITED' } else { 'RUNNING' }
   $exitText = if ($Process.HasExited) {
@@ -272,7 +350,8 @@ function Write-Dashboard {
   }
   $latest = $counters.Latest
 
-  Write-Host "Extended rotating V&V/UQ 24h audit dashboard"
+  $durationLabel = if ([double]$Hours -eq 72) { '72h / 3d' } else { "$Hours h" }
+  Write-Host "Extended rotating V&V/UQ $durationLabel audit dashboard"
   Write-Host "Updated:        $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
   Write-Host "State:          $state  PID=$($Process.Id)  ExitCode=$exitText"
   Write-Host "Run directory:  $RunDir"
@@ -309,6 +388,14 @@ function Write-Dashboard {
   Write-Host ("Performance runs:   {0,8}   executions:        {1,8}   failed: {2,5}   max ms: {3,8}   max RSS: {4,12}" -f $counters.Performance.Runs, $counters.Performance.Executions, $counters.Performance.FailedExecutions, $counters.Performance.MaxDurationMs, $counters.Performance.MaxRssBytes)
   Write-Host ("Report integrity:   {0,8}   findings:          {1,8}   warnings: {2,5}   failed runs: {3,5}" -f $counters.ReportIntegrity.Runs, $counters.ReportIntegrity.Failures, $counters.ReportIntegrity.Warnings, $counters.ReportIntegrity.FailedRuns)
   Write-Host ""
+  Write-Host "Formal/deep extension counters"
+  Write-Host ("Coverage runs:      {0,8}   partial:           {1,8}   fail: {2,5}   last lines: {3,6:n2}%   branches: {4,6:n2}%" -f $counters.Coverage.Runs, $counters.Coverage.PartialRuns, $counters.Coverage.Failures, $counters.Coverage.LastLines, $counters.Coverage.LastBranches)
+  Write-Host ("UQ convergence:     {0,8}   rows:              {1,8}   failures: {2,5}   worst mean drift: {3,6:n2}%" -f $counters.Uq.Runs, $counters.Uq.Rows, $counters.Uq.Failures, $counters.Uq.WorstMeanDriftPct)
+  Write-Host ("Sobol validation:   {0,8}   rows:              {1,8}   warnings: {2,5}   failures: {3,5}   partial: {4,5}" -f $counters.Sobol.Runs, $counters.Sobol.Rows, $counters.Sobol.Warnings, $counters.Sobol.Failures, $counters.Sobol.PartialRuns)
+  Write-Host ("Independent model:  {0,8}   covered areas:     {1,8}   total areas: {2,5}   partial: {3,5}   fail: {4,5}" -f $counters.Independent.Runs, $counters.Independent.CoveredAreas, $counters.Independent.TotalAreas, $counters.Independent.PartialRuns, $counters.Independent.Failures)
+  Write-Host ("Methodology gov:    {0,8}   requirements:      {1,8}   deltas: {2,5}   fail: {3,5}" -f $counters.Methodology.Runs, $counters.Methodology.Requirements, $counters.Methodology.VersionDeltas, $counters.Methodology.Failures)
+  Write-Host ("Security/supply:    {0,8}   vulnerabilities:   {1,8}   findings: {2,5}   warnings: {3,5}   partial: {4,5}" -f $counters.Security.Runs, $counters.Security.Vulnerabilities, $counters.Security.Findings, $counters.Security.Warnings, $counters.Security.PartialRuns)
+  Write-Host ""
   Write-Host "Logs"
   Write-Host "Stdout: $StdoutLog"
   Write-Host "Stderr: $StderrLog"
@@ -342,7 +429,7 @@ function Write-FinalMonitorReport {
   $badge = if ($ExitCode -eq 0) { '![PASS](https://img.shields.io/badge/PASS-green)' } else { '![FAIL](https://img.shields.io/badge/FAIL-red)' }
 
   $lines = @(
-    '# Live 24h V&V/UQ Monitor Final Report',
+    "# Live $Hours h V&V/UQ Monitor Final Report",
     '',
     $badge,
     '',
@@ -380,7 +467,22 @@ function Write-FinalMonitorReport {
     ("| Mutants killed | ``{0}`` |" -f $Counters.Mutation.Killed),
     ("| Mutants survived | ``{0}`` |" -f $Counters.Mutation.Survived),
     ("| Performance executions | ``{0}`` |" -f $Counters.Performance.Executions),
-    ("| Report-integrity findings | ``{0}`` |" -f $Counters.ReportIntegrity.Failures)
+    ("| Report-integrity findings | ``{0}`` |" -f $Counters.ReportIntegrity.Failures),
+    ("| Coverage threshold runs | ``{0}`` |" -f $Counters.Coverage.Runs),
+    ("| Coverage partial runs | ``{0}`` |" -f $Counters.Coverage.PartialRuns),
+    ("| Last coverage lines | ``{0:n2}%`` |" -f $Counters.Coverage.LastLines),
+    ("| Last coverage branches | ``{0:n2}%`` |" -f $Counters.Coverage.LastBranches),
+    ("| UQ convergence runs | ``{0}`` |" -f $Counters.Uq.Runs),
+    ("| UQ convergence rows | ``{0}`` |" -f $Counters.Uq.Rows),
+    ("| UQ worst mean drift percent | ``{0:n2}`` |" -f $Counters.Uq.WorstMeanDriftPct),
+    ("| Sobol validation runs | ``{0}`` |" -f $Counters.Sobol.Runs),
+    ("| Sobol validation warnings | ``{0}`` |" -f $Counters.Sobol.Warnings),
+    ("| Independent model scope runs | ``{0}`` |" -f $Counters.Independent.Runs),
+    ("| Independent model covered areas accumulated | ``{0}`` |" -f $Counters.Independent.CoveredAreas),
+    ("| Methodology governance runs | ``{0}`` |" -f $Counters.Methodology.Runs),
+    ("| Security/supply-chain runs | ``{0}`` |" -f $Counters.Security.Runs),
+    ("| Security vulnerabilities | ``{0}`` |" -f $Counters.Security.Vulnerabilities),
+    ("| Security warnings | ``{0}`` |" -f $Counters.Security.Warnings)
   )
 
   Set-Content -Path $reportPath -Value $lines -Encoding UTF8
@@ -393,7 +495,8 @@ Set-Location $repoRoot
 
 if ([string]::IsNullOrWhiteSpace($Out)) {
   $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
-  $Out = Join-Path 'audit-output' "extended-24h-live-$stamp"
+  $hoursPart = [string]::Format('{0:g}', [double]$Hours).Replace('.', 'p')
+  $Out = Join-Path 'audit-output' "extended-${hoursPart}h-live-$stamp"
 }
 
 $outFull = Join-Path $repoRoot $Out

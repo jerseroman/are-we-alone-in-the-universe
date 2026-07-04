@@ -21,6 +21,48 @@ const MUTATIONS = [
     tests: [['npm', ['run', 'test:numerics']]]
   },
   {
+    id: 'occurrence-product-to-sum',
+    file: 'src/calculator-core.js',
+    find: 'return (Number(inp.N_p_star) || 0) * (Number(inp.f_composition) || 0) * (Number(inp.f_orbit) || 0);',
+    replace: 'return (Number(inp.N_p_star) || 0) + (Number(inp.f_composition) || 0) + (Number(inp.f_orbit) || 0);',
+    tests: [['npm', ['run', 'test:numerics']]]
+  },
+  {
+    id: 'remove-stability-factor',
+    file: 'src/calculator-core.js',
+    find: 'inp.f_stability *\n    inp.f_magnetosphere *',
+    replace: '1 *\n    inp.f_magnetosphere *',
+    tests: [['npm', ['run', 'test:numerics']]]
+  },
+  {
+    id: 'remove-chnops-factor',
+    file: 'src/calculator-core.js',
+    find: 'inp.f_CHNOPS *\n    inp.f_complex_life *',
+    replace: '1 *\n    inp.f_complex_life *',
+    tests: [['npm', ['run', 'test:numerics']]]
+  },
+  {
+    id: 'clamp-inverted',
+    file: 'src/calculator-core.js',
+    find: 'return Math.min(hi, Math.max(lo, v));',
+    replace: 'return Math.max(hi, Math.min(lo, v));',
+    tests: [['npm', ['run', 'test:numerics']]]
+  },
+  {
+    id: 'percentile-index-off-by-one',
+    file: 'src/calculator-core.js',
+    find: 'const idx = (sorted.length - 1) * p;',
+    replace: 'const idx = sorted.length * p;',
+    tests: [['npm', ['run', 'test:montecarlo']]]
+  },
+  {
+    id: 'monte-carlo-sort-descending',
+    file: 'src/calculator-core.js',
+    find: 'results.sort((a, b) => a - b);',
+    replace: 'results.sort((a, b) => b - a);',
+    tests: [['npm', ['run', 'test:montecarlo']]]
+  },
+  {
     id: 'alter-kpc-to-ly',
     file: 'src/calculator-core.js',
     find: 'const KPC_TO_LY = 3261.56;',
@@ -42,11 +84,32 @@ const MUTATIONS = [
     tests: [['npm', ['run', 'test:universe-scale']]]
   },
   {
+    id: 'universe-scale-max-star-range',
+    file: 'src/calculator-core.js',
+    find: 'max: 1e24',
+    replace: 'max: 1e22',
+    tests: [['npm', ['run', 'test:universe-scale']]]
+  },
+  {
     id: 'temporal-overlap-floor',
     file: 'src/calculator-core.js',
     find: 'const temporalTerm = Math.max(1e-30, detection.p_temporal_pct / 100);',
     replace: 'const temporalTerm = Math.max(1, detection.p_temporal_pct / 100);',
     tests: [['npm', ['run', 'test:absolute']]]
+  },
+  {
+    id: 'seed-prng-step-collapse',
+    file: 'src/calculator-core.js',
+    find: 'state = (state + 0x6D2B79F5) >>> 0;',
+    replace: 'state = (state + 1) >>> 0;',
+    tests: [['npm', ['run', 'test:montecarlo']]]
+  },
+  {
+    id: 'mc-bounds-mode-label-stale',
+    file: 'src/calculator-core.js',
+    find: "modifiedPresetLocal: 'Modified preset-local uncertainty / Uses visible bounds for edited fields and preset-local uncertainty for unchanged preset fields',",
+    replace: "modifiedPresetLocal: 'Global exploratory envelope / Not local preset uncertainty',",
+    tests: [['npm', ['run', 'test:standalone-export']]]
   }
 ];
 

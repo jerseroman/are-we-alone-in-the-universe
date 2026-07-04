@@ -104,6 +104,7 @@ function loadCalculator() {
   vm.runInContext(
     `${source}\n;globalThis.__MC_TEST_EXPORTS__ = {
       PRESETS,
+      percentile,
       monteCarloCalculate,
       runMonteCarloSimulation,
       createSeededRng,
@@ -244,6 +245,48 @@ if (summarizeSequence(directA) === summarizeSequence(directB)) {
 const defaultRun = loadCalculator().monteCarloCalculate({ samples: sampleCount, updateUi: false });
 assertValidSummary('default unseeded Monte Carlo', defaultRun);
 pass('Default unseeded Monte Carlo mode returns a valid summary.');
+
+{
+  const calculator = loadCalculator();
+  const sorted = [10, 20, 30, 40, 50];
+  const checks = [
+    { p: 0.025, expected: 11 },
+    { p: 0.5, expected: 30 },
+    { p: 0.975, expected: 49 }
+  ];
+
+  for (const check of checks) {
+    const actual = calculator.percentile(sorted, check.p);
+    if (Math.abs(actual - check.expected) <= 1e-12) {
+      pass(`Percentile interpolation p=${check.p} matches the sorted-array golden value.`);
+    } else {
+      fail(`Percentile interpolation p=${check.p}: actual=${actual}, expected=${check.expected}.`);
+    }
+  }
+}
+
+{
+  const calculator = loadCalculator();
+  const rng = calculator.createSeededRng(12345);
+  const expected = [
+    0.97972826776094735,
+    0.30675226449966431,
+    0.484205421525985,
+    0.81793441250920296,
+    0.50942836934700608
+  ];
+  const actual = expected.map(() => rng());
+  const mismatchIndex = actual.findIndex((value, index) => Math.abs(value - expected[index]) > 1e-16);
+
+  if (mismatchIndex === -1) {
+    pass('Seeded RNG matches the Mulberry32 golden sequence for seed 12345.');
+  } else {
+    fail(
+      `Seeded RNG golden sequence changed at index ${mismatchIndex}: ` +
+      `actual=${actual[mismatchIndex]}, expected=${expected[mismatchIndex]}.`
+    );
+  }
+}
 
 {
   const calculator = loadCalculator();

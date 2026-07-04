@@ -208,7 +208,7 @@ const EXTENDED_PROFILES = [
     id: '14-mutation-rotation',
     title: 'Rotating mutation audit across the full mutant catalog',
     strategy: 'repeat-until-slice-end',
-    minStartMs: 35000,
+    minStartMs: 260000,
     steps: [
       {
         command: 'node',
@@ -233,7 +233,7 @@ const EXTENDED_PROFILES = [
     id: '16-report-integrity',
     title: 'Audit report, checkpoint, summary, and badge integrity',
     strategy: 'repeat-until-slice-end',
-    minStartMs: 15000,
+    minStartMs: 45000,
     steps: [
       {
         command: 'node',
@@ -255,6 +255,48 @@ const EXTENDED_PROFILES = [
       { command: 'npm', args: ['run', 'test:calibration'] },
       { command: 'npm', args: ['run', 'test:preset-state-reset'] }
     ]
+  },
+  {
+    id: '18-coverage-threshold',
+    title: 'Formal coverage threshold, untested file, and critical path coverage audit',
+    strategy: 'single-timeboxed',
+    minStartMs: 5000,
+    steps: [{ command: 'node', args: ['tools/vvuq-audit/coverage-threshold-audit.mjs', '--out', '{profileOut}'] }]
+  },
+  {
+    id: '19-uq-convergence',
+    title: 'UQ convergence audit across preset sample sizes up to 100k',
+    strategy: 'single-timeboxed',
+    minStartMs: 5000,
+    steps: [{ command: 'node', args: ['tools/vvuq-audit/uq-convergence-audit.mjs', '--samples', '1000,3000,10000,30000,100000', '--out', '{profileOut}', '--seed', '{derivedSeed}'] }]
+  },
+  {
+    id: '20-sensitivity-sobol-validation',
+    title: 'Sensitivity and Sobol validation audit',
+    strategy: 'single-timeboxed',
+    minStartMs: 5000,
+    steps: [{ command: 'node', args: ['tools/vvuq-audit/sensitivity-sobol-audit.mjs', '--samples', '1000,3000,5000', '--out', '{profileOut}', '--seed', '{derivedSeed}'] }]
+  },
+  {
+    id: '21-independent-model-scope',
+    title: 'Independent Python/R whole-model scope audit',
+    strategy: 'single-timeboxed',
+    minStartMs: 5000,
+    steps: [{ command: 'node', args: ['tools/vvuq-audit/independent-model-scope-audit.mjs', '--cases', '600', '--out', '{profileOut}', '--seed', '{derivedSeed}'] }]
+  },
+  {
+    id: '22-methodology-governance',
+    title: 'Methodology governance, traceability, golden-output, and GREEN-boundary audit',
+    strategy: 'single-timeboxed',
+    minStartMs: 5000,
+    steps: [{ command: 'node', args: ['tools/vvuq-audit/methodology-governance-audit.mjs', '--out', '{profileOut}'] }]
+  },
+  {
+    id: '23-security-supply-chain',
+    title: 'Security, supply-chain, license, lockfile, and reproducible-build audit',
+    strategy: 'single-timeboxed',
+    minStartMs: 5000,
+    steps: [{ command: 'node', args: ['tools/vvuq-audit/security-supply-chain-audit.mjs', '--out', '{profileOut}'] }]
   }
 ];
 
