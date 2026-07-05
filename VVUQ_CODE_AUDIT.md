@@ -12,6 +12,41 @@ The audit was executed through a combination of automated test suites, Node.js s
 
 Despite extensive and repeated testing, residual errors may still exist. Passing this audit means that the tested implementation satisfied the defined internal checks at the recorded repository state; it does not prove that the model is empirically correct, exhaustive, free of defects, or scientifically validated against observed astronomical reality.
 
+## 2026-07-05 Next-Suite Audit Tooling And Status-Semantics Update
+
+This section appends the follow-up audit-tooling review and next-suite status-semantics correction. No earlier 72-hour audit evidence is removed or overwritten by this update.
+
+The new `tools/vvuq-audit/next-audit-suite.mjs` runner separates calculator/code behavior from formal audit scope. This is intentional: a timeout in an audit harness, a missing optional browser runtime, a dirty git working tree, or an intentionally incomplete independent-oracle scope should not be reported as a calculator failure when no formula, GUI, export, oracle, assertion, or stderr evidence shows a calculator-code defect.
+
+| Item | Result |
+| --- | --- |
+| Calculator/code behavior status | ![PASS](https://img.shields.io/badge/PASS-green) |
+| Formal audit scope status | ![PARTIAL](https://img.shields.io/badge/PARTIAL-yellow) |
+| Latest status-semantics smoke run | `audit-output\next-suite-status-semantics-smoke` |
+| Status-semantics summary | `status=PASS`, `code_behavior_status=PASS`, `formal_scope_status=PARTIAL`, `FailItems=0` |
+| Audit-code smoke run | `audit-output\audit-code-audit-next-suite-smoke` |
+| Audit-code finding fixed | ESM CLI guards now check `process.argv[1]` before `pathToFileURL(process.argv[1])`, so audit modules are safe to import as libraries as well as run from CLI. |
+| Live monitor | `tools/vvuq-audit/watch-next-audit-suite.ps1` displays separate `Code behavior` and `Formal scope` statuses. |
+
+### Export-Metamorphic Timeout Adjudication
+
+The full next-suite run `audit-output\next-suite-live-20260705-122440` originally produced a raw `FAIL` because the `03-export-metamorphic` component ran `npm run test:deep` until the audit timeout boundary. The underlying command output contained `386` PASS lines, `0` FAIL lines, and the completion evidence `PASS: State-transition deep regression test completed.` The command was then terminated by the audit harness after approximately `362,900 ms`.
+
+This is adjudicated as an audit-harness timeout classification issue, not a calculator-code failure. The export-consistency audit was updated so this case is now recorded as `PARTIAL` with adjudication `TIMEOUT_AFTER_PASS_OUTPUT` instead of calculator/code `FAIL`, when all of the following are true:
+
+| Condition | Required |
+| --- | --- |
+| Command timed out | yes |
+| FAIL lines or assertion failures observed | no |
+| PASS/completion evidence observed | yes |
+
+The historical raw output is preserved in its run directory, but future next-suite reports now separate:
+
+| Status field | Meaning |
+| --- | --- |
+| `code_behavior_status=PASS` | No observed calculator formula, GUI, export, oracle, mutation, or assertion failure in the executed checks. |
+| `formal_scope_status=PARTIAL` | The audit scope still contains tooling/environment/formality limitations, such as timeout-limited commands, missing Playwright browser runtime, coverage thresholds below formal targets, dirty git state, or incomplete full independent Python/R implementation. |
+
 ## 72h Extended Rotating Audit Adjudication Update
 
 This section appends the completed 72-hour extended rotating audit evidence. The raw runner status is intentionally preserved as `FAIL` in the generated machine artifacts because 15 profile executions exceeded audit-harness time limits. In plain language: the audit tool itself ran out of its allowed time while processing very large audit-output folders or long-running audit scripts. This does not mean the calculator formula, GUI value, export value, or Python-oracle comparison failed. After reviewing the failed profiles and their underlying stdout/stderr/summary evidence, the code-behavior outcome is adjudicated as ![PASS](https://img.shields.io/badge/PASS-green) for the tested implementation surface: no failed assertion, formula-oracle mismatch, GUI/export mismatch, mutation survivor, security vulnerability, or stderr evidence of calculator-code failure was observed.
