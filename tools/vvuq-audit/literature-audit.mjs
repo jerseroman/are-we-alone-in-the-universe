@@ -8,120 +8,150 @@ const require = createRequire(import.meta.url);
 const PARAMETER_EVIDENCE = Object.freeze({
   N_GHZ: {
     id: 'LIT-N-GHZ',
-    sourceText: 'The Galactic Habitable Zone and the Age Distribution of Complex Life in the Milky Way',
-    sourceTextType: 'source title',
+    sourceText: 'an annular region between 7 and 9 kiloparsecs',
+    sourceTextType: 'abstract excerpt',
+    quotedNumbers: Object.freeze(['7', '9']),
+    directPresetValues: Object.freeze([]),
     calibrationClass: 'LI',
     directNumericQuote: false,
-    valueClaim: 'GHZ star-count prior derived from GHZ framing and Milky Way star-count assumptions.'
+    valueClaim: 'GHZ star-count preset values are derived from GHZ framing and Milky Way star-count assumptions, not quoted star counts.'
   },
   f_sun_type: {
     id: 'LIT-F-SUN-TYPE',
-    sourceText: 'The Solar Neighborhood. XVII. Parallax Results from the CTIOPI 0.9 m Program',
-    sourceTextType: 'source title',
+    sourceText: 'No direct preset-value quote recorded.',
+    sourceTextType: 'audit finding',
+    quotedNumbers: Object.freeze([]),
+    directPresetValues: Object.freeze([]),
     calibrationClass: 'LI',
     directNumericQuote: false,
     valueClaim: 'Host-star fraction is an interpretive solar-type range, not a quoted census fraction.'
   },
   f_sun_age: {
     id: 'LIT-F-SUN-AGE',
-    sourceText: 'The Galactic Habitable Zone and the Age Distribution of Complex Life in the Milky Way',
-    sourceTextType: 'source title',
+    sourceText: '75% of the stars in the GHZ are older than the Sun',
+    sourceTextType: 'abstract excerpt',
+    quotedNumbers: Object.freeze(['75%']),
+    directPresetValues: Object.freeze([0.75]),
     calibrationClass: 'LI',
-    directNumericQuote: false,
-    valueClaim: 'Age-qualified host fraction follows the GHZ age framing as an internal preset prior.'
+    directNumericQuote: true,
+    valueClaim: 'The 0.75 central value is directly anchored to the quoted 75% GHZ-age statement; 0.60 and 0.80 remain interval choices.'
   },
   N_p_star: {
     id: 'LIT-N-P-STAR',
-    sourceText: 'One or more bound planets per Milky Way star from microlensing observations',
-    sourceTextType: 'source title',
+    sourceText: 'stars are orbited by planets as a rule, rather than the exception',
+    sourceTextType: 'abstract excerpt',
+    quotedNumbers: Object.freeze([]),
+    directPresetValues: Object.freeze([]),
     calibrationClass: 'LI',
     directNumericQuote: false,
-    valueClaim: 'Planet multiplicity prior is selected inside the broad occurrence-rate context.'
+    valueClaim: 'Planet multiplicity values are selected inside broad occurrence-rate context, not directly quoted as 1.0/1.5/1.6/2.0.'
   },
   f_composition: {
     id: 'LIT-F-COMPOSITION',
-    sourceText: 'Most 1.6 Earth-radius Planets are Not Rocky',
-    sourceTextType: 'source title',
+    sourceText: 'the majority of 1.6 Earth-radius planets are too low density',
+    sourceTextType: 'abstract excerpt',
+    quotedNumbers: Object.freeze(['1.6']),
+    directPresetValues: Object.freeze([]),
     calibrationClass: 'LI',
     directNumericQuote: false,
     valueClaim: 'Rocky-fraction values are model splits inside a literature-informed radius/composition context.'
   },
   f_orbit: {
     id: 'LIT-F-ORBIT',
-    sourceText: 'The Occurrence of Rocky Habitable-zone Planets around Solar-like Stars from Kepler Data',
-    sourceTextType: 'source title',
+    sourceText: 'conservative HZ is between 0.37 and 0.60 planets per star',
+    sourceTextType: 'abstract excerpt',
+    quotedNumbers: Object.freeze(['0.37', '0.60']),
+    directPresetValues: Object.freeze([]),
     calibrationClass: 'LI',
     directNumericQuote: false,
-    valueClaim: 'Habitable-zone factor is a factorized model proxy; Bryson eta-Earth is handled separately.'
+    valueClaim: 'Bryson quotes eta-Earth as a combined occurrence rate; f_orbit preset values are factorized model proxies.'
   },
   f_stability: {
     id: 'LIT-F-STABILITY',
-    sourceText: 'Architecture and Dynamics of Kepler Candidate Multiple Transiting Planet Systems',
-    sourceTextType: 'source title',
+    sourceText: 'No direct preset-value quote recorded.',
+    sourceTextType: 'audit finding',
+    quotedNumbers: Object.freeze([]),
+    directPresetValues: Object.freeze([]),
     calibrationClass: 'MS',
     directNumericQuote: false,
     valueClaim: 'Orbital-stability values are mechanism-supported model priors.'
   },
   f_magnetosphere: {
     id: 'LIT-F-MAGNETOSPHERE',
-    sourceText: 'The Influence of Thermal Evolution in the Magnetic Protection of Terrestrial Planets',
-    sourceTextType: 'source title',
+    sourceText: 'No direct preset-value quote recorded.',
+    sourceTextType: 'audit finding',
+    quotedNumbers: Object.freeze([]),
+    directPresetValues: Object.freeze([]),
     calibrationClass: 'MS',
     directNumericQuote: false,
     valueClaim: 'Magnetic/atmospheric retention values are mechanism-supported model priors.'
   },
   f_lunar_stability: {
     id: 'LIT-F-LUNAR-STABILITY',
-    sourceText: 'Obliquity variations of a moonless Earth',
-    sourceTextType: 'source title',
+    sourceText: 'No direct preset-value quote recorded.',
+    sourceTextType: 'audit finding',
+    quotedNumbers: Object.freeze([]),
+    directPresetValues: Object.freeze([]),
     calibrationClass: 'MS',
     directNumericQuote: false,
     valueClaim: 'Moon/stabilizer values are mechanism-supported climate-stability priors.'
   },
   f_size: {
     id: 'LIT-F-SIZE',
-    sourceText: 'Most 1.6 Earth-radius Planets are Not Rocky',
-    sourceTextType: 'source title',
+    sourceText: 'the majority of 1.6 Earth-radius planets are too low density',
+    sourceTextType: 'abstract excerpt',
+    quotedNumbers: Object.freeze(['1.6']),
+    directPresetValues: Object.freeze([]),
     calibrationClass: 'LI',
     directNumericQuote: false,
     valueClaim: 'Earth-size window values are literature-informed, not a quoted universal occurrence fraction.'
   },
   f_rotation: {
     id: 'LIT-F-ROTATION',
-    sourceText: 'Atmospheric circulations of terrestrial planets orbiting low-mass stars',
-    sourceTextType: 'source title',
+    sourceText: 'No direct preset-value quote recorded.',
+    sourceTextType: 'audit finding',
+    quotedNumbers: Object.freeze([]),
+    directPresetValues: Object.freeze([]),
     calibrationClass: 'MS',
     directNumericQuote: false,
     valueClaim: 'Rotation-suitability values are mechanism-supported climate priors.'
   },
   f_tilt: {
     id: 'LIT-F-TILT',
-    sourceText: 'Obliquity variations of a moonless Earth',
-    sourceTextType: 'source title',
+    sourceText: 'No direct preset-value quote recorded.',
+    sourceTextType: 'audit finding',
+    quotedNumbers: Object.freeze([]),
+    directPresetValues: Object.freeze([]),
     calibrationClass: 'MS',
     directNumericQuote: false,
     valueClaim: 'Axial-tilt values are mechanism-supported climate-stability priors.'
   },
   f_H2O: {
     id: 'LIT-F-H2O',
-    sourceText: 'Water contents of Earth-mass planets around M dwarfs',
-    sourceTextType: 'source title',
+    sourceText: 'No direct preset-value quote recorded.',
+    sourceTextType: 'audit finding',
+    quotedNumbers: Object.freeze([]),
+    directPresetValues: Object.freeze([]),
     calibrationClass: 'MS',
     directNumericQuote: false,
     valueClaim: 'Surface-water values are mechanism-supported water-availability priors.'
   },
   f_CHNOPS: {
     id: 'LIT-F-CHNOPS',
-    sourceText: 'Chemical Habitability: Supply and Retention of Life Essential Elements During Planet Formation',
-    sourceTextType: 'source title',
+    sourceText: 'CHNOPS are likely crucial to most habitable worlds',
+    sourceTextType: 'abstract excerpt',
+    quotedNumbers: Object.freeze([]),
+    directPresetValues: Object.freeze([]),
     calibrationClass: 'MS',
     directNumericQuote: false,
     valueClaim: 'CHNOPS values are mechanism-supported chemical-habitability priors.'
   },
   f_complex_life: {
     id: 'LIT-F-COMPLEX-LIFE',
-    sourceText: 'Dissolving the Fermi Paradox',
-    sourceTextType: 'source title',
+    sourceText: 'uncertainties that span multiple orders of magnitude',
+    sourceTextType: 'abstract excerpt',
+    quotedNumbers: Object.freeze([]),
+    directPresetValues: Object.freeze([]),
     calibrationClass: 'MP',
     directNumericQuote: false,
     valueClaim: 'Complex-life values are broad exploratory biological-filter priors.'
@@ -130,6 +160,8 @@ const PARAMETER_EVIDENCE = Object.freeze({
     id: 'LIT-F-X',
     sourceText: 'User-defined wildcard factor; no literature-backed numeric claim.',
     sourceTextType: 'local model-scope statement',
+    quotedNumbers: Object.freeze([]),
+    directPresetValues: Object.freeze([]),
     calibrationClass: 'MP',
     directNumericQuote: false,
     valueClaim: 'Wildcard values are intentionally user/model defined and outside literature-backed claims.'
@@ -144,6 +176,7 @@ function md(value) {
 
 function badge(status) {
   if (status === 'PASS') return '![PASS](https://img.shields.io/badge/PASS-green)';
+  if (status === 'PARTIAL') return '![PARTIAL](https://img.shields.io/badge/PARTIAL-yellow)';
   if (status === 'WARN') return '![WARN](https://img.shields.io/badge/WARN-yellow)';
   return '![FAIL](https://img.shields.io/badge/FAIL-red)';
 }
@@ -182,9 +215,10 @@ function validateSourceText(key, evidence, failures, warnings) {
   if (!evidence.valueClaim || !String(evidence.valueClaim).trim()) {
     failures.push(`${key} evidence has no value-claim explanation`);
   }
-  if (evidence.directNumericQuote) {
-    warnings.push(`${key} claims direct numeric quotation; verify page/table/section manually.`);
-  }
+}
+
+function hasDirectPresetValueQuote(value, evidence) {
+  return (evidence?.directPresetValues || []).some(item => near(value, item));
 }
 
 function buildLiteratureAudit(registry) {
@@ -214,7 +248,9 @@ function buildLiteratureAudit(registry) {
       label: param.label,
       citation: param.citationShort,
       source_url: sourceUrl,
-      exact_source_text: evidence?.sourceText ?? '',
+      quoted_evidence_text: evidence?.sourceText ?? '',
+      quoted_numbers: (evidence?.quotedNumbers || []).join(', '),
+      directly_quoted_preset_values: (evidence?.directPresetValues || []).join(', '),
       source_text_type: evidence?.sourceTextType ?? '',
       calibration_class: evidence?.calibrationClass ?? '',
       direct_numeric_quote: !!evidence?.directNumericQuote,
@@ -231,6 +267,7 @@ function buildLiteratureAudit(registry) {
       const value = values[key];
       const param = registry.parameters?.[key];
       const evidence = PARAMETER_EVIDENCE[key];
+      const directPresetValueQuote = hasDirectPresetValueQuote(value, evidence);
       if (typeof value !== 'number' || Number.isNaN(value)) {
         failures.push(`preset ${presetKey} has non-numeric value for ${key}`);
         continue;
@@ -253,16 +290,25 @@ function buildLiteratureAudit(registry) {
         evidence_id: evidence?.id ?? '',
         calibration_class: evidence?.calibrationClass ?? '',
         direct_numeric_quote: !!evidence?.directNumericQuote,
+        direct_preset_value_quote: directPresetValueQuote,
+        quoted_numbers: (evidence?.quotedNumbers || []).join(', '),
         status: rowStatus
       });
     }
   }
 
   const directQuoteCount = parameterRows.filter(row => row.direct_numeric_quote).length;
+  const directPresetValueQuoteCount = presetRows.filter(row => row.direct_preset_value_quote).length;
   const modelDerivedCount = parameterRows.length - directQuoteCount;
   const status = failures.length ? 'FAIL' : 'PASS';
+  const directPresetQuoteStatus = failures.length
+    ? 'FAIL'
+    : directPresetValueQuoteCount === presetRows.length
+      ? 'PASS'
+      : 'PARTIAL';
   const summary = {
     status,
+    direct_preset_quote_status: directPresetQuoteStatus,
     generated_at: new Date().toISOString(),
     registry_version: registry.version,
     calculator_version: registry.calculatorVersion,
@@ -271,6 +317,7 @@ function buildLiteratureAudit(registry) {
     preset_value_count: presetRows.length,
     evidence_entry_count: parameterRows.length,
     direct_numeric_quote_count: directQuoteCount,
+    direct_preset_value_quote_count: directPresetValueQuoteCount,
     model_or_prior_count: modelDerivedCount,
     failures,
     warnings
@@ -281,20 +328,23 @@ function buildLiteratureAudit(registry) {
 
 function renderReport(audit) {
   const { summary, parameterRows, presetRows } = audit;
+  const schemaColor = summary.status === 'PASS' ? 'green' : 'red';
+  const quoteColor = summary.direct_preset_quote_status === 'PASS' ? 'green' : 'yellow';
   const lines = [
     '# Literature Audit',
     '',
-    `${badge(summary.status)} ![preset_values](https://img.shields.io/badge/preset_values-${summary.preset_value_count}-blue) ![evidence_entries](https://img.shields.io/badge/evidence_entries-${summary.evidence_entry_count}-blue)`,
+    `![provenance_schema](https://img.shields.io/badge/provenance_schema-${summary.status}-${schemaColor}) ![direct_preset_quotes](https://img.shields.io/badge/direct_preset_quotes-${summary.direct_preset_quote_status}-${quoteColor}) ![preset_values](https://img.shields.io/badge/preset_values-${summary.preset_value_count}-blue) ![evidence_entries](https://img.shields.io/badge/evidence_entries-${summary.evidence_entry_count}-blue)`,
     '',
-    'This audit checks whether every named preset number in `SCIENTIFIC_PARAMETER_REGISTRY.presets` has an explicit provenance path. It records the source link, a compact exact source-text anchor, the calibration class, and whether the preset number is a direct numeric quote or an internal literature-informed/model prior.',
+    'This audit checks whether every named preset number in `SCIENTIFIC_PARAMETER_REGISTRY.presets` has an explicit provenance path. It records the source link, a compact quoted evidence text where available, quoted numbers, the calibration class, and whether the preset number itself is directly quoted by the literature or is an internal literature-informed/model prior.',
     '',
-    'Important scope note: most preset numbers in this calculator are not claimed to be exact numbers copied from a paper. They are documented as registry lower bounds, central values, upper bounds, or internal scenario values inside literature-informed intervals. A PASS here means the provenance classification is explicit and internally consistent; it does not mean every number is a direct literature quotation.',
+    'Important scope note: most preset numbers in this calculator are not claimed to be exact numbers copied from a paper. They are documented as registry lower bounds, central values, upper bounds, or internal scenario values inside literature-informed intervals. `provenance_schema=PASS` means the provenance classification is explicit and internally consistent. `direct_preset_quotes=PARTIAL` means only the listed preset values have a direct numeric quote; the remaining values are model-derived priors and must not be described as quoted literature numbers.',
     '',
     '## Summary',
     '',
     '| Item | Value |',
     '| --- | --- |',
-    `| Status | ${badge(summary.status)} |`,
+    `| Provenance schema status | ${badge(summary.status)} |`,
+    `| Direct preset-value quote status | ${badge(summary.direct_preset_quote_status)} |`,
     `| Generated at | \`${summary.generated_at}\` |`,
     `| Calculator version | \`${summary.calculator_version}\` |`,
     `| Registry version | \`${summary.registry_version}\` |`,
@@ -302,7 +352,8 @@ function renderReport(audit) {
     `| Parameters checked | \`${summary.parameter_count}\` |`,
     `| Preset numeric values checked | \`${summary.preset_value_count}\` |`,
     `| Evidence entries | \`${summary.evidence_entry_count}\` |`,
-    `| Direct numeric quote claims | \`${summary.direct_numeric_quote_count}\` |`,
+    `| Parameters with direct numeric quote evidence | \`${summary.direct_numeric_quote_count}\` |`,
+    `| Preset values with direct numeric quote coverage | \`${summary.direct_preset_value_quote_count}/${summary.preset_value_count}\` |`,
     `| Literature-informed/model-prior entries | \`${summary.model_or_prior_count}\` |`,
     `| Failures | \`${summary.failures.length}\` |`,
     `| Warnings | \`${summary.warnings.length}\` |`,
@@ -318,15 +369,15 @@ function renderReport(audit) {
     '',
     '## Parameter Evidence',
     '',
-    '| Evidence ID | Parameter | Citation | Link | Exact source text | Text type | Class | Direct numeric quote? | Value claim |',
-    '| --- | --- | --- | --- | --- | --- | --- | --- | --- |',
-    ...parameterRows.map(row => `| ${md(row.evidence_id)} | ${md(row.parameter)} | ${md(row.citation)} | ${md(row.source_url)} | ${md(row.exact_source_text)} | ${md(row.source_text_type)} | ${md(row.calibration_class)} | ${row.direct_numeric_quote ? 'yes' : 'no'} | ${md(row.value_claim)} |`),
+    '| Evidence ID | Parameter | Citation | Link | Quoted evidence text | Quoted numbers | Directly quoted preset values | Text type | Class | Value claim |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+    ...parameterRows.map(row => `| ${md(row.evidence_id)} | ${md(row.parameter)} | ${md(row.citation)} | ${md(row.source_url)} | ${md(row.quoted_evidence_text)} | ${md(row.quoted_numbers || 'none')} | ${md(row.directly_quoted_preset_values || 'none')} | ${md(row.source_text_type)} | ${md(row.calibration_class)} | ${md(row.value_claim)} |`),
     '',
     '## Preset Number Trace Matrix',
     '',
-    '| Preset | Parameter | Value | Registry interval | Basis | Evidence ID | Class | Direct numeric quote? | Status |',
-    '| --- | --- | ---: | --- | --- | --- | --- | --- | --- |',
-    ...presetRows.map(row => `| ${md(row.preset)} | ${md(row.parameter)} | ${row.value} | [${row.registry_min}, ${row.registry_central}, ${row.registry_max}] | ${md(row.value_basis)} | ${md(row.evidence_id)} | ${md(row.calibration_class)} | ${row.direct_numeric_quote ? 'yes' : 'no'} | ${badge(row.status)} |`),
+    '| Preset | Parameter | Value | Registry interval | Basis | Evidence ID | Quoted numbers | Class | Direct preset-value quote? | Status |',
+    '| --- | --- | ---: | --- | --- | --- | --- | --- | --- | --- |',
+    ...presetRows.map(row => `| ${md(row.preset)} | ${md(row.parameter)} | ${row.value} | [${row.registry_min}, ${row.registry_central}, ${row.registry_max}] | ${md(row.value_basis)} | ${md(row.evidence_id)} | ${md(row.quoted_numbers || 'none')} | ${md(row.calibration_class)} | ${row.direct_preset_value_quote ? 'yes' : 'no'} | ${badge(row.status)} |`),
     '',
     '## Findings',
     '',
@@ -361,7 +412,7 @@ export async function runLiteratureAudit(outDir, options = {}) {
     await writeText(path.resolve(repoRoot, options.rootReport), report);
   }
 
-  process.stdout.write(`LITERATURE_AUDIT ${audit.summary.status}: preset_values=${audit.summary.preset_value_count}, evidence_entries=${audit.summary.evidence_entry_count}, failures=${audit.summary.failures.length}\n`);
+  process.stdout.write(`LITERATURE_AUDIT ${audit.summary.status}: direct_preset_quotes=${audit.summary.direct_preset_quote_status}, quoted_values=${audit.summary.direct_preset_value_quote_count}/${audit.summary.preset_value_count}, preset_values=${audit.summary.preset_value_count}, evidence_entries=${audit.summary.evidence_entry_count}, failures=${audit.summary.failures.length}\n`);
   return audit.summary;
 }
 
