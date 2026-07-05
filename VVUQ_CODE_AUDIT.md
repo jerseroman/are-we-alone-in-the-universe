@@ -333,7 +333,7 @@ This section updates the existing audit record with the latest completed 24-hour
 
 ## Previous Audit Evidence
 
-## Local Repository State
+### Local Repository State
 
 Branch: `main`  
 Commit: `4baef054c4bfa05b23b6fb7e24ba691b2773a6da`  
@@ -342,14 +342,14 @@ Node: `v24.14.1`
 npm: `11.11.0`  
 OS: `Windows_NT 10.0.26200 x64`
 
-## Existing Test Execution Summary
+### Existing Test Execution Summary
 
 | Command | Status | Exit | Duration ms |
 | --- | --- | ---: | ---: |
 | npm run test:absolute | ![PASS](https://img.shields.io/badge/PASS-green) | 0 | 36919 |
 | npm run test:all | ![PASS](https://img.shields.io/badge/PASS-green) | 0 | 55760 |
 
-## Detailed Command Evidence
+### Detailed Command Evidence
 
 | Command | Evidence # | Evidence line |
 | --- | ---: | --- |
@@ -671,7 +671,7 @@ OS: `Windows_NT 10.0.26200 x64`
 | npm run test:all | 271 | ![PASS](https://img.shields.io/badge/PASS-green): Bio/Geophysical source links and tooltip framing verified for 7 cards. |
 | npm run test:all | 272 | ![PASS](https://img.shields.io/badge/PASS-green): Registry doiOrUrl entries consistent for f_H2O, f_rotation, f_tilt, and f_CHNOPS. |
 
-## Configured 24-Profile Rotating Audit Catalog
+### Configured 24-Profile Rotating Audit Catalog
 
 Catalog execution status for the latest completed 24-hour run: ![PASS](https://img.shields.io/badge/PASS-green)
 
@@ -706,7 +706,7 @@ Catalog execution status for the latest completed 24-hour run: ![PASS](https://i
 | 24-regression-golden-outputs | Regression against golden outputs | 1 | `npm run test:numerics` | ![PASS](https://img.shields.io/badge/PASS-green) |
 | 24-regression-golden-outputs | Regression against golden outputs | 2 | `npm run test:pessimist-mc` | ![PASS](https://img.shields.io/badge/PASS-green) |
 
-## Requirements Traceability Matrix
+### Requirements Traceability Matrix
 
 Status: ![PASS](https://img.shields.io/badge/PASS-green); rows: 17.
 
@@ -730,7 +730,7 @@ Status: ![PASS](https://img.shields.io/badge/PASS-green); rows: 17.
 | LaTeX / Markdown export | Current deterministic/MC/export state rendered to text tables | src/share.js and src/app.js export helpers | export/share controls | LaTeX and Markdown export text | npm run test:standalone-export; npm run test:deep |
 | UI labels and forbidden wording guard | No numeric formula; wording boundary check | index.html; src/app.js; src/share.js; docs/*.md | public labels, warnings, and explanatory copy | share/export wording | npm run test:strings; tools/vvuq-audit/static-scan.mjs |
 
-## Static Scan Summary
+### Static Scan Summary
 
 Status: ![PASS](https://img.shields.io/badge/PASS-green); files scanned: 25; blocking findings: 0.
 
@@ -749,7 +749,7 @@ Status: ![PASS](https://img.shields.io/badge/PASS-green); files scanned: 25; blo
 | version_mentions | 53 |
 | provenance_term_matches | 861 |
 
-### Static Scan Findings
+#### Static Scan Findings
 
 | Severity | Category | Location | Message |
 | --- | --- | --- | --- |
@@ -762,7 +762,7 @@ Status: ![PASS](https://img.shields.io/badge/PASS-green); files scanned: 25; blo
 | INFO | http-literal | src/styles.css:940 | Allowed HTTP literal context. |
 | INFO | http-literal | src/styles.css:1977 | Allowed HTTP literal context. |
 
-## Independent Oracle Summary
+### Independent Oracle Summary
 
 Status: ![PASS](https://img.shields.io/badge/PASS-green); checks: 20; failures: 0.
 
@@ -789,38 +789,38 @@ Status: ![PASS](https://img.shields.io/badge/PASS-green); checks: 20; failures: 
 | seti_mean_wait:range-gated-zero | ![PASS](https://img.shields.io/badge/PASS-green) |  |  |
 | seti_median_wait:range-gated-zero | ![PASS](https://img.shields.io/badge/PASS-green) |  |  |
 
-## Randomized Timeboxed Stress Summary
+### Randomized Timeboxed Stress Summary
 
-Not run.
+![NOT_RUN](https://img.shields.io/badge/NOT_RUN-lightgrey)
 
 No timeboxed profile executions were recorded in this run.
 
-## Mutation Testing Summary
+### Mutation Testing Summary
 
-Not run.
+![NOT_RUN](https://img.shields.io/badge/NOT_RUN-lightgrey)
 
-## Coverage Summary
+### Coverage Summary
 
-Not run.
+![NOT_RUN](https://img.shields.io/badge/NOT_RUN-lightgrey)
 
-## Performance Summary
+### Performance Summary
 
-Not run.
+![NOT_RUN](https://img.shields.io/badge/NOT_RUN-lightgrey)
 
-## Findings And Severity Table
+### Findings And Severity Table
 
 | Severity | Finding |
 | --- | --- |
 | INFO | No critical/high findings were recorded by the executed checks. |
 
-## Reproducibility Artifacts
+### Reproducibility Artifacts
 
 Run directory: `audit-output\20260628-070816Z-smoke`
 
-## Verification Boundaries
+### Verification Boundaries
 
 The report covers only executed audit scripts and generated summaries present in this run directory. It does not claim empirical astronomical validation or peer-reviewed astrophysical correctness.
 
-## Final Status
+### Final Status
 
 ![GREEN](https://img.shields.io/badge/GREEN-green)
