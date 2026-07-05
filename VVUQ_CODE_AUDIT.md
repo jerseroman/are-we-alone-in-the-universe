@@ -673,36 +673,38 @@ OS: `Windows_NT 10.0.26200 x64`
 
 ## Configured 24-Profile Rotating Audit Catalog
 
-| Profile | Title | Step | Command |
-| --- | --- | ---: | --- |
-| 01-realistic-core-fuzz | Realistic core parameter fuzz | 1 | `npm run test:numerics` |
-| 02-additional-modules-matrix | Additional Scientific Modules matrix | 1 | `npm run test:absolute` |
-| 03-preset-mc-transition | Preset and MC-mode transition fuzz | 1 | `npm run test:state-transition:core` |
-| 04-seti-fermi-extremes | SETI/Fermi extreme assumptions | 1 | `npm run test:numerics` |
-| 04-seti-fermi-extremes | SETI/Fermi extreme assumptions | 2 | `npm run test:strings` |
-| 05-boundary-corrupted | Boundary and corrupted input fuzz | 1 | `npm run test:numerics` |
-| 06-strict-oracle-no-modules | Strict no-module independent oracle comparison | 1 | `node tools/vvuq-audit/run-oracle.mjs --out {profileOut}` |
-| 07-mc-reproducibility | Monte Carlo reproducibility | 1 | `npm run test:montecarlo` |
-| 08-interval-ordering | Interval ordering | 1 | `npm run test:scenario-coherence` |
-| 09-preset-reset-stale | Preset reset / stale-state | 1 | `npm run test:preset-state-reset` |
-| 10-full-preset-snapshot-diff | Full preset snapshot diff | 1 | `npm run test:presets` |
-| 11-json-export-parity | JSON export parity | 1 | `npm run test:standalone-export` |
-| 12-latex-markdown-export-parity | LaTeX / Markdown export parity | 1 | `npm run test:deep` |
-| 13-ui-browser-dom | UI/browser DOM | 1 | `npm run test:absolute` |
-| 14-mobile-vs-desktop | Mobile vs desktop parity proxy | 1 | `npm run test:absolute` |
-| 15-forbidden-wording | Forbidden wording | 1 | `node tools/vvuq-audit/static-scan.mjs --out {profileOut}` |
-| 16-source-provenance | Source/provenance | 1 | `npm run test:source-links` |
-| 16-source-provenance | Source/provenance | 2 | `npm run test:biogeo-sources` |
-| 16-source-provenance | Source/provenance | 3 | `node tools/vvuq-audit/traceability.mjs --out {profileOut}` |
-| 17-distance-model-nearest-candidate | Distance model / nearest candidate | 1 | `npm run test:montecarlo` |
-| 18-universe-scale | Universe scale | 1 | `npm run test:universe-scale` |
-| 19-seti-sparse-display | SETI sparse display | 1 | `npm run test:numerics` |
-| 20-module-overlap-warning | Module overlap warning | 1 | `npm run test:absolute` |
-| 21-performance-memory | Performance / memory | 1 | `node tools/vvuq-audit/performance-runner.mjs --out {profileOut} --seconds 15` |
-| 22-security-static-scan | Security/static scan | 1 | `node tools/vvuq-audit/static-scan.mjs --out {profileOut}` |
-| 23-mutation-style-formula-trap | Mutation-style formula trap | 1 | `node tools/vvuq-audit/mutation-runner.mjs --quick --out {profileOut}` |
-| 24-regression-golden-outputs | Regression against golden outputs | 1 | `npm run test:numerics` |
-| 24-regression-golden-outputs | Regression against golden outputs | 2 | `npm run test:pessimist-mc` |
+Catalog execution status for the latest completed 24-hour run: ![PASS](https://img.shields.io/badge/PASS-green)
+
+| Profile | Title | Step | Command | 24h status |
+| --- | --- | ---: | --- | --- |
+| 01-realistic-core-fuzz | Realistic core parameter fuzz | 1 | `npm run test:numerics` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 02-additional-modules-matrix | Additional Scientific Modules matrix | 1 | `npm run test:absolute` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 03-preset-mc-transition | Preset and MC-mode transition fuzz | 1 | `npm run test:state-transition:core` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 04-seti-fermi-extremes | SETI/Fermi extreme assumptions | 1 | `npm run test:numerics` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 04-seti-fermi-extremes | SETI/Fermi extreme assumptions | 2 | `npm run test:strings` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 05-boundary-corrupted | Boundary and corrupted input fuzz | 1 | `npm run test:numerics` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 06-strict-oracle-no-modules | Strict no-module independent oracle comparison | 1 | `node tools/vvuq-audit/run-oracle.mjs --out {profileOut}` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 07-mc-reproducibility | Monte Carlo reproducibility | 1 | `npm run test:montecarlo` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 08-interval-ordering | Interval ordering | 1 | `npm run test:scenario-coherence` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 09-preset-reset-stale | Preset reset / stale-state | 1 | `npm run test:preset-state-reset` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 10-full-preset-snapshot-diff | Full preset snapshot diff | 1 | `npm run test:presets` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 11-json-export-parity | JSON export parity | 1 | `npm run test:standalone-export` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 12-latex-markdown-export-parity | LaTeX / Markdown export parity | 1 | `npm run test:deep` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 13-ui-browser-dom | UI/browser DOM | 1 | `npm run test:absolute` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 14-mobile-vs-desktop | Mobile vs desktop parity proxy | 1 | `npm run test:absolute` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 15-forbidden-wording | Forbidden wording | 1 | `node tools/vvuq-audit/static-scan.mjs --out {profileOut}` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 16-source-provenance | Source/provenance | 1 | `npm run test:source-links` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 16-source-provenance | Source/provenance | 2 | `npm run test:biogeo-sources` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 16-source-provenance | Source/provenance | 3 | `node tools/vvuq-audit/traceability.mjs --out {profileOut}` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 17-distance-model-nearest-candidate | Distance model / nearest candidate | 1 | `npm run test:montecarlo` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 18-universe-scale | Universe scale | 1 | `npm run test:universe-scale` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 19-seti-sparse-display | SETI sparse display | 1 | `npm run test:numerics` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 20-module-overlap-warning | Module overlap warning | 1 | `npm run test:absolute` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 21-performance-memory | Performance / memory | 1 | `node tools/vvuq-audit/performance-runner.mjs --out {profileOut} --seconds 15` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 22-security-static-scan | Security/static scan | 1 | `node tools/vvuq-audit/static-scan.mjs --out {profileOut}` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 23-mutation-style-formula-trap | Mutation-style formula trap | 1 | `node tools/vvuq-audit/mutation-runner.mjs --quick --out {profileOut}` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 24-regression-golden-outputs | Regression against golden outputs | 1 | `npm run test:numerics` | ![PASS](https://img.shields.io/badge/PASS-green) |
+| 24-regression-golden-outputs | Regression against golden outputs | 2 | `npm run test:pessimist-mc` | ![PASS](https://img.shields.io/badge/PASS-green) |
 
 ## Requirements Traceability Matrix
 
