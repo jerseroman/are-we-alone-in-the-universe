@@ -50,6 +50,8 @@
     "audit:vvuq:uq-convergence": "node tools/vvuq-audit/uq-convergence-audit.mjs",
     "audit:vvuq:sobol": "node tools/vvuq-audit/sensitivity-sobol-audit.mjs",
     "audit:vvuq:prior-matrix": "node tools/vvuq-audit/prior-and-dependency-matrix.mjs",
+    "audit:vvuq:literature": "node tools/vvuq-audit/literature-audit.mjs",
+    "audit:vvuq:literature:root": "node tools/vvuq-audit/literature-audit.mjs --root-report LITERATURE_AUDIT.md",
     "audit:vvuq:methodology-governance": "node tools/vvuq-audit/methodology-governance-audit.mjs",
     "audit:vvuq:security-supply-chain": "node tools/vvuq-audit/security-supply-chain-audit.mjs",
     "audit:vvuq:evidence-manifest": "node tools/vvuq-audit/evidence-pack-manifest.mjs",
