@@ -299,7 +299,7 @@ async function main() {
   process.stdout.write(`COMPILE ${summary.status}: ${path.join(runDir, 'FULL_VVUQ_MODEL_AUDIT_REPORT.md')}\n`);
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch(err => {
     process.stderr.write(`${err.stack || err.message}\n`);
     process.exit(1);

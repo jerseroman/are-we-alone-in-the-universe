@@ -54,6 +54,10 @@
     "audit:vvuq:security-supply-chain": "node tools/vvuq-audit/security-supply-chain-audit.mjs",
     "audit:vvuq:evidence-manifest": "node tools/vvuq-audit/evidence-pack-manifest.mjs",
     "audit:vvuq:report-integrity": "node tools/vvuq-audit/report-integrity-audit.mjs",
+    "audit:vvuq:next-suite": "node tools/vvuq-audit/next-audit-suite.mjs",
+    "audit:vvuq:next-suite:smoke": "node tools/vvuq-audit/next-audit-suite.mjs --smoke",
+    "audit:vvuq:next-suite:full": "node tools/vvuq-audit/next-audit-suite.mjs --run-export --run-oracle-expansion --run-coverage --run-build --run-evidence-manifest --run-security",
+    "audit:vvuq:watch-next-suite": "powershell -ExecutionPolicy Bypass -File tools/vvuq-audit/watch-next-audit-suite.ps1",
     "audit:vvuq:extended24h": "node tools/vvuq-audit/run-extended-rotating-24h.mjs --hours 24 --slice-minutes 5 --live",
     "audit:vvuq:extended72h": "node tools/vvuq-audit/run-extended-rotating-24h.mjs --hours 72 --slice-minutes 5 --live",
     "audit:vvuq:extended:smoke": "node tools/vvuq-audit/run-extended-rotating-24h.mjs --hours 24 --slice-minutes 0.08 --max-slices 1 --skip-preflight --live"

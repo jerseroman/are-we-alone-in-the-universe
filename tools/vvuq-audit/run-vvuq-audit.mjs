@@ -312,7 +312,7 @@ export async function runAudit(args = parseArgs()) {
   return { runDir, summary, compiled };
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   runAudit().then(({ summary }) => {
     process.exit(summary.status === 'PASS' ? 0 : 1);
   }).catch(err => {

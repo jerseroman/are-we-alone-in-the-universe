@@ -665,7 +665,7 @@ export async function runExtendedRotatingAudit(args = parseArgs()) {
   return { runDir, summary };
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   runExtendedRotatingAudit().then(({ summary }) => {
     process.exit(summary.status === 'PASS' ? 0 : 1);
   }).catch(err => {
