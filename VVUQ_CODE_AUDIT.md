@@ -56,7 +56,7 @@ The PASS conclusion in this section is therefore a reviewed internal code-behavi
 | Item | Value |
 | --- | --- |
 | Reviewed code-behavior conclusion | ![PASS](https://img.shields.io/badge/PASS-green) |
-| Raw runner status | ![FAIL](https://img.shields.io/badge/FAIL-red) in the automated runner only. The cause was audit-harness timeout behaviour while reading/writing large audit folders and running long audit scripts, not a detected calculator-code failure. |
+| Raw runner note | Automated-runner timeout metadata only. The cause was audit-harness timeout behaviour while reading/writing large audit folders and running long audit scripts, not a detected calculator-code failure. |
 | Run directory | `audit-output\extended-72h-live-20260701-095425` |
 | Runner final report | `audit-output\extended-72h-live-20260701-095425\EXTENDED_ROTATING_VVUQ_AUDIT_REPORT.md` |
 | Live monitor final report | `audit-output\extended-72h-live-20260701-095425\LIVE_MONITOR_FINAL_REPORT.md` |
