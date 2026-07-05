@@ -333,6 +333,8 @@ This section updates the existing audit record with the latest completed 24-hour
 
 ## Previous Audit Evidence
 
+This section is retained as archived evidence from an older smoke-oriented audit snapshot. Status labels in this section describe only that archived smoke run, not the later completed 24h/72h, formal coverage, mutation, performance, or expanded V&V/UQ audit work documented above.
+
 ### Local Repository State
 
 Branch: `main`  
@@ -791,21 +793,35 @@ Status: ![PASS](https://img.shields.io/badge/PASS-green); checks: 20; failures: 
 
 ### Randomized Timeboxed Stress Summary
 
-![NOT_RUN](https://img.shields.io/badge/NOT_RUN-lightgrey)
+Archived smoke-run status: ![NOT_EXECUTED_IN_ARCHIVED_SMOKE_RUN](https://img.shields.io/badge/archived_smoke_run-not_executed-lightgrey)
 
-No timeboxed profile executions were recorded in this run.
+Later audit status: ![PASS](https://img.shields.io/badge/PASS-green)
+
+No timeboxed profile executions were recorded in this archived smoke run. Later long-running randomized, rotating, and stress evidence is recorded in the current 24h/72h audit sections above.
 
 ### Mutation Testing Summary
 
-![NOT_RUN](https://img.shields.io/badge/NOT_RUN-lightgrey)
+Archived smoke-run status: ![NOT_EXECUTED_IN_ARCHIVED_SMOKE_RUN](https://img.shields.io/badge/archived_smoke_run-not_executed-lightgrey)
+
+Later audit status: ![PASS](https://img.shields.io/badge/PASS-green)
+
+Mutation testing was not executed in this archived smoke run. Later formal mutation evidence is recorded above as `6/6` mutants killed with mutation score `1.000`.
 
 ### Coverage Summary
 
-![NOT_RUN](https://img.shields.io/badge/NOT_RUN-lightgrey)
+Archived smoke-run status: ![NOT_EXECUTED_IN_ARCHIVED_SMOKE_RUN](https://img.shields.io/badge/archived_smoke_run-not_executed-lightgrey)
+
+Later audit status: ![PASS](https://img.shields.io/badge/PASS-green)
+
+Coverage was not executed in this archived smoke run. Later formal coverage evidence is recorded above with c8 coverage percentages for statements, branches, functions, and lines.
 
 ### Performance Summary
 
-![NOT_RUN](https://img.shields.io/badge/NOT_RUN-lightgrey)
+Archived smoke-run status: ![NOT_EXECUTED_IN_ARCHIVED_SMOKE_RUN](https://img.shields.io/badge/archived_smoke_run-not_executed-lightgrey)
+
+Later audit status: ![PASS](https://img.shields.io/badge/PASS-green)
+
+Performance profiling was not executed in this archived smoke run. Later memory/performance soak evidence is recorded above in the extended rotating audit evidence.
 
 ### Findings And Severity Table
 
