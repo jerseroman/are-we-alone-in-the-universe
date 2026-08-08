@@ -1,0 +1,86 @@
+name: JJ G-host export
+
+on:
+  pull_request:
+    paths:
+      - 'research/jj-host-export/**'
+      - '.github/workflows/jj-g-host-export.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  jj-export:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install pinned-compatible Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'numpy==1.23.5' 'scipy==1.10.1' 'astropy==5.3.4' 'matplotlib==3.7.5' 'fast-histogram==0.14' 'requests>=2.28'
+
+      - name: Checkout official JJ model at pinned commit
+        run: |
+          git clone https://github.com/askenja/jjmodel.git /tmp/jjmodel-src
+          cd /tmp/jjmodel-src
+          git checkout 2828a2e8bfc379ba9c8ef4b4d0477ab5febe3b54
+          python -m pip install -e .
+          git rev-parse HEAD
+
+      - name: Download official Padova/PARSEC JJ isochrone archive
+        run: |
+          python - <<'PY'
+          from jjmodel.iso_loader import isochrone_loader
+          isochrone_loader('Padova', photometry='multiband')
+          PY
+
+      - name: Prepare official JJ tutorial2 configuration
+        run: |
+          mkdir -p /tmp/jj-run
+          cp /tmp/jjmodel-src/jjmodel/tutorials/tutorial2/parameters /tmp/jj-run/parameters
+          cp /tmp/jjmodel-src/jjmodel/tutorials/tutorial2/sfrd_peaks_parameters /tmp/jj-run/sfrd_peaks_parameters
+          mkdir -p results/jj
+
+      - name: Generate JJ stellar assemblies and export G hosts
+        run: |
+          python research/jj-host-export/run_jj_export.py \
+            --jj-root /tmp/jjmodel-src \
+            --run-dir /tmp/jj-run \
+            --out "$GITHUB_WORKSPACE/results/jj" \
+            --iso Padova
+
+      - name: Record exact provenance
+        run: |
+          cp /tmp/jj-run/parameters results/jj/JJ_tutorial2_parameters.txt
+          cp /tmp/jj-run/sfrd_peaks_parameters results/jj/JJ_tutorial2_sfrd_peaks_parameters.txt
+          sha256sum results/jj/* | sort > results/jj/SHA256SUMS_all.txt
+          cat > results/jj/PROVENANCE.md <<'EOF'
+          # JJ G-dwarf host export provenance
+
+          - JJ code: `askenja/jjmodel`
+          - Pinned commit: `2828a2e8bfc379ba9c8ef4b4d0477ab5febe3b54` (v1.0.1)
+          - Radial/SFH/IMF/AMR configuration: official `jjmodel/tutorials/tutorial2/parameters` at the same commit.
+          - SFR peaks: official `jjmodel/tutorials/tutorial2/sfrd_peaks_parameters` at the same commit.
+          - Isochrones: official JJ Padova/PARSEC multiband archive downloaded through `jjmodel.iso_loader.isochrone_loader` from heiDATA DOI `10.11588/data/ZCXHOE`.
+          - Host cut: 5300 <= Teff <= 6000 K; 4.3 < logg < 7; age >= 4.57 Gyr; thin + thick disk only.
+          - This is a project-specific G-only estimand. JJ's built-in `g_dwarfs()` uses 5200-6000 K, so it is intentionally not used.
+          - `N` in JJ stellar-assembly tables is present-day surface number density [stars pc^-2].
+          - At each R: Sigma_G(R) = sum of N over eligible thin+thick rows.
+          - Radial count density: dN/dR = 2*pi*R*1e6*Sigma_G(R) [stars kpc^-1].
+          - Total modeled-disk hosts: trapezoidal integral over R=4..14 kpc on the official 1-kpc tutorial2 grid.
+          - No SN/GHZ environmental mask is applied in this table.
+          - No extra planet-occurrence metallicity correction is applied.
+          EOF
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jj-g-host-export-padova
+          path: results/jj/
+          if-no-files-found: error
+          retention-days: 14
