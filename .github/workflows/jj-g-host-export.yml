@@ -61,6 +61,14 @@ jobs:
             --out "$GITHUB_WORKSPACE/results/jj" \
             --iso Padova
 
+      - name: Export row-level eligible JJ hosts
+        run: |
+          python research/jj-host-export/export_raw_eligible.py \
+            --jj-root /tmp/jjmodel-src \
+            --run-dir /tmp/jj-run \
+            --out "$GITHUB_WORKSPACE/results/jj" \
+            --iso Padova
+
       - name: Record exact provenance
         run: |
           cp /tmp/jj-run/parameters.original results/jj/JJ_tutorial2_parameters_original.txt
@@ -82,6 +90,7 @@ jobs:
           - At each R: Sigma_G(R) = sum of N over eligible thin+thick rows.
           - Radial count density: dN/dR = 2*pi*R*1e6*Sigma_G(R) [stars kpc^-1].
           - Total modeled-disk hosts: trapezoidal integral over R=4..14 kpc on the official 1-kpc tutorial2 grid.
+          - Row-level eligible output preserves each JJ synthetic stellar assembly's Teff, age, logg, and N_surface so occurrence can be weighted without 100-K midpoint approximation.
           - No SN/GHZ environmental mask is applied in this table.
           - No extra planet-occurrence metallicity correction is applied.
           EOF
