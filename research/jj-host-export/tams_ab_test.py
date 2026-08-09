@@ -15,29 +15,13 @@ from pathlib import Path
 import argparse, csv, json, math, os, sys
 import numpy as np
 from astropy.table import Table
+from tams_reference import tams_radius_rsun, EXPECTED_SHA256 as TAMS_REFERENCE_SHA256
 
 TMIN,TMAX=5300.0,6000.0
 AGE_MIN=4.57
 LOGG_MIN,LOGG_MAX=4.3,7.0
 LOGG_SUN=4.438
 TSUN_RADIUS=5772.0
-
-# Public PARSEC TAMS boundary used by danxhuber/evolstate (tams_parsec.txt).
-TAMS_T=np.array([5200.,5390.13944,5517.85139,5633.13293,5738.25706,5844.13178,
-5951.82290,6060.24246,6263.10943,6330.52896,6376.75894,6370.00833,
-6360.04224,6365.16989,6349.06831,6406.93031,6476.34536,6561.45266,
-6662.69603,6781.56611,6920.69962,7067.56807,7202.44582,7344.80043,
-7484.96890,7625.52940,7767.11973,7907.87872,8048.22298,8188.04084,
-8326.83579,8602.40727,9159.67364,9685.90042,10204.92929,10710.25966,
-11201.59844,11683.15127,12154.86109,12612.46575,13058.70166,
-13493.66736,13922.58891,14335.07601,14734.31669,15127.25055,
-15507.79317,15880.71310,16243.51448])
-TAMS_R=np.array([1.15,1.22926,1.28542,1.35053,1.42375,1.49188,1.55332,1.61155,
-1.51292,1.69428,1.87034,2.08391,2.31769,2.56130,2.84178,2.99416,3.13931,
-3.25953,3.37272,3.46581,3.53138,3.59009,3.66210,3.72130,3.77920,3.84025,
-3.89439,3.94839,4.00221,4.05219,4.10530,4.20431,4.37602,4.56052,4.72911,
-4.89345,5.05085,5.19876,5.34072,5.48056,5.61513,5.75195,5.87131,5.99901,
-6.12308,6.24748,6.37265,6.49419,6.61690])
 
 F0=1.107; ALPHA=-1.082; BETA=-0.839; GAMMA=-2.671
 T0=3900.; TBREAK=5117.; T1=6300.
@@ -105,7 +89,7 @@ def main():
                 for vals in zip(age[keep],mini[keep],mf[keep],logL[keep],logT[keep],teff[keep],logg[keep],n[keep]):
                     ag,mi,m,lL,lT,T,lg,wt=map(float,vals)
                     rg=math.sqrt(m*10**(LOGG_SUN-lg)); rl=10**(lL/2)*(TSUN_RADIUS/T)**2
-                    rt=float(10**np.interp(T,TAMS_T,np.log10(TAMS_R)))
+                    rt=float(tams_radius_rsun(T))
                     below_tams=(rg<=rt)
                     A=(lg>LOGG_MIN and lg<LOGG_MAX)
                     B=(below_tams and lg<LOGG_MAX)
@@ -122,6 +106,8 @@ def main():
     with rpath.open('w',newline='',encoding='utf-8') as f:
         cols=['R_kpc','A_N','B_N','A_L1','B_L1','A_L2','B_L2']; w=csv.DictWriter(f,fieldnames=cols); w.writeheader(); w.writerows(radial)
     result={'parent_rows':n_parent,'dR_kpc':0.5,'logg_sun':LOGG_SUN,'Tsun_radius_K':TSUN_RADIUS,
+            'TAMS_reference_sha256':TAMS_REFERENCE_SHA256,
+            'TAMS_interpolation':'linear in Teff and log10(R/Rsun); no extrapolation',
             'B_definition':'Rstar <= PARSEC TAMS radius AND logg < 7 compact-remnant veto',
             'compact_remnant_rows_rejected':compact_rejected_rows,
             'radius_reconstruction_rel_diff_median':float(np.median(rel_radius)),
