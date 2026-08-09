@@ -96,25 +96,8 @@ jobs:
 
       - name: Assert canonical main files are TAMS, not legacy logg
         run: |
-          python - <<'PY'
-          import json, pandas as pd, numpy as np
-          from pathlib import Path
-          root=Path('results/jj')
-          s=json.loads((root/'jj_g_hosts_summary_padova.json').read_text())
-          assert s['host_provider_id']=='jj_padova_dr05_parsec_tams_v1', s
-          assert 'logg' not in s['host_estimand'], s['host_estimand']
-          assert s['host_estimand']['explicit_metallicity_dimension'] is False
-          assert abs(s['N_G_hosts_age_ge_4p57_R4_14']-1238302534.419577)<1e-2
-          assert abs(s['N_G_hosts_age_ge_4p57_R7_9']-263061992.36670703)<1e-2
-          assert abs(s['thick_disk_fraction_R7_9']-0.19893903660103215)<1e-12
-          r=pd.read_csv(root/'jj_g_hosts_radial_padova.csv')
-          q=r[(r.R_kpc>=4)&(r.R_kpc<=14)]
-          n=float(np.trapz(q['dN_dR_stars_kpc-1'],q.R_kpc))
-          assert abs(n-1238302534.419577)<1e-2, n
-          assert (root/'jj_g_hosts_radial_padova_legacy_logg43.csv').exists()
-          assert (root/'jj_g_hosts_summary_padova_legacy_logg43.json').exists()
-          print('CANONICAL_MAIN_FILES_TAMS_PASS', n)
-          PY
+          python research/jj-host-export/assert_canonical_tams.py \
+            --out "$GITHUB_WORKSPACE/results/jj"
 
       - name: Record exact provenance
         run: |
