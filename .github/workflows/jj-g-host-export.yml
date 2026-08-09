@@ -50,7 +50,8 @@ jobs:
           sed -E -i 's/^(Rmin[[:space:]]+)4([[:space:]])/\14.0\2/' /tmp/jj-run/parameters
           sed -E -i 's/^(Rmax[[:space:]]+)14([[:space:]])/\114.0\2/' /tmp/jj-run/parameters
           # Convergence experiment: only radial numerical resolution changes.
-          sed -E -i 's/^(dR[[:space:]]+)1(\.0)?([[:space:]]*)$/\10.5\3/' /tmp/jj-run/parameters
+          # The official line contains units/comments after the value, so replace only the first numeric field.
+          sed -E -i 's/^(dR[[:space:]]+)1([[:space:]])/\10.5\2/' /tmp/jj-run/parameters
           grep -E '^(Rmin|Rmax|dR)[[:space:]]' /tmp/jj-run/parameters
           # The research exporter pins the 1-kpc production benchmark; patch only its runtime guard/text.
           sed -i 's/float(p.dR) == 1.0/float(p.dR) == 0.5/' research/jj-host-export/run_jj_export.py
