@@ -1,4 +1,4 @@
-name: JJ G-host export dR=0.5 validation
+name: JJ G-host dR=0.5 + TAMS validation
 
 on:
   pull_request:
@@ -46,14 +46,10 @@ jobs:
           cp /tmp/jjmodel-src/jjmodel/tutorials/tutorial2/parameters /tmp/jj-run/parameters
           cp /tmp/jjmodel-src/jjmodel/tutorials/tutorial2/sfrd_peaks_parameters /tmp/jj-run/sfrd_peaks_parameters
           cp /tmp/jj-run/parameters /tmp/jj-run/parameters.original
-          # Compatibility-only textual fixes for Rmin/Rmax, as in the 1-kpc benchmark.
           sed -E -i 's/^(Rmin[[:space:]]+)4([[:space:]])/\14.0\2/' /tmp/jj-run/parameters
           sed -E -i 's/^(Rmax[[:space:]]+)14([[:space:]])/\114.0\2/' /tmp/jj-run/parameters
-          # Convergence experiment: only radial numerical resolution changes.
-          # The official line contains units/comments after the value, so replace only the first numeric field.
           sed -E -i 's/^(dR[[:space:]]+)1([[:space:]])/\10.5\2/' /tmp/jj-run/parameters
           grep -E '^(Rmin|Rmax|dR)[[:space:]]' /tmp/jj-run/parameters
-          # The research exporter pins the 1-kpc production benchmark; patch only its runtime guard/text.
           sed -i 's/float(p.dR) == 1.0/float(p.dR) == 0.5/' research/jj-host-export/run_jj_export.py
           sed -i 's/JJ 1-kpc grid/JJ 0.5-kpc grid/' research/jj-host-export/run_jj_export.py
           mkdir -p results/jj
@@ -74,35 +70,39 @@ jobs:
             --out "$GITHUB_WORKSPACE/results/jj" \
             --iso Padova
 
+      - name: Run PARSEC-TAMS A/B main-sequence validation
+        run: |
+          python research/jj-host-export/tams_ab_test.py \
+            --jj-root /tmp/jjmodel-src \
+            --run-dir /tmp/jj-run \
+            --out "$GITHUB_WORKSPACE/results/jj" \
+            --iso Padova
+          cat results/jj/tams_ab_results.json
+
       - name: Record exact provenance
         run: |
           cp /tmp/jj-run/parameters.original results/jj/JJ_tutorial2_parameters_original.txt
           cp /tmp/jj-run/parameters results/jj/JJ_tutorial2_parameters_runtime.txt
-          cp /tmp/jj-run/sfrd_peaks_parameters results/jj/JJ_tutorial2_sfrd_peaks_parameters.txt
+          cp /tmp/jj-run/sfrd_peaks_parameters results/jj/JJ_tutorial2_sfr_peaks_parameters.txt
           sha256sum results/jj/* | sort > results/jj/SHA256SUMS_all.txt
           cat > results/jj/PROVENANCE.md <<'EOF'
-          # JJ G-dwarf radial convergence export provenance
+          # JJ G-dwarf dR=0.5 and PARSEC-TAMS validation provenance
 
-          - Purpose: numerical radial-convergence validation against the existing dR=1 kpc benchmark.
-          - JJ code: `askenja/jjmodel`
-          - Pinned commit: `2828a2e8bfc379ba9c8ef4b4d0477ab5febe3b54` (v1.0.1)
-          - Radial/SFH/IMF/AMR configuration: official `jjmodel/tutorials/tutorial2/parameters` at the same commit.
-          - SFR peaks: official `jjmodel/tutorials/tutorial2/sfrd_peaks_parameters` at the same commit.
-          - Only scientific/numerical change relative to the benchmark: dR = 0.5 kpc instead of 1 kpc.
-          - Rmin = 4 kpc, Rmax = 14 kpc; thin + thick disk only.
-          - Isochrones: official JJ Padova/PARSEC multiband archive downloaded through `jjmodel.iso_loader.isochrone_loader` from heiDATA DOI `10.11588/data/ZCXHOE`.
-          - Host cut: 5300 <= Teff <= 6000 K; 4.3 < logg < 7; age >= 4.57 Gyr.
-          - `N` in JJ stellar-assembly tables is present-day surface number density [stars pc^-2].
-          - At each R: Sigma_G(R) = sum of N over eligible thin+thick rows.
-          - Radial count density: dN/dR = 2*pi*R*1e6*Sigma_G(R) [stars kpc^-1].
-          - Row-level eligible output preserves exact JJ Teff values for direct Bryson/Kopparapu integration.
-          - No SN/GHZ environmental probability factor is applied; 7–9 kpc is applied downstream as a geometric integration mask.
-          - No extra planet-occurrence metallicity correction is applied.
+          - JJ code: `askenja/jjmodel`, commit `2828a2e8bfc379ba9c8ef4b4d0477ab5febe3b54` (v1.0.1).
+          - Official tutorial2 SFH/IMF/AMR configuration; only radial numerical resolution changed to dR=0.5 kpc.
+          - Official JJ Padova/PARSEC multiband isochrones, heiDATA DOI `10.11588/data/ZCXHOE`.
+          - Parent A/B sample: 5300 <= Teff <= 6000 K; age >= 4.57 Gyr; thin+thick disk; no pre-applied logg cut.
+          - Selection A: legacy 4.3 < logg < 7.0.
+          - Selection B: Rstar <= interpolated public PARSEC TAMS radius boundary used by Berger/Huber evolstate.
+          - Primary radius reconstruction: R/Rsun = sqrt(Mf * 10^(logg_sun-logg)), logg_sun=4.438.
+          - Independent radius check: R/Rsun = 10^(logL/2)*(5772/Teff)^2.
+          - L1/L2 use the same frozen Bryson Model 1 hab2 constant-completeness + Kopparapu conservative HZ equations as the deterministic verifier.
+          - No extra metallicity, P_evol, SFR, SN, or Lineweaver probability multiplier is applied.
           EOF
 
       - uses: actions/upload-artifact@v4
         with:
-          name: jj-g-host-export-padova-dr05
+          name: jj-g-host-export-padova-dr05-tams
           path: results/jj/
           if-no-files-found: error
           retention-days: 14
