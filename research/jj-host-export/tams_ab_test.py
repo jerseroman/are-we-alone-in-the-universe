@@ -2,10 +2,12 @@
 """A/B validation of the frozen G-dwarf host selection.
 
 A = legacy operational dwarf cut: 4.3 < logg < 7.0
-B = radius below the public PARSEC TAMS boundary used by Berger/Huber evolstate.
+B = radius below the public PARSEC TAMS boundary used by Berger/Huber evolstate,
+    plus logg < 7 solely as a compact-remnant veto. The TAMS boundary is an
+    upper-radius boundary and by itself cannot reject white-dwarf-like remnants.
 
 The parent population is selected ONLY by Teff, age, Galactic component and
-finite non-negative JJ surface-number weight. No logg cut is applied before A/B.
+finite non-negative JJ surface-number weight. No lower-logg cut is applied before A/B.
 The script also evaluates the frozen Bryson Model-1 + Kopparapu CHZ L1/L2
 integrals on each selection and integrates them radially.
 """
@@ -37,7 +39,6 @@ TAMS_R=np.array([1.15,1.22926,1.28542,1.35053,1.42375,1.49188,1.55332,1.61155,
 4.89345,5.05085,5.19876,5.34072,5.48056,5.61513,5.75195,5.87131,5.99901,
 6.12308,6.24748,6.37265,6.49419,6.61690])
 
-# Frozen Bryson Model 1 / hab2 / constant-completeness branch.
 F0=1.107; ALPHA=-1.082; BETA=-0.839; GAMMA=-2.671
 T0=3900.; TBREAK=5117.; T1=6300.
 RUN=(1.107,1.332e-4,1.58e-8,-8.308e-12,-1.931e-15)
@@ -86,8 +87,8 @@ def main():
     if abs(float(p.dR)-0.5)>1e-12: raise RuntimeError(f'TAMS A/B requires dR=0.5, got {p.dR}')
     poptab=Path(jj.T['poptab']); out=Path(a.out); out.mkdir(parents=True,exist_ok=True)
     parent_path=out/'jj_g_hosts_parent_prelogg_padova.csv'
-    header=['R_kpc','component','age_Gyr','Mini','Mf','logL','logT','Teff_K','logg','N_surface_pc-2','Rstar_g_Rsun','Rstar_L_Rsun','R_TAMS_Rsun','A_logg','B_TAMS','f_HZ','f_earth10']
-    rows_by_R={}; rel_radius=[]; n_parent=0
+    header=['R_kpc','component','age_Gyr','Mini','Mf','logL','logT','Teff_K','logg','N_surface_pc-2','Rstar_g_Rsun','Rstar_L_Rsun','R_TAMS_Rsun','A_logg','B_TAMS_MS','f_HZ','f_earth10']
+    rows_by_R={}; rel_radius=[]; n_parent=0; compact_rejected_rows=0
     with parent_path.open('w',newline='',encoding='utf-8') as fh:
         w=csv.writer(fh); w.writerow(header)
         for R in np.asarray(jj.R,dtype=float):
@@ -105,7 +106,10 @@ def main():
                     ag,mi,m,lL,lT,T,lg,wt=map(float,vals)
                     rg=math.sqrt(m*10**(LOGG_SUN-lg)); rl=10**(lL/2)*(TSUN_RADIUS/T)**2
                     rt=float(10**np.interp(T,TAMS_T,np.log10(TAMS_R)))
-                    A=(lg>LOGG_MIN and lg<LOGG_MAX); B=(rg<=rt)
+                    below_tams=(rg<=rt)
+                    A=(lg>LOGG_MIN and lg<LOGG_MAX)
+                    B=(below_tams and lg<LOGG_MAX)
+                    if below_tams and lg>=LOGG_MAX: compact_rejected_rows+=1
                     fhz=float(f_hz(T)); fe=float(f10(T)); n_parent+=1
                     if rg>0 and rl>0: rel_radius.append(abs(rg-rl)/((rg+rl)/2))
                     if A: acc['A_N']+=wt; acc['A_L1']+=wt*fhz; acc['A_L2']+=wt*fe
@@ -118,6 +122,8 @@ def main():
     with rpath.open('w',newline='',encoding='utf-8') as f:
         cols=['R_kpc','A_N','B_N','A_L1','B_L1','A_L2','B_L2']; w=csv.DictWriter(f,fieldnames=cols); w.writeheader(); w.writerows(radial)
     result={'parent_rows':n_parent,'dR_kpc':0.5,'logg_sun':LOGG_SUN,'Tsun_radius_K':TSUN_RADIUS,
+            'B_definition':'Rstar <= PARSEC TAMS radius AND logg < 7 compact-remnant veto',
+            'compact_remnant_rows_rejected':compact_rejected_rows,
             'radius_reconstruction_rel_diff_median':float(np.median(rel_radius)),
             'radius_reconstruction_rel_diff_q95':float(np.quantile(rel_radius,.95)),
             'domains':{}}
@@ -127,7 +133,6 @@ def main():
             d[sel]={'N_G':integrate(radial,f'{sel}_N',lo,hi),'Lambda_ESHZ':integrate(radial,f'{sel}_L1',lo,hi),'Lambda_earth10':integrate(radial,f'{sel}_L2',lo,hi)}
         d['delta_B_vs_A']={k:(d['B'][k]-d['A'][k])/d['A'][k] for k in d['A']}
         result['domains'][name]=d
-    # Structural invariant for both selections/domains.
     for d in result['domains'].values():
         for sel in ['A','B']:
             assert d[sel]['Lambda_earth10'] <= d[sel]['Lambda_ESHZ'] + 1e-9
