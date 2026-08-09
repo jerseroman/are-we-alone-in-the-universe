@@ -54,7 +54,7 @@ jobs:
           sed -i 's/JJ 1-kpc grid/JJ 0.5-kpc grid/' research/jj-host-export/run_jj_export.py
           mkdir -p results/jj
 
-      - name: Generate JJ stellar assemblies and export G hosts
+      - name: Generate JJ stellar assemblies and export legacy logg hosts
         run: |
           python research/jj-host-export/run_jj_export.py \
             --jj-root /tmp/jjmodel-src \
@@ -62,7 +62,7 @@ jobs:
             --out "$GITHUB_WORKSPACE/results/jj" \
             --iso Padova
 
-      - name: Export row-level eligible JJ hosts
+      - name: Export legacy row-level eligible JJ hosts
         run: |
           python research/jj-host-export/export_raw_eligible.py \
             --jj-root /tmp/jjmodel-src \
@@ -79,6 +79,13 @@ jobs:
             --iso Padova
           cat results/jj/tams_ab_results.json
 
+      - name: Promote PARSEC-TAMS provider to canonical JJ files
+        run: |
+          python research/jj-host-export/promote_tams_provider.py \
+            --out "$GITHUB_WORKSPACE/results/jj"
+          cat results/jj/jj_g_hosts_summary_padova.json
+          cp research/jj-host-export/TAMS_METHOD_NOTE.md results/jj/TAMS_METHOD_NOTE.md
+
       - name: Recalculate all frozen Bryson/Kopparapu branches and GHZ masks
         run: |
           python research/jj-host-export/recalc_all_branches_tams.py \
@@ -87,12 +94,33 @@ jobs:
           cat results/jj/tams_branches_lineweaver_7_9.csv
           cat results/jj/tams_ghz_sensitivity_chz_constant.csv
 
+      - name: Assert canonical main files are TAMS, not legacy logg
+        run: |
+          python - <<'PY'
+          import json, pandas as pd, numpy as np
+          from pathlib import Path
+          root=Path('results/jj')
+          s=json.loads((root/'jj_g_hosts_summary_padova.json').read_text())
+          assert s['host_provider_id']=='jj_padova_dr05_parsec_tams_v1', s
+          assert 'logg' not in s['host_estimand'], s['host_estimand']
+          assert s['host_estimand']['explicit_metallicity_dimension'] is False
+          assert abs(s['N_G_hosts_age_ge_4p57_R4_14']-1238302534.419577)<1e-2
+          assert abs(s['N_G_hosts_age_ge_4p57_R7_9']-263061992.36670703)<1e-2
+          assert abs(s['thick_disk_fraction_R7_9']-0.19893903660103215)<1e-12
+          r=pd.read_csv(root/'jj_g_hosts_radial_padova.csv')
+          q=r[(r.R_kpc>=4)&(r.R_kpc<=14)]
+          n=float(np.trapz(q['dN_dR_stars_kpc-1'],q.R_kpc))
+          assert abs(n-1238302534.419577)<1e-2, n
+          assert (root/'jj_g_hosts_radial_padova_legacy_logg43.csv').exists()
+          assert (root/'jj_g_hosts_summary_padova_legacy_logg43.json').exists()
+          print('CANONICAL_MAIN_FILES_TAMS_PASS', n)
+          PY
+
       - name: Record exact provenance
         run: |
           cp /tmp/jj-run/parameters.original results/jj/JJ_tutorial2_parameters_original.txt
           cp /tmp/jj-run/parameters results/jj/JJ_tutorial2_parameters_runtime.txt
           cp /tmp/jj-run/sfrd_peaks_parameters results/jj/JJ_tutorial2_sfr_peaks_parameters.txt
-          sha256sum results/jj/* | sort > results/jj/SHA256SUMS_all.txt
           cat > results/jj/PROVENANCE.md <<'EOF'
           # JJ G-dwarf dR=0.5, PARSEC-TAMS, and downstream branch validation provenance
 
@@ -101,19 +129,23 @@ jobs:
           - Official JJ Padova/PARSEC multiband isochrones, heiDATA DOI `10.11588/data/ZCXHOE`.
           - Parent A/B sample: 5300 <= Teff <= 6000 K; age >= 4.57 Gyr; thin+thick disk; no pre-applied logg cut.
           - Selection A: legacy 4.3 < logg < 7.0.
-          - Selection B / downstream provider: Rstar <= interpolated public PARSEC TAMS radius boundary plus logg < 7 compact-remnant veto.
+          - Selection B / canonical provider: Rstar <= interpolated public PARSEC TAMS radius boundary plus logg < 7 compact-remnant veto.
+          - The canonical files named `jj_g_hosts_*_padova.*` are rewritten from Selection B after the A/B test. Legacy logg-provider versions are retained only with the explicit `_legacy_logg43` suffix.
           - Primary radius reconstruction: R/Rsun = sqrt(Mf * 10^(logg_sun-logg)), logg_sun=4.438.
           - Independent radius check: R/Rsun = 10^(logL/2)*(5772/Teff)^2.
+          - The adopted public Berger/Huber PARSEC TAMS boundary is a one-dimensional function R_TAMS(Teff), without an explicit metallicity coordinate. It is intentionally transferred to both thin- and thick-disk hosts for compatibility with the Bryson/Kepler selection function. This is a host-selection transport approximation, not a claim of metallicity-independent stellar evolution.
+          - In the corrected 7-9 kpc canonical host sample, 19.8939% of integrated host weight is thick-disk. The TAMS transfer may therefore be permissive for the more metal-poor thick-disk population; this is retained as an explicit systematic limitation.
           - Frozen occurrence branches: Bryson Model 1 hab2 constant/zero completeness; HZ definitions: Kopparapu 2014 conservative (runaway/maximum greenhouse) and optimistic (recent Venus/early Mars).
           - L1 radius domain 0.5-1.5 Rearth; L2 B10 = 0.9-1.1 Rearth x 0.9-1.1 Searth intersected with the selected HZ.
           - Primary occurrence measure is linear dI dr.
           - GHZ masks recalculated: 7-9, 6-10, 4-8, and full JJ 4-14 kpc.
           - No extra metallicity, P_evol, SFR, SN, or Lineweaver probability multiplier is applied.
           EOF
+          sha256sum results/jj/* | sort > results/jj/SHA256SUMS_all.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: jj-g-host-export-padova-dr05-tams
+          name: jj-g-host-export-padova-dr05-tams-canonical
           path: results/jj/
           if-no-files-found: error
           retention-days: 14
