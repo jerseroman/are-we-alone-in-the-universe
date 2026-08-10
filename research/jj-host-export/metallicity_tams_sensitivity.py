@@ -7,10 +7,14 @@ one-dimensional Berger/Huber TAMS selector.
 Method:
   * read the exact JJ pre-logg parent population, including row-level FeH;
   * regenerate PARSEC v1.2S TAMS points at several published metallicity grids
-    using the same rule as danxhuber/evolstate parsec.py: first PHASE==7 model
-    of each evolutionary track, age < 20 Gyr, with radius reconstructed from
-    LOG_L and LOG_TE;
-  * validate the Z=0.017 curve against the immutable Berger/Huber source table;
+    as the first PHASE==7 model of each evolutionary track, with radius
+    reconstructed from LOG_L and LOG_TE;
+  * use the full PARSEC low-mass track horizon (up to 30 Gyr where available)
+    for metallicity curves so that the full 5300-6000 K interval remains
+    bracketed even at metallicities where the corresponding TAMS age exceeds
+    20 Gyr;
+  * independently validate the Z=0.017 points with age <20 Gyr against the
+    immutable Berger/Huber source table, which was generated with that cap;
   * interpolate log10(R_TAMS) linearly in Teff within each metallicity curve;
   * interpolate log10(R_TAMS) linearly in [M/H] between PARSEC metallicity
     anchors, with no metallicity or temperature extrapolation;
@@ -37,6 +41,7 @@ from astropy.io import ascii
 BASE_URL = "https://people.sissa.it/~sbressan/CAF09_V1.2S_M36_LT"
 TMIN, TMAX = 5300.0, 6000.0
 LOGG_MAX = 7.0
+TRACK_AGE_MAX_GYR = 30.0
 
 # PARSEC v1.2S scaled-solar metallicity grids that bracket the JJ disk AMR.
 # Archive names are from the public PARSEC/SISSA track database.
@@ -124,7 +129,7 @@ def build_curve(z: float, y: float, archive_name: str, cache: Path):
         parsed_files += 1
         phase = np.asarray(tab["PHASE"], float)
         age = np.asarray(tab["AGE"], float)
-        idx = np.where((phase == 7.0) & (age < 20.0e9))[0]
+        idx = np.where((phase == 7.0) & (age < TRACK_AGE_MAX_GYR * 1.0e9))[0]
         if len(idx) == 0:
             continue
         k = int(idx[0])
@@ -132,14 +137,15 @@ def build_curve(z: float, y: float, archive_name: str, cache: Path):
         logl = float(tab["LOG_L"][k])
         radius = float(math.sqrt(10.0**logl * (teff / 5777.0) ** (-4.0)))
         mass = float(tab["MASS"][k]) if "MASS" in cols else float("nan")
-        pts.append((teff, radius, mass, p.name))
+        tams_age_gyr = float(age[k] * 1e-9)
+        pts.append((teff, radius, mass, p.name, tams_age_gyr))
 
     if parsed_files == 0 or len(pts) < 5:
         raise RuntimeError(f"Failed to recover TAMS track points for Z={z}: parsed={parsed_files}, points={len(pts)}")
 
     # Keep the low/intermediate-mass branch relevant to the 5300-6000 K G-star
-    # interval.  The public Berger/Huber curve is monotonic on this segment.
-    pts = [q for q in pts if 4800.0 <= q[0] <= 6300.0]
+    # interval. The public Berger/Huber curve is monotonic on the solar segment.
+    pts = [q for q in pts if 4700.0 <= q[0] <= 6400.0]
     pts.sort(key=lambda q: q[0])
     if len(pts) < 4:
         raise RuntimeError(f"Insufficient G-star TAMS coverage for Z={z}: {pts}")
@@ -158,7 +164,7 @@ def build_curve(z: float, y: float, archive_name: str, cache: Path):
     t = np.array([q[0] for q in pts], float)
     r = np.array([q[1] for q in pts], float)
     if t.min() > TMIN or t.max() < TMAX:
-        raise RuntimeError(f"TAMS curve Z={z} does not bracket 5300-6000 K: {t.min()}..{t.max()}")
+        raise RuntimeError(f"TAMS curve Z={z} does not bracket 5300-6000 K even with {TRACK_AGE_MAX_GYR:g}-Gyr track horizon: {t.min()}..{t.max()}")
     return {
         "Z": z,
         "Y": y,
@@ -181,7 +187,11 @@ def interp_curve(curve, T):
 def validate_solar(curve, reference_path: Path):
     ref = np.loadtxt(reference_path)
     ref = ref[(ref[:, 0] >= 5200.0) & (ref[:, 0] <= 6060.3)]
-    generated = np.array([[q[0], q[1]] for q in curve["points"]], float)
+    # Berger/Huber used only phase-7 points younger than 20 Gyr. Restrict the
+    # regenerated solar curve to the same subset for this compatibility check.
+    generated = np.array([[q[0], q[1]] for q in curve["points"] if q[4] < 20.0], float)
+    if len(generated) == 0:
+        raise RuntimeError("No solar TAMS points younger than 20 Gyr for validation")
     matches = []
     for T, R in ref:
         j = int(np.argmin(np.abs(generated[:, 0] - T)))
@@ -190,8 +200,6 @@ def validate_solar(curve, reference_path: Path):
         matches.append((T, R, generated[j, 0], generated[j, 1], dT, dRrel))
     max_dt = max(q[4] for q in matches)
     max_dr = max(q[5] for q in matches)
-    # The public source table was produced from these same PARSEC tracks using
-    # this same PHASE==7 rule.  Allow only tiny text/rounding differences.
     if max_dt > 0.2 or max_dr > 5e-4:
         raise RuntimeError(f"Solar TAMS regeneration does not reproduce Berger/Huber table: max_dT={max_dt}, max_relR={max_dr}")
     return matches, max_dt, max_dr
@@ -207,8 +215,6 @@ def metallicity_tams_radius(T, feh, curves):
     if np.any(feh < mh[0]) or np.any(feh > mh[-1]):
         raise ValueError(f"Metallicity extrapolation forbidden: host FeH {feh.min()}..{feh.max()}, anchors {mh[0]}..{mh[-1]}")
 
-    # Evaluate each metallicity anchor at each row's Teff, then interpolate
-    # log10 radius in [M/H] independently for every stellar assembly.
     anchor_logr = np.vstack([np.log10(interp_curve(c, T)) for c in curves])
     out = np.empty_like(T)
     for i, zfe in enumerate(feh):
@@ -272,8 +278,6 @@ def main():
         raise RuntimeError("Empty parent population")
 
     feh_all = np.array([r["FeH"] for r in parent], float)
-    # Download only PARSEC anchors that bracket the actual parent metallicity
-    # range, plus one anchor on either side when available.
     anchor_mh = np.array([mh_from_z(z) for z, _, _ in ANCHORS])
     lo_idx = max(0, int(np.searchsorted(anchor_mh, feh_all.min(), side="right")) - 1)
     hi_idx = min(len(ANCHORS) - 1, int(np.searchsorted(anchor_mh, feh_all.max(), side="left")))
@@ -284,19 +288,17 @@ def main():
     curves = [build_curve(*a, cache) for a in selected_anchors]
     solar = min(curves, key=lambda c: abs(c["Z"] - 0.017))
     if abs(solar["Z"] - 0.017) > 1e-12:
-        # Always include the Huber/solar validation anchor.
         solar = build_curve(0.017, 0.279, "Z0.017Y0.279.tar.gz", cache)
         curves.append(solar)
         curves.sort(key=lambda c: c["MH"])
     matches, max_dt, max_dr = validate_solar(solar, ref)
 
-    # Export all regenerated TAMS points and solar validation matches.
     with (out / "metallicity_tams_anchor_points.csv").open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["Z", "Y", "MH", "Teff_K", "R_TAMS_Rsun", "track_mass_Msun", "track_file"])
+        w.writerow(["Z", "Y", "MH", "Teff_K", "R_TAMS_Rsun", "track_mass_Msun", "track_file", "TAMS_age_Gyr"])
         for c in curves:
-            for T, R, M, name in c["points"]:
-                w.writerow([c["Z"], c["Y"], c["MH"], T, R, M, name])
+            for T, R, M, name, age_gyr in c["points"]:
+                w.writerow([c["Z"], c["Y"], c["MH"], T, R, M, name, age_gyr])
     with (out / "metallicity_tams_solar_validation.csv").open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["ref_Teff_K", "ref_R_Rsun", "generated_Teff_K", "generated_R_Rsun", "abs_dT_K", "rel_dR"])
@@ -339,11 +341,11 @@ def main():
         "sensitivity_selector": "PARSEC v1.2S R_TAMS(Teff,[M/H]) + logg<7",
         "metallicity_interpolation": "linear in [M/H] and log10(R_TAMS); temperature interpolation linear in Teff and log10(R_TAMS); no extrapolation",
         "parsec_source": BASE_URL,
-        "parsec_phase_rule": "first PHASE==7 model per track, age<20 Gyr, matching danxhuber/evolstate parsec.py",
+        "parsec_phase_rule": f"first PHASE==7 model per track; metallicity curves use PARSEC track horizon up to {TRACK_AGE_MAX_GYR:g} Gyr; Z=0.017 compatibility validation restricted to age<20 Gyr to match danxhuber/evolstate",
         "parent_FeH_min": float(feh.min()),
         "parent_FeH_max": float(feh.max()),
         "anchor_summary": [
-            {"Z": c["Z"], "Y": c["Y"], "MH": c["MH"], "archive": c["archive"], "archive_sha256": c["archive_sha256"], "n_G_segment_points": len(c["points"])}
+            {"Z": c["Z"], "Y": c["Y"], "MH": c["MH"], "archive": c["archive"], "archive_sha256": c["archive_sha256"], "n_G_segment_points": len(c["points"]), "T_min_K": float(c["T"].min()), "T_max_K": float(c["T"].max())}
             for c in curves
         ],
         "solar_regeneration_validation": {"max_abs_dT_K": max_dt, "max_relative_dR": max_dr},
@@ -363,14 +365,11 @@ def main():
         d["delta_2D_vs_1D"] = {k: (d["2D"][k] - d["1D"][k]) / d["1D"][k] for k in ("N_G", "Lambda_ESHZ", "Lambda_earth10")}
         result["domains"][name] = d
 
-    # Canonical baseline must exactly reproduce the current TAMS provider before
-    # interpreting the metallicity sensitivity.
     b = result["domains"]["lineweaver_7_9"]["1D"]
     assert abs(b["N_G"] - 263061992.3667424) < 1e-2, b
     assert abs(b["Lambda_ESHZ"] - 105716685.0799756) < 1e-2, b
     assert abs(b["Lambda_earth10"] - 3376462.6740267) < 1e-2, b
 
-    # Diagnostics for rows whose classification changes in 7-9 kpc.
     changed = [r for r in parent if 7.0 <= r["R_kpc"] <= 9.0 and r["B_1D"] != r["B_2D"]]
     gained = [r for r in changed if (not r["B_1D"]) and r["B_2D"]]
     lost = [r for r in changed if r["B_1D"] and (not r["B_2D"])]
@@ -385,7 +384,7 @@ def main():
 
     (out / "metallicity_tams_sensitivity.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
     with (out / "metallicity_tams_anchor_summary.csv").open("w", newline="", encoding="utf-8") as f:
-        cols = ["Z", "Y", "MH", "archive", "archive_sha256", "n_G_segment_points"]
+        cols = ["Z", "Y", "MH", "archive", "archive_sha256", "n_G_segment_points", "T_min_K", "T_max_K"]
         w = csv.DictWriter(f, fieldnames=cols); w.writeheader(); w.writerows(result["anchor_summary"])
 
     print(json.dumps(result, indent=2))
