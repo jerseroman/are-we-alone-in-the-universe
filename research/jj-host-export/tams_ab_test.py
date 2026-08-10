@@ -10,6 +10,11 @@ The parent population is selected ONLY by Teff, age, Galactic component and
 finite non-negative JJ surface-number weight. No lower-logg cut is applied before A/B.
 The script also evaluates the frozen Bryson Model-1 + Kopparapu CHZ L1/L2
 integrals on each selection and integrates them radially.
+
+FeH from the JJ stellar-assembly table is preserved in the parent export so that
+metallicity-dependent host-selection sensitivity can be evaluated on exactly the
+same weighted population. In jjmodel this FeH field is assigned from the thin/thick
+disk AMR value used to construct each stellar assembly.
 """
 from pathlib import Path
 import argparse, csv, json, math, os, sys
@@ -71,7 +76,7 @@ def main():
     if abs(float(p.dR)-0.5)>1e-12: raise RuntimeError(f'TAMS A/B requires dR=0.5, got {p.dR}')
     poptab=Path(jj.T['poptab']); out=Path(a.out); out.mkdir(parents=True,exist_ok=True)
     parent_path=out/'jj_g_hosts_parent_prelogg_padova.csv'
-    header=['R_kpc','component','age_Gyr','Mini','Mf','logL','logT','Teff_K','logg','N_surface_pc-2','Rstar_g_Rsun','Rstar_L_Rsun','R_TAMS_Rsun','A_logg','B_TAMS_MS','f_HZ','f_earth10']
+    header=['R_kpc','component','age_Gyr','FeH','Mini','Mf','logL','logT','Teff_K','logg','N_surface_pc-2','Rstar_g_Rsun','Rstar_L_Rsun','R_TAMS_Rsun','A_logg','B_TAMS_MS','f_HZ','f_earth10']
     rows_by_R={}; rel_radius=[]; n_parent=0; compact_rejected_rows=0
     with parent_path.open('w',newline='',encoding='utf-8') as fh:
         w=csv.writer(fh); w.writerow(header)
@@ -79,15 +84,16 @@ def main():
             acc={'A_N':0.,'B_N':0.,'A_L1':0.,'B_L1':0.,'A_L2':0.,'B_L2':0.}
             for comp,label in [('d','thin'),('t','thick')]:
                 tab=Table.read(poptab/f'SSP_R{R}_{comp}_{a.iso}.csv',format='ascii.csv')
-                required=['age','Mini','Mf','logL','logT','logg','N']
+                required=['age','FeH','Mini','Mf','logL','logT','logg','N']
                 miss=[c for c in required if c not in tab.colnames]
                 if miss: raise RuntimeError(f'{R} {label}: missing {miss}; columns={tab.colnames}')
-                age=np.asarray(tab['age'],float); mini=np.asarray(tab['Mini'],float); mf=np.asarray(tab['Mf'],float)
+                age=np.asarray(tab['age'],float); feh=np.asarray(tab['FeH'],float)
+                mini=np.asarray(tab['Mini'],float); mf=np.asarray(tab['Mf'],float)
                 logL=np.asarray(tab['logL'],float); logT=np.asarray(tab['logT'],float); logg=np.asarray(tab['logg'],float); n=np.asarray(tab['N'],float)
                 teff=10**logT
-                keep=(teff>=TMIN)&(teff<=TMAX)&(age>=AGE_MIN)&np.isfinite(n)&(n>=0)&np.isfinite(mf)&(mf>0)&np.isfinite(logL)&np.isfinite(logg)
-                for vals in zip(age[keep],mini[keep],mf[keep],logL[keep],logT[keep],teff[keep],logg[keep],n[keep]):
-                    ag,mi,m,lL,lT,T,lg,wt=map(float,vals)
+                keep=(teff>=TMIN)&(teff<=TMAX)&(age>=AGE_MIN)&np.isfinite(feh)&np.isfinite(n)&(n>=0)&np.isfinite(mf)&(mf>0)&np.isfinite(logL)&np.isfinite(logg)
+                for vals in zip(age[keep],feh[keep],mini[keep],mf[keep],logL[keep],logT[keep],teff[keep],logg[keep],n[keep]):
+                    ag,zfe,mi,m,lL,lT,T,lg,wt=map(float,vals)
                     rg=math.sqrt(m*10**(LOGG_SUN-lg)); rl=10**(lL/2)*(TSUN_RADIUS/T)**2
                     rt=float(tams_radius_rsun(T))
                     below_tams=(rg<=rt)
@@ -98,7 +104,7 @@ def main():
                     if rg>0 and rl>0: rel_radius.append(abs(rg-rl)/((rg+rl)/2))
                     if A: acc['A_N']+=wt; acc['A_L1']+=wt*fhz; acc['A_L2']+=wt*fe
                     if B: acc['B_N']+=wt; acc['B_L1']+=wt*fhz; acc['B_L2']+=wt*fe
-                    w.writerow([R,label,ag,mi,m,lL,lT,T,lg,wt,rg,rl,rt,int(A),int(B),fhz,fe])
+                    w.writerow([R,label,ag,zfe,mi,m,lL,lT,T,lg,wt,rg,rl,rt,int(A),int(B),fhz,fe])
             fac=2*math.pi*R*1e6
             rows_by_R[float(R)]={'R_kpc':float(R), **{k:fac*v for k,v in acc.items()}}
     radial=[rows_by_R[k] for k in sorted(rows_by_R)]
@@ -108,6 +114,7 @@ def main():
     result={'parent_rows':n_parent,'dR_kpc':0.5,'logg_sun':LOGG_SUN,'Tsun_radius_K':TSUN_RADIUS,
             'TAMS_reference_sha256':TAMS_REFERENCE_SHA256,
             'TAMS_interpolation':'linear in Teff and log10(R/Rsun); no extrapolation',
+            'parent_export_includes_FeH':True,
             'B_definition':'Rstar <= PARSEC TAMS radius AND logg < 7 compact-remnant veto',
             'compact_remnant_rows_rejected':compact_rejected_rows,
             'radius_reconstruction_rel_diff_median':float(np.median(rel_radius)),
