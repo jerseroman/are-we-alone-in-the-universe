@@ -1,0 +1,24 @@
+\section{Conclusions}\label{sec:conclusions}
+
+We have constructed a row-level transport operator that combines a per-star occurrence model with a synthetic Galactic host population while retaining the temperature dependence of occurrence and HZ boundaries. Applied to old, operationally main-sequence G stars in the 7--9 kpc annulus, the method gives
+\begin{align}
+ N_\star&\simeq2.63\times10^8,\nonumber\\
+ \LamEE^{\rm const}&\simeq3.38\times10^6,\nonumber\\
+ \LamEE^{\rm zero}&\simeq4.71\times10^6.
+\end{align}
+The latter two values are the constant-completeness source low bound and zero-completeness source high bound, respectively. They are conditional bounding extrapolations of the source completeness model, not a credible interval or assumption-free physical bounds. \citet{Bryson2021} argue that the true rate may lie closer to the zero-completeness case for hotter stars. The fixed-vector broad-HZ implementation lies 5.9--6.6\% above the published Bryson posterior medians, while replacing the uniform temperature measure with the JJ distribution changes broad-HZ occurrence by less than 0.3\%. The latter is a negative numerical result: the row-level construction is important for an explicit and reusable transport measure, but temperature reweighting is not the dominant leverage in this particular calculation.
+
+The observed 0.5-to-0.25 kpc grid changes are below 0.3\%, but they do not represent the total uncertainty on the host population. Host classification, long-period completeness, climate assumptions, radial-domain choice, source-to-target selection, multiplicity, unpropagated JJ/isochrone uncertainties, and sparse support in the narrow planet domain are materially more important. A full posterior Galactic inference requires correlated occurrence samples and a host model that explicitly propagates its own population and multiplicity uncertainties. Until then, the reported values should be read as reproducible, model-conditioned benchmarks.
+
+\section{Data and Software Availability}\label{sec:data}
+
+The persistent project concept DOI is \href{https://doi.org/10.5281/zenodo.20474527}{10.5281/zenodo.20474527}; exact reproduction additionally requires the release tag or commit cited with the manuscript. The pinned computational identifiers are:
+\begin{itemize}
+\item \texttt{jjmodel}: \hashid{2828a2e8bfc379ba9c8ef4b4d0477ab5febe3b54};
+\item project analysis: \hashid{f9cbe74bfd791ebfb26dc48ff39d54f37dea263d};
+\item Bryson research code: \texttt{d200f54b6f0d};
+\item verified workflow artifact: \hashid{sha256:0d5fc39c878193d09c545ed6bc68a4a449ee2a53907c0005058e33e1e7acdf00}.
+\end{itemize}
+The paper-specific evidence bundle contains the parent and canonical row-level exports, radial summaries, frozen TAMS table, JJ runtime parameters, sensitivity outputs, figure-generation and verification scripts, and SHA-256 manifests. The Bryson notebooks generate posterior arrays at runtime, but saved correlated arrays are not present in the pinned repository tree.
+
+The analysis was performed with Python, NumPy \citep{Harris2020}, pandas \citep{McKinney2010}, Matplotlib \citep{Hunter2007}, Astropy \citep{Astropy2022}, and \texttt{jjmodel} \citep{Sysoliatina2022}.
