@@ -1,0 +1,131 @@
+\section{Occurrence and Habitable-Zone Integration}\label{sec:occurrence}
+
+\subsection{Bryson occurrence function}
+
+We adopt Model~1 from \citet{Bryson2021}, which the authors recommend as their baseline model. The differential number of planets per star per unit $r$ and $I$ is
+\begin{equation}
+ \lambda(r,I,T\mid\bm\theta)
+ =F_0C_1r^\alpha I^\beta T^\gamma g(T),
+ \label{eq:lambda}
+\end{equation}
+with $T$ in kelvin and
+\begin{equation}
+ g(T)=
+ \begin{cases}
+ 10^{-11.84}T^{3.16}, & T\leq5117\ {\rm K},\\
+ 10^{-16.77}T^{4.49}, & T>5117\ {\rm K}.
+ \end{cases}
+ \label{eq:gT}
+\end{equation}
+The displayed coefficients follow the published precision; the implementation uses the additional digits $-11.839$ and $-16.769$ from the pinned public code. $C_1$ normalizes the model over $0.5\leq r\leq2.5$, $0.2\leq I\leq2.2$, and a uniform temperature measure over 3900--6300 K. The analytic normalization is given in Appendix~\ref{app:analytic}.
+
+Table~\ref{tab:occurrence_parameters} lists the two parameter vectors used here. They are the medians of the \citet{Bryson2021} Model~1, \texttt{hab2}, Poisson-likelihood, ``With Uncertainty'' solutions for the constant- and zero-completeness extrapolations. Under the source model's assumption that average completeness does not increase beyond the measured long-period regime, constant completeness supplies the conditional lower-occurrence bound and zero completeness the conditional upper-occurrence bound. They are not samples from one probability distribution, a posterior credible interval, or assumption-free physical bounds. \citet{Bryson2021} state that reality should lie between them and may be closer to the zero-completeness case for hotter stars; 5300--6000 K is the hotter part, though not the full upper edge, of their 3900--6300 K fit domain.
+
+\begin{table*}[t]
+\caption{Adopted Bryson Model~1 plug-in parameters}
+\label{tab:occurrence_parameters}
+\centering
+\begin{tabular}{lccccc}
+\toprule
+Completeness branch & $F_0$ & $\alpha$ & $\beta$ & $\gamma$ & $C_1$\\
+\midrule
+Constant & 1.107 & -1.082 & -0.839 & -2.671 & $2.714\times10^9$\\
+Zero & 1.590 & -1.175 & -1.195 & -1.376 & $3.612\times10^4$\\
+\bottomrule
+\end{tabular}
+\tablecomments{Values are the \citet{Bryson2021} Model~1, \texttt{hab2}, Poisson, ``With Uncertainty'' low- and high-bound medians. The low and high bounds correspond to constant- and zero-completeness extrapolation, respectively.}
+\end{table*}
+
+The factor $g(T)$ is the fixed empirical geometric term of the source model. \citet{Bryson2021} fit it to the semimajor-axis width $\Delta a$ of their Kepler parent stars over the fixed instellation interval $0.25\leq I\leq1.8$, using the source sample's radius--temperature relation. It is therefore distinct from the temperature-dependent conservative Kopparapu HZ imposed in Section~\ref{sec:occurrence}. We do not replace it post hoc with a JJ-derived relation: doing so without refitting the Kepler likelihood would alter the fitted parameter meanings and normalization.
+
+The high-precision coefficients used by the pinned source implementation produce a 0.691\% upward discontinuity at 5117 K. Every target row in this work lies on the high-temperature branch. A diagnostic that changes the high-temperature coefficient to enforce continuity and then recomputes $C_1$ changes target-domain occurrence by $-0.303\%$; the canonical calculation retains the published source definition. The broader transport limitation is discussed in Section~\ref{subsec:transport}.
+
+\subsection{Present-day conservative HZ}
+
+For a selected climatic boundary, the effective stellar flux is
+\begin{align}
+ S_{\rm eff}(T)={}&S_{{\rm eff},\odot}+aT'
+ +bT'^2+cT'^3+dT'^4,\nonumber\\
+ T'={}&T-5780\ {\rm K}.
+ \label{eq:kopparapu}
+\end{align}
+using the polynomial introduced by \citet{Kopparapu2013}. The planetary-mass dependence tabulated by \citet{Kopparapu2014} is applied to the runaway-greenhouse inner boundary; the maximum-greenhouse outer-boundary coefficients are unchanged across the 0.1, 1, and $5\,\Mearth$ prescriptions used here. The canonical conservative HZ uses the $1\,\Mearth$ runaway-greenhouse inner boundary and the maximum-greenhouse outer boundary (Table~\ref{tab:hz_coefficients}). ``Conservative'' names this particular model pair; it is not a universal lower bound over all atmospheric or climate models.
+
+\begin{table*}[t]
+\caption{Canonical conservative-HZ coefficients}
+\label{tab:hz_coefficients}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{lccccc}
+\toprule
+Boundary & $S_{{\rm eff},\odot}$ & $a$ & $b$ & $c$ & $d$\\
+\midrule
+Runaway greenhouse & 1.107 & $1.332\times10^{-4}$ & $1.580\times10^{-8}$ & $-8.308\times10^{-12}$ & $-1.931\times10^{-15}$\\
+Maximum greenhouse & 0.356 & $6.171\times10^{-5}$ & $1.698\times10^{-9}$ & $-3.198\times10^{-12}$ & $-5.575\times10^{-16}$\\
+\bottomrule
+\end{tabular}
+\tablecomments{Only the runaway-greenhouse inner-boundary coefficients vary with the planet-mass prescription in \citet{Kopparapu2014}; the maximum-greenhouse coefficients used here are mass independent.}
+\end{table*}
+
+Let $S_{\rm out}(T)$ and $S_{\rm in}(T)$ denote the outer and inner HZ flux boundaries. The broad HZ and narrow ExoEarth domains are
+\begin{equation}
+ \mathcal{D}_{\rm HZ}(T)
+ =[0.5,1.5]\times[S_{\rm out}(T),S_{\rm in}(T)],
+ \label{eq:d_hz}
+\end{equation}
+\begin{align}
+ \mathcal{D}_{\rm EE}(T)=[0.9,1.1]\times
+ \big[&\max\{0.9,S_{\rm out}(T)\},\nonumber\\
+      &\min\{1.1,S_{\rm in}(T)\}\big],
+ \label{eq:d_ee}
+\end{align}
+with an empty domain when the upper instellation limit does not exceed the lower limit. Figure~\ref{fig:hz_geometry} shows the actual clipped domain rather than only the nominal rectangle. Across 5300--6000 K, $S_{\rm out}=0.327$--0.370 and never clips the lower boundary $I=0.9$. The runaway-greenhouse boundary crosses $I=1.1$ at 5727.1 K, so only the inner HZ boundary clips the narrow domain.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{hz_exoearth_geometry.pdf}
+\caption{Present-day conservative HZ boundaries and the actual narrow ExoEarth integration domain. The shaded band is Equation~(\ref{eq:d_ee}), clipped by the runaway-greenhouse boundary below 5727.1 K.}
+\label{fig:hz_geometry}
+\end{figure}
+
+\subsection{Row-level Galactic estimator}
+
+For $k\in\{\mathrm{HZ},\mathrm{EE}\}$, the expected number of selected planets per star at temperature $T$ is
+\begin{equation}
+ f_k(T\mid\bm\theta)
+ =\iint_{\mathcal{D}_k(T)}
+ \lambda(r,I,T\mid\bm\theta)\,\dd r\,\dd I.
+ \label{eq:fk}
+\end{equation}
+Figure~\ref{fig:occurrence_curves} shows these functions for both completeness branches.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.47\textwidth]{occurrence_hz_vs_teff.pdf}\hfill
+\includegraphics[width=0.47\textwidth]{occurrence_ee_vs_teff.pdf}
+\caption{Per-star occurrence functions evaluated over the broad conservative-HZ domain (left) and narrow ExoEarth domain (right). The curves include both the temperature dependence of the fitted occurrence model and the temperature-dependent HZ clipping.}
+\label{fig:occurrence_curves}
+\end{figure*}
+
+At radial node $R_j$, the occurrence-weighted surface density is
+\begin{equation}
+ \Sigma_k(R_j)=\sum_i H_{ij}w_{ij}
+ f_k(T_{ij}\mid\bm\theta).
+ \label{eq:sigma_k}
+\end{equation}
+The nodal radial intensity is
+\begin{equation}
+ \left.\frac{\dd\Lambda_k}{\dd R}\right|_{R_j}
+ =2\pi R_j\,10^6\,\Sigma_k(R_j).
+ \label{eq:radial_intensity}
+\end{equation}
+The actual production estimator is the corresponding trapezoid sum,
+\begin{equation}
+ \boxed{
+ \Lambda_k^{(\Delta R)}
+ =10^6\Delta R\sum_{j=0}^{4}c_j\,2\pi R_j
+ \sum_i H_{ij}w_{ij}f_k(T_{ij}\mid\bm\theta),}
+ \label{eq:galactic_estimator}
+\end{equation}
+with the same $R_j$, $c_j$, and $\Delta R$ as Equation~(\ref{eq:nstar_trapezoid}). This row-level construction keeps the source occurrence measure and target stellar measure explicit and prevents an implicit collapse to a representative temperature. In this particular estimand, however, the JJ temperature weighting changes broad-HZ occurrence by less than 0.3\% relative to a uniform temperature measure; the row-level treatment is therefore methodologically consequential for traceability, but not a major numerical driver of the headline value.
