@@ -1,0 +1,58 @@
+\section{Sensitivity and Uncertainty}\label{sec:sensitivity}
+
+Table~\ref{tab:sensitivity} reports one-at-a-time alternatives relative to the constant-completeness canonical result. These are not draws from a common probability distribution and must not be summed or combined in quadrature. They include numerical tests, alternative host definitions, climate prescriptions, and occurrence-model branches.
+
+\begin{table*}[t]
+\caption{One-at-a-time sensitivity of the narrow ExoEarth expectation}
+\label{tab:sensitivity}
+\centering
+\begin{tabular}{lrrl}
+\toprule
+Alternative & $\LamEE$ & Change from reference & Interpretation\\
+\midrule
+Luminosity--temperature radius selector & $3.381\times10^6$ & +0.15\% & Radius-reconstruction stability\\
+Radial grid $\Delta R=0.25$ kpc & $3.384\times10^6$ & +0.23\% & Regenerated-grid convergence\\
+Metallicity-dependent TAMS selector & $3.430\times10^6$ & +1.59\% & Host classification\\
+Bryson Model~2 & $3.488\times10^6$ & +3.30\% & Occurrence functional form in $T$\\
+Inner HZ flux boundary $-1\%$ & $3.253\times10^6$ & -3.67\% & Climate boundary\\
+Inner HZ flux boundary $+1\%$ & $3.468\times10^6$ & +2.71\% & Climate boundary\\
+$5\,\Mearth$ runaway-greenhouse inner boundary & $3.618\times10^6$ & +7.15\% & Planet-mass climate prescription\\
+Zero-completeness source branch & $4.708\times10^6$ & +39.4\% & Long-period completeness\\
+Legacy $4.3<\log g<7$ selector & $2.409\times10^6$ & -28.6\% & Host-domain alternative\\
+$0.1\,\Mearth$ runaway-greenhouse inner boundary & $1.442\times10^6$ & -57.3\% & Planet-mass climate prescription\\
+\bottomrule
+\end{tabular}
+\tablecomments{All changes are relative to the constant-completeness reference result. They are separate deterministic alternatives or diagnostics, not samples from a joint uncertainty distribution.}
+\end{table*}
+
+The sign of the legacy-selector comparison is important. The TAMS-selected reference result is 40.1\% larger than the legacy result when TAMS is used as the numerator; equivalently, the legacy alternative is 28.6\% smaller than the TAMS result when all table entries are expressed relative to the reference branch. The Model~2 row uses $F_0=1.13$, $\alpha=-1.13$, $\beta=-0.85$, and $\gamma=+1.19$, with no $g(T)$ factor and $C_2=1.072724\times10^{-5}$; Appendix~\ref{app:model2} gives its normalization.
+
+The metallicity-dependent TAMS test preserves the adopted one-dimensional absolute boundary at solar metallicity and imports only the differential PARSEC response,
+\begin{align}
+ R_{\rm TAMS,2D}(T,Z)={}&R_{\rm TAMS,Huber}(T)\nonumber\\
+ &\times\frac{R_{\rm TAMS,PARSEC}(T,Z)}
+ {R_{\rm TAMS,PARSEC}(T,Z_\odot)}.
+ \label{eq:tams2d}
+\end{align}
+For this test the JJ $[\mathrm{Fe/H}]$ coordinate is treated as scaled-solar $[\mathrm{M/H}]$; alpha enhancement is not modeled. The test changes $N_\star$ by $+1.633\%$ and $\LamEE$ by $+1.590\%$. It is a stellar-state sensitivity, not a metallicity multiplier on planet occurrence.
+
+The radial mask changes the estimand rather than perturbing a parameter. Table~\ref{tab:domains} therefore reports alternative domains separately from Table~\ref{tab:sensitivity}.
+
+\begin{table*}[t]
+\caption{Alternative Galactocentric domains under the constant-completeness branch}
+\label{tab:domains}
+\centering
+\begin{tabular}{lrr}
+\toprule
+Radial domain & $N_\star$ & $\LamEE$\\
+\midrule
+7--9 kpc & $2.6306\times10^8$ & $3.3765\times10^6$\\
+6--10 kpc & $5.3640\times10^8$ & $6.8239\times10^6$\\
+4--8 kpc & $9.1809\times10^8$ & $1.1299\times10^7$\\
+4--14 kpc & $1.2383\times10^9$ & $1.5479\times10^7$\\
+\bottomrule
+\end{tabular}
+\tablecomments{These rows define different target populations and are not uncertainty intervals for the 7--9 kpc estimand.}
+\end{table*}
+
+The public Bryson repository contains notebooks that generate and save posterior arrays during execution, but the pinned repository snapshot does not contain the saved correlated arrays required for direct propagation through Equation~(\ref{eq:galactic_estimator}). A statistically valid narrow-domain credible interval therefore cannot be reconstructed from the published marginal summaries alone. In particular, scaling the published broad-HZ interval by a fixed ratio would ignore correlations among $F_0$, $\alpha$, $\beta$, and $\gamma$, the nonlinear normalization $C_1$, and temperature-dependent clipping of $\mathcal{D}_{\rm EE}(T)$. We consequently report fixed-vector estimates and keep the two completeness branches separate.
