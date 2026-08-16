@@ -1,0 +1,80 @@
+\section{Results}\label{sec:results}
+
+\subsection{Host population}
+
+The canonical selector yields
+\begin{equation}
+ N_\star=2.63\times10^8
+ \label{eq:nstar_result}
+\end{equation}
+old G-star hosts in the 7--9 kpc annulus. The thin disk contributes $2.11\times10^8$ and the thick disk $5.23\times10^7$, corresponding to 19.9\% of the total. Table~\ref{tab:demographics} and Figure~\ref{fig:demographics} summarize the occurrence-relevant host distribution. The weighted median temperature is 5670 K rather than the 5650 K midpoint of the nominal interval, so the transported temperature measure is explicitly documented. Section~\ref{sec:benchmark} shows that the resulting replacement of a uniform temperature measure is nevertheless a small ($<0.3\%$) numerical effect for the broad HZ in this estimand.
+
+\begin{table*}[t]
+\caption{Integrated host-property distribution in the 7--9 kpc annulus}
+\label{tab:demographics}
+\centering
+\begin{tabular}{lccrrrr}
+\toprule
+Quantity & Unit & Weighted mean & 16th percentile & Median & 84th percentile\\
+\midrule
+Effective temperature & K & 5646 & 5424 & 5670 & 5841\\
+Age & Gyr & 9.35 & 6.41 & 9.59 & 12.16\\
+$[\mathrm{Fe/H}]$ & dex & -0.020 & -0.284 & +0.033 & +0.222\\
+Current mass & $M_\odot$ & 0.913 & 0.810 & 0.910 & 1.015\\
+Stellar radius & $R_\odot$ & 1.035 & 0.864 & 0.999 & 1.237\\
+$\log g$ & dex (cgs) & 4.379 & 4.250 & 4.400 & 4.492\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.32\textwidth]{host_teff_distribution.pdf}\hfill
+\includegraphics[width=0.32\textwidth]{host_age_distribution.pdf}\hfill
+\includegraphics[width=0.32\textwidth]{host_feh_distribution.pdf}
+\caption{JJ-weighted distributions of selected host effective temperature, age, and metallicity after radial integration over 7--9 kpc. The distributions use the same trapezoid measure as Equation~(\ref{eq:nstar}).}
+\label{fig:demographics}
+\end{figure*}
+
+\subsection{Planet expectations}
+
+Table~\ref{tab:main_results} gives the principal results. Under the constant-completeness conditional lower-occurrence branch, used as the reference for the one-at-a-time comparisons in Section~\ref{sec:sensitivity},
+\begin{equation}
+ \LamHZ=1.06\times10^8,
+ \qquad
+ \LamEE=3.38\times10^6.
+ \label{eq:canonical_results}
+\end{equation}
+The corresponding mean rates are 0.402 broad-HZ planets and 0.0128 narrow-domain ExoEarth candidates per selected host. The narrow domain contains 3.19\% of the integrated broad-HZ occurrence intensity.
+
+The zero-completeness conditional upper-occurrence branch gives
+\begin{equation}
+ \LamHZ=1.76\times10^8,
+ \qquad
+ \LamEE=4.71\times10^6.
+ \label{eq:zero_results}
+\end{equation}
+The branch change is larger for the broad HZ than for the narrow ExoEarth domain because the two domains weight radius, instellation, and temperature differently.
+
+\begin{table*}[t]
+\caption{Model-conditioned population expectations}
+\label{tab:main_results}
+\centering
+\begin{tabular}{lrrrrrr}
+\toprule
+Branch & $N_\star$ & $\langle f_{\rm HZ}\rangle$ & $\LamHZ$ & $\langle f_{\rm EE}\rangle$ & $\LamEE$ & $\LamEE/\LamHZ$\\
+\midrule
+Constant completeness (source low bound) & $2.63\times10^8$ & 0.4019 & $1.06\times10^8$ & 0.0128 & $3.38\times10^6$ & 3.19\%\\
+Zero completeness (source high bound) & $2.63\times10^8$ & 0.6703 & $1.76\times10^8$ & 0.0179 & $4.71\times10^6$ & 2.67\%\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+Figure~\ref{fig:radial_intensity} shows the full 4--14 kpc radial intensity before the 7--9 kpc mask is applied. The annulus is therefore an explicit estimand choice, not a region outside of which the model predicts zero planets.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{exoearth_radial_intensity.pdf}
+\caption{Radial intensity of narrow-domain ExoEarth candidates in the full JJ model range. Only the shaded 7--9 kpc interval is integrated for the headline estimand.}
+\label{fig:radial_intensity}
+\end{figure}
