@@ -1,0 +1,30 @@
+\section{Internal Verification}\label{sec:verification}
+
+The numerical pipeline was verified from the frozen row-level export rather than by reusing only the final radial totals. The independent reproduction recomputed stellar radii, occurrence normalizations, HZ intersections, per-row occurrence weights, thin/thick decompositions, and radial integrals. It uses the same frozen population export and is therefore a reproduction from shared input data, not an observationally independent validation.
+
+The following invariants were checked: finite and non-negative surface-number weights; exact recovery of the intended radial, temperature, age, and component domains; $\mathcal{D}_{\rm EE}(T)\subseteq\mathcal{D}_{\rm HZ}(T)$; non-negative occurrence values; one inner-HZ crossing; and exact recovery of the reported results to floating-point precision. SHA-256 manifests were verified for the archived inputs. The additional radius-selector diagnostic reproduces the $+0.131\%$ host-count and $+0.148\%$ narrow-domain changes reported in Section~\ref{subsec:selector}.
+
+The final TAMS population was independently regenerated on $\Delta R=1.0$, 0.5, and 0.25 kpc grids. Refinement from 0.5 to 0.25 kpc changes $N_\star$ by $+0.175\%$, $\LamHZ$ by $+0.200\%$, and $\LamEE$ by $+0.231\%$. These are observed differences between regenerated grids, not a Richardson extrapolation or an estimate of the remaining astrophysical uncertainty. Numerical radial resolution is therefore subdominant to the model alternatives in Section~\ref{sec:sensitivity}.
+
+\section{External Benchmark against Bryson et al.}\label{sec:benchmark}
+
+\citet{Bryson2021} report Model~1 conservative-HZ occurrence for exactly the 5300--6000 K G-star interval and the broad $0.5$--$1.5\,\Rearth$ radius range. For a fixed parameter vector, their definition samples temperature uniformly over the selected interval. Their published statistic is not that fixed-vector mean: they evaluate distributions of $f_{\rm HZ}(T)$ over the occurrence-parameter sample at uniformly sampled temperatures, concatenate those distributions, and then report posterior summaries. Table~\ref{tab:external_benchmark} therefore compares the published posterior medians with a distinct, explicitly labeled fixed-vector plug-in calculation.
+
+\begin{table*}[t]
+\caption{External benchmark for broad-HZ occurrence per star}
+\label{tab:external_benchmark}
+\centering
+\small
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{lccccc}
+\toprule
+Branch & Bryson median & 68\% interval & Uniform-$T$ plug-in & JJ weighted & Plug-in offset\\
+\midrule
+Constant & 0.38 & 0.16--0.88 & 0.4024 & 0.4019 & +5.9\%\\
+Zero & 0.63 & 0.25--1.57 & 0.6719 & 0.6703 & +6.6\%\\
+\bottomrule
+\end{tabular}
+\tablecomments{The final column compares the uniform-temperature fixed-vector value with the published posterior median; these are not identical statistical functionals. The JJ-weighted values differ from the corresponding uniform-temperature plug-in values by $-0.13\%$ and $-0.23\%$. Published intervals are external benchmarks and are not transferred to the narrow-domain estimator.}
+\end{table*}
+
+The comparison establishes that the analytic implementation reproduces the published G-star broad-HZ scale. The normalization convention $C_1$ and the fixed-vector calculation were independently verified against the pinned source implementation. The residual 5.9--6.6\% difference cannot be fully decomposed without the correlated occurrence-parameter arrays and complete source inference state. It can reflect both the noncommutativity of transforming a posterior summary and the difference between a posterior-temperature mixture and a fixed-vector temperature mean. Replacing the uniform temperature measure alone with the JJ host distribution changes the broad-HZ value by less than 0.3\%, a useful negative result rather than a dominant correction.
