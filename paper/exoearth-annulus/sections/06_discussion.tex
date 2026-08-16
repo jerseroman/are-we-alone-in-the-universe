@@ -1,0 +1,31 @@
+\section{Discussion}\label{sec:discussion}
+
+\subsection{Data support for the narrow planet domain}
+
+The narrow ExoEarth estimate is more model-dependent than the broad-HZ benchmark. In the DR25 population considered by \citet{Bryson2021}, only nine candidates near the HZ have $R_p\leq1.5\,\Rearth$, compared with 56 at $R_p\leq2.5\,\Rearth$. The $0.9$--$1.1\,\Rearth$ interval used here is narrower still. The result therefore depends on extrapolating a smooth fitted occurrence surface into a sparsely populated domain. This does not invalidate a model-conditioned expectation, but it limits how literally the central number should be interpreted. Theoretical and empirical studies have also warned that extrapolating from larger, more irradiated planets to small low-instellation planets can bias $\eta_\oplus$ \citep{LopezRice2018,Pascucci2019}.
+
+The Model~2 sensitivity of +3.30\% tests one alternative temperature dependence within the Bryson framework. It does not exhaust uncertainty in the radius--instellation functional form, particularly within a domain with very few direct detections.
+
+\subsection{Host-population uncertainty}
+
+The JJ host count is a deterministic output of the pinned parameter realization and isochrone library. The $+0.175\%$ grid change is only a radial-discretization diagnostic and must not be read as a total uncertainty on $N_\star$. This work does not propagate posterior uncertainty in the JJ star-formation and age--metallicity histories, IMF parameters, component normalizations, or the choice among PARSEC, MIST, and BaSTI libraries supported by \texttt{jjmodel}. Consequently, the reported host count is numerically reproducible but not known astrophysically to sub-percent precision.
+
+\subsection{Transport assumptions}\label{subsec:transport}
+
+Equation~(\ref{eq:galactic_estimator}) transports a Kepler-calibrated occurrence model to an older Galactic population. Conditional on $\Teff$, the calculation assumes no additional dependence of planet occurrence or survival on stellar age, $[\mathrm{Fe/H}]$, $[\alpha/\mathrm{Fe}]$, thin/thick-disk membership, or Galactic radius. This is a transparent null transport assumption, not an empirical finding.
+
+The source stellar denominator and the JJ denominator are also not guaranteed to represent identical selection or multiplicity populations. \citet{Bryson2021} began with 177,798 stars common to three source catalogs and, after cuts on stellar characterization, evolutionary state, identified binarity, noise, limb darkening, duty cycle, data span, and the DR25 \texttt{timeoutsumry} flag, retained 82,371 stars before their final temperature selections. The JJ export describes an intrinsic synthetic single-star population and does not reproduce these observational-quality cuts. The transport therefore assumes that, conditional on the modeled stellar variables, the source denominator's quality cuts are not additionally correlated with intrinsic planet occurrence.
+
+The JJ export is constructed from a single-star IMF and single-star isochrones and does not explicitly encode a binary selection matching the Kepler cuts. Close companions can suppress planet occurrence \citep{Kraus2016}, while unresolved multiplicity can alter inferred planet radii and completeness. The direction and magnitude of a correction cannot be inferred from the present data, so multiplicity is retained as an unquantified transport systematic rather than assigned an ad hoc factor.
+
+The empirical $g(T)$ factor is another source-population feature. Because it is embedded in the fitted occurrence model, substituting a JJ-specific $g_{\rm JJ}(T)$ after fitting would not be a controlled sensitivity experiment. A defensible replacement would require refitting the Kepler occurrence likelihood under the alternative parameterization. The Model~2 result provides a limited, internally calibrated comparison without changing the source model post hoc.
+
+\subsection{Meaning of the Galactic annulus}
+
+The 7--9 kpc interval is adopted solely as an absolute Galactocentric geometric mask motivated by the historically highlighted region in \citet{Lineweaver2004}. It is not a transfer of their complete GHZ model. Lineweaver et al. used $R_\odot=8.5$ kpc, whereas the pinned JJ realization uses $R_\odot=8.17$ kpc; the same absolute annulus therefore has a slightly different position relative to the Sun. The present analysis also does not inherit their time-dependent metallicity, supernova, terrestrial-planet, biological-evolution, or stellar-formation-age weighting. In particular, the one-sided criterion $t_\star\geq4.57$ Gyr is defined independently of the approximately 8--4 Gyr formation-time population emphasized in the historical GHZ result.
+
+The concept and geometry of a sharply bounded GHZ are themselves model-dependent \citep{Prantzos2008,Gowanlock2011}. The result must therefore be described as an estimate within a 7--9 kpc annulus, not as the number of ExoEarth candidates in a physically complete Galactic habitable zone. Table~\ref{tab:domains} shows that the full JJ 4--14 kpc domain contains substantially more eligible hosts and planet intensity. These are alternative target populations, not evidence that the remainder of the disk is uninhabitable.
+
+\subsection{What the central number does and does not mean}
+
+The statement $\LamEE=3.38\times10^6$ means that the canonical frozen model assigns that expected number of planets to the specified radius--instellation--present-day-HZ domain around the selected host population. It is not a count of observed planets, not the number of systems with at least one such planet, and not the number of rocky, ocean-bearing, habitable, or inhabited worlds. The six-digit computational outputs retained in the archive document reproducibility; three significant figures are used in the scientific text because the model systematics are much larger.
