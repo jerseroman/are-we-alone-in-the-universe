@@ -1,0 +1,80 @@
+\appendix
+\setcounter{equation}{0}
+\renewcommand{\theequation}{A\arabic{equation}}
+\renewcommand{\theHequation}{A.\arabic{equation}}
+
+\section{Analytic Occurrence Integrals}\label{app:analytic}
+
+For exponent $q$, define
+\begin{equation}
+ \mathcal{J}(x_0,x_1;q)=
+ \begin{cases}
+ \displaystyle\frac{x_1^{q+1}-x_0^{q+1}}{q+1}, & q\neq-1,\\[6pt]
+ \ln(x_1/x_0), & q=-1.
+ \end{cases}
+ \label{eq:primitive}
+\end{equation}
+With $T_0=3900$ K, $T_b=5117$ K, and $T_1=6300$ K, the Model~1 normalization is
+\begin{align}
+ C_1^{-1}={}&
+ \mathcal{J}(0.5,2.5;\alpha)
+ \mathcal{J}(0.2,2.2;\beta)\nonumber\\
+ &\times\frac{1}{T_1-T_0}\big[
+ 10^{-11.839}\mathcal{J}(T_0,T_b;\gamma+3.16)\nonumber\\
+ &\hspace{36mm}+10^{-16.769}\mathcal{J}(T_b,T_1;\gamma+4.49)
+ \big].
+ \label{eq:c1}
+\end{align}
+Because Equation~(\ref{eq:lambda}) is separable within each temperature branch, $f_k(T)$ is evaluated analytically in $r$ and $I$ using Equation~(\ref{eq:primitive}). The only numerical quadrature in the final Galactic estimator is the radial integration after the row-level sums have been constructed.
+
+\section{Bryson Model~2 Sensitivity}\label{app:model2}
+
+For the Model~2 sensitivity, the source occurrence function is
+\begin{equation}
+ \lambda_2(r,I,T\mid\bm\theta_2)=F_0C_2r^\alpha I^\beta T^\gamma,
+ \label{eq:model2}
+\end{equation}
+without the fixed geometric factor $g(T)$. Its normalization is
+\begin{equation}
+ C_2^{-1}=\mathcal{J}(0.5,2.5;\alpha)
+ \mathcal{J}(0.2,2.2;\beta)
+ \frac{\mathcal{J}(T_0,T_1;\gamma)}{T_1-T_0}.
+ \label{eq:c2}
+\end{equation}
+The adopted \citet{Bryson2021} \texttt{hab2}, Poisson, ``With Uncertainty,'' constant-completeness median vector is
+\begin{equation}
+ (F_0,\alpha,\beta,\gamma,C_2)
+ =(1.13,-1.13,-0.85,+1.19,1.072724\times10^{-5}).
+\end{equation}
+Evaluated on the same frozen JJ rows and HZ prescription, this gives $\LamEE=3.487759\times10^6$, or $+3.296\%$ relative to the Model~1 constant-completeness reference.
+
+\section{Frozen PARSEC-TAMS Boundary}\label{app:tams}
+
+Table~\ref{tab:tams_nodes} lists the complete monotonic segment used in the 5300--6000 K host selection. The 5200 K, $1.15R_\odot$ anchor is retained verbatim from the frozen upstream table. Regeneration from the currently public PARSEC phase-7 track set reproduces the remaining G-segment nodes to numerical precision but does not reproduce that special low-temperature anchor under the upstream generator's $t<20$ Gyr condition; retaining the immutable source table avoids silently changing the inherited classifier.
+
+\begin{table}[h]
+\caption{Frozen TAMS nodes used for G-star interpolation}
+\label{tab:tams_nodes}
+\centering
+\begin{tabular}{rr}
+\toprule
+$T_{\rm eff}$ (K) & $R_{\rm TAMS}/R_\odot$\\
+\midrule
+5200.00000 & 1.15000\\
+5390.13944 & 1.22926\\
+5517.85139 & 1.28542\\
+5633.13293 & 1.35053\\
+5738.25706 & 1.42375\\
+5844.13178 & 1.49188\\
+5951.82290 & 1.55332\\
+6060.24246 & 1.61155\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Frozen Verification Checklist}\label{app:checks}
+
+The archived rerun accepts the reference result only after checking: (1) input checksums; (2) finite, non-negative row weights; (3) radial-node and unit consistency; (4) host temperature, age, and disk-component domains; (5) the youngest accepted midpoint; (6) the TAMS and compact-remnant indicators; (7) analytic recovery of both $C_1$ values and the Model~2 $C_2$ value; (8) non-negative $f_k(T)$ and nested planet domains; (9) the unique $S_{\rm in}=1.1$ crossing; (10) thin/thick decomposition; (11) exact reproduction of both completeness branches; (12) independent mass--gravity and luminosity--temperature radius selectors; (13) the inherited $g(T)$ break diagnostic; and (14) comparison with the separately regenerated 1.0, 0.5, and 0.25 kpc grids and the metallicity-dependent TAMS experiment. These checks establish internal consistency of the frozen model stack, not observational truth.
+
+\bibliography{references}
+\bibliographystyle{aasjournal}
