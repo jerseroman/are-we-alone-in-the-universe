@@ -7,7 +7,15 @@ on:
     paths:
       - 'research/bryson-joint-posterior/**'
       - '.github/workflows/bryson-joint-posterior-pilot.yml'
+  pull_request:
+    paths:
+      - 'research/bryson-joint-posterior/**'
+      - '.github/workflows/bryson-joint-posterior-pilot.yml'
   workflow_dispatch:
+
+concurrency:
+  group: bryson-joint-posterior-pilot-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
