@@ -88,7 +88,7 @@ jobs:
           cp /tmp/DR25-occurrence-public/stellarCatalogs/dr25_stellar_berger2020_clean_hab2.txt "$OUT/stellarCatalogs/dr25_stellar_berger2020_clean_hab2.txt"
           cp "/tmp/DR25-occurrence-public/completenessContours/$NAME" "$OUT/completenessContours/$NAME"
           cd "$OUT"
-          find . -type f -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
+          find . -type f ! -name 'SHA256SUMS.txt' -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
       - uses: actions/upload-artifact@v4
@@ -168,7 +168,7 @@ jobs:
             --burn 400 \
             --steps 2000
           cd "$OUT"
-          sha256sum * | sort > SHA256SUMS.txt
+          find . -maxdepth 1 -type f ! -name 'SHA256SUMS.txt' -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
           cat joint_posterior_summary.json
 
       - uses: actions/upload-artifact@v4
@@ -222,7 +222,7 @@ jobs:
             --steps 2000 \
             --thin-stride 20
           cd "$OUT"
-          sha256sum * | sort > SHA256SUMS.txt
+          find . -maxdepth 1 -type f ! -name 'SHA256SUMS.txt' -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
           cat joint_posterior_aggregate_summary.json
 
       - uses: actions/upload-artifact@v4
