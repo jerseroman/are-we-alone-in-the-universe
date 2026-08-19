@@ -1,15 +1,11 @@
-name: Bryson fixed-seed joint-posterior pilot
+name: Bryson joint-posterior pilot
 
 on:
   push:
     branches:
       - agent/bryson-joint-posterior-preflight
     paths:
-      - 'research/bryson-posterior-preflight/run_joint_posterior*.py'
-      - '.github/workflows/bryson-joint-posterior-pilot.yml'
-  pull_request:
-    paths:
-      - 'research/bryson-posterior-preflight/run_joint_posterior*.py'
+      - 'research/bryson-joint-posterior/**'
       - '.github/workflows/bryson-joint-posterior-pilot.yml'
   workflow_dispatch:
 
@@ -18,12 +14,19 @@ permissions:
 
 jobs:
   pilot:
+    name: Pilot ${{ matrix.branch }} completeness
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
     strategy:
       fail-fast: false
       matrix:
-        branch: [constant, zero]
-    runs-on: ubuntu-22.04
-    timeout-minutes: 180
+        include:
+          - branch: constant
+            seed: 2026081901
+            contour: out_sc0_hab2_insol_teff_extrap_const.fits.gz
+          - branch: zero
+            seed: 2026081902
+            contour: out_sc0_hab2_insol_teff.fits.gz
 
     steps:
       - uses: actions/checkout@v4
@@ -32,7 +35,7 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install source-compatible numerical environment
+      - name: Install pinned numerical environment
         run: |
           python -m pip install --upgrade pip
           python -m pip install \
@@ -40,8 +43,17 @@ jobs:
             'scipy==1.10.1' \
             'pandas==1.5.3' \
             'astropy==5.3.4' \
-            'emcee==2.2.1' \
-            'ipywidgets==8.1.7'
+            'emcee==3.1.6'
+          python - <<'PY'
+          import astropy, emcee, numpy, pandas, scipy
+          print({
+              'numpy': numpy.__version__,
+              'scipy': scipy.__version__,
+              'pandas': pandas.__version__,
+              'astropy': astropy.__version__,
+              'emcee': emcee.__version__,
+          })
+          PY
 
       - name: Sparse-checkout pinned Bryson inputs
         run: |
@@ -56,26 +68,21 @@ jobs:
           test "$(git rev-parse HEAD)" = "d200f54b6f0df49e0dae530e69983cdce5397bfb"
           unzip -p stellarCatalogs/dr25_stellar_berger2020_clean_hab2.txt.zip \
             > stellarCatalogs/dr25_stellar_berger2020_clean_hab2.txt
+          test -s stellarCatalogs/dr25_stellar_berger2020_clean_hab2.txt
 
       - name: Download authoritative completeness contour
         env:
-          BRANCH: ${{ matrix.branch }}
+          CONTOUR_NAME: ${{ matrix.contour }}
         run: |
-          if [ "$BRANCH" = "constant" ]; then
-            NAME='out_sc0_hab2_insol_teff_extrap_const.fits.gz'
-          else
-            NAME='out_sc0_hab2_insol_teff.fits.gz'
-          fi
-          export NAME
-          mkdir -p /tmp/DR25-occurrence-public/completenessContours
+          mkdir -p /tmp/DR25-occurrence-public/completenessContours/runtime
           python - <<'PY'
           import os
           import urllib.request
           from pathlib import Path
 
-          name = os.environ['NAME']
+          name = os.environ['CONTOUR_NAME']
           url = f'https://stevepur.com/completenessContours/{name}'
-          destination = Path('/tmp/DR25-occurrence-public/completenessContours') / name
+          destination = Path('/tmp/DR25-occurrence-public/completenessContours/runtime') / name
           request = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
           with urllib.request.urlopen(request, timeout=900) as response, destination.open('wb') as output:
               while True:
@@ -87,33 +94,42 @@ jobs:
               raise RuntimeError(f'Completeness download unexpectedly small: {destination.stat().st_size}')
           print(destination, destination.stat().st_size)
           PY
-          sha256sum "/tmp/DR25-occurrence-public/completenessContours/$NAME"
-          echo "CONTOUR=/tmp/DR25-occurrence-public/completenessContours/$NAME" >> "$GITHUB_ENV"
+          sha256sum "/tmp/DR25-occurrence-public/completenessContours/runtime/$CONTOUR_NAME"
 
-      - name: Run fixed-seed pilot reconstruction
+      - name: Run seeded no-period-cutoff joint-posterior pilot
+        env:
+          BRANCH: ${{ matrix.branch }}
+          SEED: ${{ matrix.seed }}
+          CONTOUR_NAME: ${{ matrix.contour }}
+        run: |
+          OUT="$GITHUB_WORKSPACE/results/bryson-joint-posterior/$BRANCH"
+          mkdir -p "$OUT"
+          python research/bryson-joint-posterior/run_hab2_joint_posterior.py \
+            --bryson-root /tmp/DR25-occurrence-public \
+            --stellar-catalog /tmp/DR25-occurrence-public/stellarCatalogs/dr25_stellar_berger2020_clean_hab2.txt \
+            --pc-catalog /tmp/DR25-occurrence-public/insolation/koiCatalogs/PCs_dr25_hab2.csv \
+            --completeness "/tmp/DR25-occurrence-public/completenessContours/runtime/$CONTOUR_NAME" \
+            --branch "$BRANCH" \
+            --out "$OUT" \
+            --seed "$SEED" \
+            --trials 3 \
+            --burnin 50 \
+            --steps 120 \
+            --thin 2 \
+            --run-label pilot
+
+      - name: Inspect pilot results
         env:
           BRANCH: ${{ matrix.branch }}
         run: |
-          OUT="$GITHUB_WORKSPACE/results/bryson-pilot-$BRANCH"
-          mkdir -p "$OUT"
-          python research/bryson-posterior-preflight/run_joint_posterior_seeded.py \
-            --source-root /tmp/DR25-occurrence-public \
-            --branch "$BRANCH" \
-            --completeness "$CONTOUR" \
-            --stellar-catalog /tmp/DR25-occurrence-public/stellarCatalogs/dr25_stellar_berger2020_clean_hab2.txt \
-            --planet-catalog /tmp/DR25-occurrence-public/insolation/koiCatalogs/PCs_dr25_hab2.csv \
-            --out "$OUT" \
-            --seed 20260819 \
-            --trials 2 \
-            --walkers 8 \
-            --burn 20 \
-            --steps 100
-          sha256sum "$OUT"/* | sort > "$OUT/SHA256SUMS.txt"
-          cat "$OUT/joint_posterior_summary.json"
+          OUT="results/bryson-joint-posterior/$BRANCH"
+          find "$OUT" -maxdepth 1 -type f -printf '%f\t%s bytes\n' | sort
+          cat "$OUT/posterior_summary_${BRANCH}_pilot.json"
+          cat "$OUT/trial_diagnostics_${BRANCH}_pilot.json"
 
       - uses: actions/upload-artifact@v4
         with:
           name: bryson-joint-posterior-pilot-${{ matrix.branch }}
-          path: results/bryson-pilot-${{ matrix.branch }}/
+          path: results/bryson-joint-posterior/${{ matrix.branch }}/
           if-no-files-found: error
           retention-days: 14
