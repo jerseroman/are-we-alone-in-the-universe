@@ -1,0 +1,59 @@
+name: Bryson posterior preflight artifact
+
+on:
+  push:
+    branches:
+      - agent/bryson-joint-posterior-preflight
+    paths:
+      - 'research/bryson-posterior-preflight/**'
+      - '.github/workflows/bryson-posterior-preflight-pr.yml'
+  pull_request:
+    paths:
+      - 'research/bryson-posterior-preflight/**'
+      - '.github/workflows/bryson-posterior-preflight-pr.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Checkout pinned Bryson snapshot
+        run: |
+          git clone https://github.com/stevepur/DR25-occurrence-public.git /tmp/DR25-occurrence-public
+          cd /tmp/DR25-occurrence-public
+          git checkout d200f54b6f0df49e0dae530e69983cdce5397bfb
+          test "$(git rev-parse HEAD)" = "d200f54b6f0df49e0dae530e69983cdce5397bfb"
+
+      - name: Run reproducibility preflight
+        run: |
+          mkdir -p results/bryson-posterior-preflight
+          python research/bryson-posterior-preflight/preflight.py \
+            --root /tmp/DR25-occurrence-public \
+            --out "$GITHUB_WORKSPACE/results/bryson-posterior-preflight"
+
+      - name: Record inventory and checksums
+        run: |
+          cd /tmp/DR25-occurrence-public
+          find . -type f -printf '%P\t%s bytes\n' | sort > "$GITHUB_WORKSPACE/results/bryson-posterior-preflight/repository_file_inventory.tsv"
+          find insolation/data -type f -print0 | sort -z | xargs -0 sha256sum > "$GITHUB_WORKSPACE/results/bryson-posterior-preflight/insolation_data_SHA256SUMS.txt"
+          cd "$GITHUB_WORKSPACE/results/bryson-posterior-preflight"
+          sha256sum * | sort > SHA256SUMS.txt
+          cat PREFLIGHT_REPORT.md
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bryson-joint-posterior-preflight
+          path: results/bryson-posterior-preflight/
+          if-no-files-found: error
+          retention-days: 14
