@@ -66,6 +66,7 @@ jobs:
           else
             NAME='out_sc0_hab2_insol_teff.fits.gz'
           fi
+          export NAME
           mkdir -p /tmp/DR25-occurrence-public/completenessContours
           python - <<'PY'
           import os
@@ -88,9 +89,6 @@ jobs:
           PY
           sha256sum "/tmp/DR25-occurrence-public/completenessContours/$NAME"
           echo "CONTOUR=/tmp/DR25-occurrence-public/completenessContours/$NAME" >> "$GITHUB_ENV"
-        env:
-          BRANCH: ${{ matrix.branch }}
-          NAME: ${{ matrix.branch == 'constant' && 'out_sc0_hab2_insol_teff_extrap_const.fits.gz' || 'out_sc0_hab2_insol_teff.fits.gz' }}
 
       - name: Run fixed-seed pilot reconstruction
         env:
