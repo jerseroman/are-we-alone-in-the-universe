@@ -1,0 +1,102 @@
+name: Bryson fixed-seed joint-posterior pilot
+
+on:
+  push:
+    branches:
+      - agent/bryson-joint-posterior-preflight
+    paths:
+      - 'research/bryson-posterior-preflight/run_joint_posterior.py'
+      - '.github/workflows/bryson-joint-posterior-pilot.yml'
+  pull_request:
+    paths:
+      - 'research/bryson-posterior-preflight/run_joint_posterior.py'
+      - '.github/workflows/bryson-joint-posterior-pilot.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pilot:
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: [constant, zero]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install source-compatible numerical environment
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install \
+            'numpy==1.23.5' \
+            'scipy==1.10.1' \
+            'pandas==1.5.3' \
+            'astropy==5.3.4' \
+            'emcee==2.2.1' \
+            'ipywidgets==8.1.7'
+
+      - name: Sparse-checkout pinned Bryson inputs
+        run: |
+          git clone --filter=blob:none --no-checkout https://github.com/stevepur/DR25-occurrence-public.git /tmp/DR25-occurrence-public
+          cd /tmp/DR25-occurrence-public
+          git sparse-checkout init --no-cone
+          git sparse-checkout set \
+            /insolation/rateModels3D.py \
+            /insolation/koiCatalogs/PCs_dr25_hab2.csv \
+            /stellarCatalogs/dr25_stellar_berger2020_clean_hab2.txt.zip
+          git checkout d200f54b6f0df49e0dae530e69983cdce5397bfb
+          test "$(git rev-parse HEAD)" = "d200f54b6f0df49e0dae530e69983cdce5397bfb"
+          unzip -p stellarCatalogs/dr25_stellar_berger2020_clean_hab2.txt.zip \
+            > stellarCatalogs/dr25_stellar_berger2020_clean_hab2.txt
+
+      - name: Download authoritative completeness contour
+        env:
+          BRANCH: ${{ matrix.branch }}
+        run: |
+          if [ "$BRANCH" = "constant" ]; then
+            NAME='out_sc0_hab2_insol_teff_extrap_const.fits.gz'
+          else
+            NAME='out_sc0_hab2_insol_teff.fits.gz'
+          fi
+          mkdir -p /tmp/DR25-occurrence-public/completenessContours
+          curl --fail --location --retry 3 --retry-delay 5 \
+            "https://stevepur.com/completenessContours/$NAME" \
+            --output "/tmp/DR25-occurrence-public/completenessContours/$NAME"
+          sha256sum "/tmp/DR25-occurrence-public/completenessContours/$NAME"
+          echo "CONTOUR=/tmp/DR25-occurrence-public/completenessContours/$NAME" >> "$GITHUB_ENV"
+
+      - name: Run fixed-seed pilot reconstruction
+        env:
+          BRANCH: ${{ matrix.branch }}
+        run: |
+          OUT="$GITHUB_WORKSPACE/results/bryson-pilot-$BRANCH"
+          mkdir -p "$OUT"
+          python research/bryson-posterior-preflight/run_joint_posterior.py \
+            --source-root /tmp/DR25-occurrence-public \
+            --branch "$BRANCH" \
+            --completeness "$CONTOUR" \
+            --stellar-catalog /tmp/DR25-occurrence-public/stellarCatalogs/dr25_stellar_berger2020_clean_hab2.txt \
+            --planet-catalog /tmp/DR25-occurrence-public/insolation/koiCatalogs/PCs_dr25_hab2.csv \
+            --out "$OUT" \
+            --seed 20260819 \
+            --trials 2 \
+            --walkers 8 \
+            --burn 20 \
+            --steps 100
+          sha256sum "$OUT"/* | sort > "$OUT/SHA256SUMS.txt"
+          cat "$OUT/joint_posterior_summary.json"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bryson-joint-posterior-pilot-${{ matrix.branch }}
+          path: results/bryson-pilot-${{ matrix.branch }}/
+          if-no-files-found: error
+          retention-days: 14
