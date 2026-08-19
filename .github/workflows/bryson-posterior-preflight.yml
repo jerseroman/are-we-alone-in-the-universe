@@ -1,0 +1,260 @@
+name: Bryson joint-posterior reproducibility preflight
+
+on:
+  push:
+    branches:
+      - agent/bryson-joint-posterior-preflight
+    paths:
+      - '.github/workflows/bryson-posterior-preflight.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  posterior-preflight:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Checkout pinned Bryson research-code snapshot
+        run: |
+          git clone https://github.com/stevepur/DR25-occurrence-public.git /tmp/DR25-occurrence-public
+          cd /tmp/DR25-occurrence-public
+          git checkout d200f54b6f0df49e0dae530e69983cdce5397bfb
+          test "$(git rev-parse HEAD)" = "d200f54b6f0df49e0dae530e69983cdce5397bfb"
+
+      - name: Audit notebooks, posterior code, and data dependencies
+        run: |
+          mkdir -p results/bryson-posterior-preflight
+          python - <<'PY'
+          from __future__ import annotations
+
+          import ast
+          import csv
+          import hashlib
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          ROOT = Path('/tmp/DR25-occurrence-public')
+          OUT = Path('results/bryson-posterior-preflight')
+          OUT.mkdir(parents=True, exist_ok=True)
+          PINNED = 'd200f54b6f0df49e0dae530e69983cdce5397bfb'
+
+          notebooks = [
+              ROOT / 'insolation' / 'computeOccurrencefixedTeff_uncertainty.ipynb',
+              ROOT / 'insolation' / 'eta_earth_v5.ipynb',
+          ]
+
+          key_pattern = re.compile(
+              r'emcee|EnsembleSampler|MCMC|approximate\s+Bayesian|\bABC\b|posterior|'
+              r'chain|sampler|lnprob|log[_ ]?prob|autocorr|burn|thin|seed|'
+              r'np\.random|random\.|save|pickle|joblib|RData|read_csv|readRDS|load\(',
+              re.IGNORECASE,
+          )
+          path_pattern = re.compile(
+              r"['\"]([^'\"]+\.(?:csv|RData|rds|npy|npz|pkl|pickle|fits|json|txt))['\"]",
+              re.IGNORECASE,
+          )
+
+          def sha256(path: Path) -> str:
+              h = hashlib.sha256()
+              with path.open('rb') as fh:
+                  for block in iter(lambda: fh.read(1024 * 1024), b''):
+                      h.update(block)
+              return h.hexdigest()
+
+          def normalize_source(source):
+              if isinstance(source, list):
+                  return ''.join(source)
+              return str(source or '')
+
+          report = {
+              'source_repository': 'stevepur/DR25-occurrence-public',
+              'source_commit': PINNED,
+              'notebooks': {},
+              'candidate_posterior_files': [],
+              'readme_findings': [],
+          }
+
+          readme = ROOT / 'insolation' / 'README.md'
+          readme_text = readme.read_text(encoding='utf-8', errors='replace')
+          for lineno, line in enumerate(readme_text.splitlines(), 1):
+              if re.search(r'approximate Bayesian|not included|eta_earth|uncertaint|posterior', line, re.I):
+                  report['readme_findings'].append({'line': lineno, 'text': line})
+          (OUT / 'insolation_README.md').write_text(readme_text, encoding='utf-8')
+
+          for path in ROOT.rglob('*'):
+              if not path.is_file():
+                  continue
+              low = path.name.lower()
+              if any(term in low for term in ('posterior', 'chain', 'sample', 'mcmc', 'trace')) or path.suffix.lower() in {'.npy', '.npz', '.pkl', '.pickle'}:
+                  report['candidate_posterior_files'].append({
+                      'path': str(path.relative_to(ROOT)),
+                      'size_bytes': path.stat().st_size,
+                      'sha256': sha256(path),
+                  })
+
+          all_dependencies = []
+          all_imports = set()
+          findings_rows = []
+
+          for nb_path in notebooks:
+              if not nb_path.exists():
+                  report['notebooks'][str(nb_path.relative_to(ROOT))] = {'exists': False}
+                  continue
+
+              raw = json.loads(nb_path.read_text(encoding='utf-8'))
+              cells = raw.get('cells', [])
+              code_cells = [cell for cell in cells if cell.get('cell_type') == 'code']
+              kernel = raw.get('metadata', {}).get('kernelspec', {})
+              nb_rel = str(nb_path.relative_to(ROOT))
+              stem = nb_path.stem
+              code_out = []
+              key_hits = []
+              dependencies = []
+              imports = set()
+              execution_counts = []
+              output_types = {}
+
+              for cell_index, cell in enumerate(cells):
+                  if cell.get('cell_type') != 'code':
+                      continue
+                  src = normalize_source(cell.get('source'))
+                  execution_counts.append(cell.get('execution_count'))
+                  code_out.append(f'\n# ===== NOTEBOOK CELL {cell_index} =====\n')
+                  code_out.append(src)
+                  if not src.endswith('\n'):
+                      code_out.append('\n')
+
+                  for line_index, line in enumerate(src.splitlines(), 1):
+                      if key_pattern.search(line):
+                          item = {
+                              'cell': cell_index,
+                              'line_in_cell': line_index,
+                              'text': line.strip(),
+                          }
+                          key_hits.append(item)
+                          findings_rows.append([nb_rel, cell_index, line_index, line.strip()])
+                      for match in path_pattern.finditer(line):
+                          dep_text = match.group(1)
+                          candidates = [
+                              nb_path.parent / dep_text,
+                              ROOT / dep_text,
+                          ]
+                          resolved = next((p for p in candidates if p.exists()), None)
+                          item = {
+                              'cell': cell_index,
+                              'literal': dep_text,
+                              'resolved_path': str(resolved.relative_to(ROOT)) if resolved else None,
+                              'exists': bool(resolved),
+                          }
+                          if item not in dependencies:
+                              dependencies.append(item)
+                              all_dependencies.append([nb_rel, cell_index, dep_text, item['resolved_path'] or '', item['exists']])
+
+                  cleaned = '\n'.join(
+                      line for line in src.splitlines()
+                      if not line.lstrip().startswith(('%', '!'))
+                  )
+                  try:
+                      tree = ast.parse(cleaned)
+                  except SyntaxError:
+                      tree = None
+                  if tree is not None:
+                      for node in ast.walk(tree):
+                          if isinstance(node, ast.Import):
+                              for alias in node.names:
+                                  imports.add(alias.name)
+                                  all_imports.add(alias.name)
+                          elif isinstance(node, ast.ImportFrom):
+                              name = node.module or ''
+                              imports.add(name)
+                              all_imports.add(name)
+
+                  for output in cell.get('outputs', []):
+                      output_type = output.get('output_type', 'unknown')
+                      output_types[output_type] = output_types.get(output_type, 0) + 1
+
+              (OUT / f'{stem}_extracted.py').write_text(''.join(code_out), encoding='utf-8')
+              (OUT / f'{stem}_key_hits.json').write_text(json.dumps(key_hits, indent=2), encoding='utf-8')
+              (OUT / f'{stem}_dependencies.json').write_text(json.dumps(dependencies, indent=2), encoding='utf-8')
+
+              report['notebooks'][nb_rel] = {
+                  'exists': True,
+                  'sha256': sha256(nb_path),
+                  'size_bytes': nb_path.stat().st_size,
+                  'kernel': kernel,
+                  'total_cells': len(cells),
+                  'code_cells': len(code_cells),
+                  'executed_code_cells': sum(x is not None for x in execution_counts),
+                  'output_types': output_types,
+                  'imports': sorted(x for x in imports if x),
+                  'key_hit_count': len(key_hits),
+                  'dependency_count': len(dependencies),
+                  'missing_dependency_literals': sorted({d['literal'] for d in dependencies if not d['exists']}),
+              }
+
+          with (OUT / 'posterior_key_hits.csv').open('w', newline='', encoding='utf-8') as fh:
+              writer = csv.writer(fh)
+              writer.writerow(['notebook', 'cell', 'line_in_cell', 'text'])
+              writer.writerows(findings_rows)
+
+          with (OUT / 'notebook_dependencies.csv').open('w', newline='', encoding='utf-8') as fh:
+              writer = csv.writer(fh)
+              writer.writerow(['notebook', 'cell', 'literal', 'resolved_path', 'exists'])
+              writer.writerows(all_dependencies)
+
+          report['all_imports'] = sorted(x for x in all_imports if x)
+          (OUT / 'preflight.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
+
+          md = []
+          md.append('# Bryson joint-posterior reproducibility preflight\n\n')
+          md.append(f'- Repository: `stevepur/DR25-occurrence-public`\n')
+          md.append(f'- Commit: `{PINNED}`\n\n')
+          md.append('## Source README findings\n\n')
+          if report['readme_findings']:
+              for item in report['readme_findings']:
+                  md.append(f"- L{item['line']}: {item['text']}\n")
+          else:
+              md.append('- No matching README statements found.\n')
+          md.append('\n## Notebook inventory\n\n')
+          for name, info in report['notebooks'].items():
+              md.append(f'### `{name}`\n\n')
+              for key, value in info.items():
+                  md.append(f'- **{key}:** `{value}`\n')
+              md.append('\n')
+          md.append('## Candidate serialized posterior/chain files\n\n')
+          if report['candidate_posterior_files']:
+              for item in report['candidate_posterior_files']:
+                  md.append(f"- `{item['path']}` ({item['size_bytes']} bytes)\n")
+          else:
+              md.append('- None detected by filename or serialized-array extension.\n')
+          md.append('\n## Interpretation rule\n\n')
+          md.append('This preflight establishes only what is present in the pinned public snapshot. It does not treat independently sampled marginal summaries as a joint posterior and does not manufacture missing correlations.\n')
+          (OUT / 'PREFLIGHT_REPORT.md').write_text(''.join(md), encoding='utf-8')
+          PY
+
+      - name: Record repository tree and checksums
+        run: |
+          cd /tmp/DR25-occurrence-public
+          find . -type f -printf '%P\t%s bytes\n' | sort > "$GITHUB_WORKSPACE/results/bryson-posterior-preflight/repository_file_inventory.tsv"
+          find insolation/data -type f -print0 | sort -z | xargs -0 sha256sum > "$GITHUB_WORKSPACE/results/bryson-posterior-preflight/insolation_data_SHA256SUMS.txt"
+          cd "$GITHUB_WORKSPACE/results/bryson-posterior-preflight"
+          sha256sum * | sort > SHA256SUMS.txt
+          cat PREFLIGHT_REPORT.md
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bryson-joint-posterior-preflight
+          path: results/bryson-posterior-preflight/
+          if-no-files-found: error
+          retention-days: 14
