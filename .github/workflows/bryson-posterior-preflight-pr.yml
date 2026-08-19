@@ -41,15 +41,60 @@ jobs:
           python research/bryson-posterior-preflight/preflight.py \
             --root /tmp/DR25-occurrence-public \
             --out "$GITHUB_WORKSPACE/results/bryson-posterior-preflight"
+          python research/bryson-posterior-preflight/extract_archived_outputs.py \
+            --root /tmp/DR25-occurrence-public \
+            --out "$GITHUB_WORKSPACE/results/bryson-posterior-preflight"
+
+      - name: Probe authoritative completeness-contour inputs
+        run: |
+          python - <<'PY'
+          import json
+          import urllib.error
+          import urllib.request
+          from pathlib import Path
+
+          names = [
+              'out_sc0_hab2_insol_teff.fits.gz',
+              'out_sc0_hab2_insol_teff_extrap_const.fits.gz',
+          ]
+          bases = [
+              'http://stevepur.com/completenessContours/',
+              'https://stevepur.com/completenessContours/',
+          ]
+          results = []
+          for name in names:
+              for base in bases:
+                  url = base + name
+                  req = urllib.request.Request(url, method='HEAD', headers={'User-Agent': 'Mozilla/5.0'})
+                  try:
+                      with urllib.request.urlopen(req, timeout=60) as response:
+                          results.append({
+                              'url': url,
+                              'status': response.status,
+                              'effective_url': response.geturl(),
+                              'content_length': response.headers.get('Content-Length'),
+                              'content_type': response.headers.get('Content-Type'),
+                          })
+                  except Exception as exc:
+                      results.append({'url': url, 'error': repr(exc)})
+          out = Path('results/bryson-posterior-preflight/completeness_contour_url_probe.json')
+          out.write_text(json.dumps(results, indent=2), encoding='utf-8')
+          print(out.read_text())
+          PY
 
       - name: Record inventory and checksums
         run: |
           cd /tmp/DR25-occurrence-public
           find . -type f -printf '%P\t%s bytes\n' | sort > "$GITHUB_WORKSPACE/results/bryson-posterior-preflight/repository_file_inventory.tsv"
-          find insolation/data -type f -print0 | sort -z | xargs -0 sha256sum > "$GITHUB_WORKSPACE/results/bryson-posterior-preflight/insolation_data_SHA256SUMS.txt"
+          if [ -d insolation/data ]; then
+            find insolation/data -type f -print0 | sort -z | xargs -0 -r sha256sum > "$GITHUB_WORKSPACE/results/bryson-posterior-preflight/insolation_data_SHA256SUMS.txt"
+          else
+            : > "$GITHUB_WORKSPACE/results/bryson-posterior-preflight/insolation_data_SHA256SUMS.txt"
+          fi
           cd "$GITHUB_WORKSPACE/results/bryson-posterior-preflight"
           sha256sum * | sort > SHA256SUMS.txt
           cat PREFLIGHT_REPORT.md
+          cat ARCHIVED_OUTPUT_REPORT.md
 
       - uses: actions/upload-artifact@v4
         with:
