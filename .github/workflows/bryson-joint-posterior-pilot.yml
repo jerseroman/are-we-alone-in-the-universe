@@ -5,11 +5,11 @@ on:
     branches:
       - agent/bryson-joint-posterior-preflight
     paths:
-      - 'research/bryson-posterior-preflight/run_joint_posterior.py'
+      - 'research/bryson-posterior-preflight/run_joint_posterior*.py'
       - '.github/workflows/bryson-joint-posterior-pilot.yml'
   pull_request:
     paths:
-      - 'research/bryson-posterior-preflight/run_joint_posterior.py'
+      - 'research/bryson-posterior-preflight/run_joint_posterior*.py'
       - '.github/workflows/bryson-joint-posterior-pilot.yml'
   workflow_dispatch:
 
@@ -96,7 +96,7 @@ jobs:
         run: |
           OUT="$GITHUB_WORKSPACE/results/bryson-pilot-$BRANCH"
           mkdir -p "$OUT"
-          python research/bryson-posterior-preflight/run_joint_posterior.py \
+          python research/bryson-posterior-preflight/run_joint_posterior_seeded.py \
             --source-root /tmp/DR25-occurrence-public \
             --branch "$BRANCH" \
             --completeness "$CONTOUR" \
