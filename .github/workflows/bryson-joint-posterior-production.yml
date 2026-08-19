@@ -1,14 +1,16 @@
 name: Bryson full fixed-seed joint-posterior reconstruction
 
 on:
-  push:
-    branches:
-      - agent/bryson-joint-posterior-preflight
+  pull_request:
     paths:
       - 'research/bryson-posterior-preflight/run_joint_posterior*.py'
       - 'research/bryson-posterior-preflight/aggregate_joint_posterior.py'
       - '.github/workflows/bryson-joint-posterior-production.yml'
   workflow_dispatch:
+
+concurrency:
+  group: bryson-full-joint-posterior-reconstruction
+  cancel-in-progress: true
 
 permissions:
   contents: read
