@@ -1,13 +1,15 @@
-name: Bryson full fixed-seed joint-posterior reconstruction
+name: Bryson full joint-posterior reconstruction gate
 
 on:
   pull_request:
     paths:
-      - 'research/bryson-posterior-preflight/run_joint_posterior*.py'
-      - 'research/bryson-posterior-preflight/aggregate_joint_posterior.py'
       - '.github/workflows/bryson-joint-posterior-production.yml'
   workflow_dispatch:
 
+# This group intentionally matches the former production workflow.  Updating
+# this gate cancels any stale in-progress reconstruction that used the obsolete
+# 400-day period cut.  A new full workflow will be enabled only after the
+# no-period-cutoff pilot has passed for both completeness branches.
 concurrency:
   group: bryson-full-joint-posterior-reconstruction
   cancel-in-progress: true
@@ -16,219 +18,19 @@ permissions:
   contents: read
 
 jobs:
-  prepare-inputs:
-    strategy:
-      fail-fast: false
-      matrix:
-        branch: [constant, zero]
+  gated:
     runs-on: ubuntu-22.04
-    timeout-minutes: 90
-
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Sparse-checkout pinned Bryson inputs
+      - name: Hold publication-scale reconstruction pending pilot validation
         run: |
-          git clone --filter=blob:none --no-checkout https://github.com/stevepur/DR25-occurrence-public.git /tmp/DR25-occurrence-public
-          cd /tmp/DR25-occurrence-public
-          git sparse-checkout init --no-cone
-          git sparse-checkout set \
-            /insolation/rateModels3D.py \
-            /insolation/koiCatalogs/PCs_dr25_hab2.csv \
-            /stellarCatalogs/dr25_stellar_berger2020_clean_hab2.txt.zip
-          git checkout d200f54b6f0df49e0dae530e69983cdce5397bfb
-          test "$(git rev-parse HEAD)" = "d200f54b6f0df49e0dae530e69983cdce5397bfb"
-          unzip -p stellarCatalogs/dr25_stellar_berger2020_clean_hab2.txt.zip \
-            > stellarCatalogs/dr25_stellar_berger2020_clean_hab2.txt
+          cat <<'EOF'
+          Full reconstruction is intentionally gated.
 
-      - name: Download authoritative completeness contour once per branch
-        env:
-          BRANCH: ${{ matrix.branch }}
-        run: |
-          if [ "$BRANCH" = "constant" ]; then
-            NAME='out_sc0_hab2_insol_teff_extrap_const.fits.gz'
-          else
-            NAME='out_sc0_hab2_insol_teff.fits.gz'
-          fi
-          export NAME
-          mkdir -p /tmp/DR25-occurrence-public/completenessContours
-          python - <<'PY'
-          import os
-          import urllib.request
-          from pathlib import Path
+          Required before enabling production:
+          1. constant-completeness no-period-cutoff pilot succeeds;
+          2. zero-completeness no-period-cutoff pilot succeeds;
+          3. parameter ordering is verified against archived medians;
+          4. trial-level MCMC diagnostics are reviewed.
 
-          name = os.environ['NAME']
-          url = f'https://stevepur.com/completenessContours/{name}'
-          destination = Path('/tmp/DR25-occurrence-public/completenessContours') / name
-          request = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-          with urllib.request.urlopen(request, timeout=900) as response, destination.open('wb') as output:
-              while True:
-                  block = response.read(1024 * 1024)
-                  if not block:
-                      break
-                  output.write(block)
-          if destination.stat().st_size < 100_000_000:
-              raise RuntimeError(f'Completeness download unexpectedly small: {destination.stat().st_size}')
-          print(destination, destination.stat().st_size)
-          PY
-
-      - name: Assemble immutable branch input artifact
-        env:
-          BRANCH: ${{ matrix.branch }}
-        run: |
-          if [ "$BRANCH" = "constant" ]; then
-            NAME='out_sc0_hab2_insol_teff_extrap_const.fits.gz'
-          else
-            NAME='out_sc0_hab2_insol_teff.fits.gz'
-          fi
-          OUT="$GITHUB_WORKSPACE/results/bryson-source-$BRANCH"
-          mkdir -p "$OUT/insolation/koiCatalogs" "$OUT/stellarCatalogs" "$OUT/completenessContours"
-          cp /tmp/DR25-occurrence-public/insolation/rateModels3D.py "$OUT/insolation/rateModels3D.py"
-          cp /tmp/DR25-occurrence-public/insolation/koiCatalogs/PCs_dr25_hab2.csv "$OUT/insolation/koiCatalogs/PCs_dr25_hab2.csv"
-          cp /tmp/DR25-occurrence-public/stellarCatalogs/dr25_stellar_berger2020_clean_hab2.txt "$OUT/stellarCatalogs/dr25_stellar_berger2020_clean_hab2.txt"
-          cp "/tmp/DR25-occurrence-public/completenessContours/$NAME" "$OUT/completenessContours/$NAME"
-          cd "$OUT"
-          find . -type f ! -name 'SHA256SUMS.txt' -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
-          cat SHA256SUMS.txt
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: bryson-production-inputs-${{ matrix.branch }}
-          path: results/bryson-source-${{ matrix.branch }}/
-          if-no-files-found: error
-          retention-days: 14
-          compression-level: 0
-
-  reconstruct-shards:
-    needs: prepare-inputs
-    strategy:
-      fail-fast: false
-      max-parallel: 16
-      matrix:
-        branch: [constant, zero]
-        shard: [0, 1, 2, 3, 4, 5, 6, 7]
-    runs-on: ubuntu-22.04
-    timeout-minutes: 180
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Install pinned numerical environment
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install \
-            'numpy==1.23.5' \
-            'scipy==1.10.1' \
-            'pandas==1.5.3' \
-            'astropy==5.3.4' \
-            'emcee==2.2.1' \
-            'ipywidgets==8.1.7'
-          python -m pip freeze | sort > numerical_environment.txt
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: bryson-production-inputs-${{ matrix.branch }}
-          path: /tmp/DR25-occurrence-public
-
-      - name: Verify input artifact
-        run: |
-          cd /tmp/DR25-occurrence-public
-          sha256sum --check SHA256SUMS.txt
-
-      - name: Run full source-matched shard
-        env:
-          BRANCH: ${{ matrix.branch }}
-          SHARD: ${{ matrix.shard }}
-        run: |
-          if [ "$BRANCH" = "constant" ]; then
-            CONTOUR=/tmp/DR25-occurrence-public/completenessContours/out_sc0_hab2_insol_teff_extrap_const.fits.gz
-            OFFSET=0
-          else
-            CONTOUR=/tmp/DR25-occurrence-public/completenessContours/out_sc0_hab2_insol_teff.fits.gz
-            OFFSET=100000
-          fi
-          SEED=$((2026081900 + OFFSET + SHARD))
-          OUT="$GITHUB_WORKSPACE/results/bryson-production-$BRANCH-$SHARD"
-          mkdir -p "$OUT"
-          cp numerical_environment.txt "$OUT/numerical_environment.txt"
-          python research/bryson-posterior-preflight/run_joint_posterior_seeded.py \
-            --source-root /tmp/DR25-occurrence-public \
-            --branch "$BRANCH" \
-            --completeness "$CONTOUR" \
-            --stellar-catalog /tmp/DR25-occurrence-public/stellarCatalogs/dr25_stellar_berger2020_clean_hab2.txt \
-            --planet-catalog /tmp/DR25-occurrence-public/insolation/koiCatalogs/PCs_dr25_hab2.csv \
-            --out "$OUT" \
-            --seed "$SEED" \
-            --trials 50 \
-            --walkers 8 \
-            --burn 400 \
-            --steps 2000
-          cd "$OUT"
-          find . -maxdepth 1 -type f ! -name 'SHA256SUMS.txt' -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
-          cat joint_posterior_summary.json
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: bryson-production-shard-${{ matrix.branch }}-${{ matrix.shard }}
-          path: results/bryson-production-${{ matrix.branch }}-${{ matrix.shard }}/
-          if-no-files-found: error
-          retention-days: 14
-          compression-level: 1
-
-  aggregate:
-    needs: reconstruct-shards
-    strategy:
-      fail-fast: false
-      matrix:
-        branch: [constant, zero]
-    runs-on: ubuntu-22.04
-    timeout-minutes: 90
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Install aggregation dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install 'numpy==1.23.5' 'pandas==1.5.3'
-
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: bryson-production-shard-${{ matrix.branch }}-*
-          path: /tmp/bryson-shards
-
-      - name: Aggregate 400 realizations
-        env:
-          BRANCH: ${{ matrix.branch }}
-        run: |
-          OUT="$GITHUB_WORKSPACE/results/bryson-production-combined-$BRANCH"
-          mkdir -p "$OUT"
-          find /tmp/bryson-shards -maxdepth 3 -type f -printf '%P\n' | sort
-          python research/bryson-posterior-preflight/aggregate_joint_posterior.py \
-            --root /tmp/bryson-shards \
-            --branch "$BRANCH" \
-            --out "$OUT" \
-            --expected-shards 8 \
-            --trials-per-shard 50 \
-            --walkers 8 \
-            --steps 2000 \
-            --thin-stride 20
-          cd "$OUT"
-          find . -maxdepth 1 -type f ! -name 'SHA256SUMS.txt' -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
-          cat joint_posterior_aggregate_summary.json
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: bryson-joint-posterior-production-${{ matrix.branch }}
-          path: results/bryson-production-combined-${{ matrix.branch }}/
-          if-no-files-found: error
-          retention-days: 14
-          compression-level: 1
+          No posterior result is produced by this gate.
+          EOF
