@@ -1,0 +1,41 @@
+name: Export frozen posterior source package
+
+on:
+  push:
+    branches:
+      - agent/export-posterior-source-package
+    paths:
+      - '.github/workflows/export-posterior-source-package.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: e169dabfb7e5a2d3fec1da618103141a09789826
+
+      - name: Assemble source package
+        run: |
+          mkdir -p export/research export/workflows
+          cp -R research/bryson-joint-posterior export/research/
+          cp .github/workflows/bryson-joint-posterior-production.yml export/workflows/
+          cp .github/workflows/bryson-joint-posterior-pilot.yml export/workflows/
+          cat > export/SOURCE_COMMIT.txt <<'EOF'
+          Repository: jerseroman/are-we-alone-in-the-universe
+          Frozen source commit: e169dabfb7e5a2d3fec1da618103141a09789826
+          Bryson source snapshot: d200f54b6f0df49e0dae530e69983cdce5397bfb
+          EOF
+          cd export
+          find . -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frozen-posterior-source-e169dabf
+          path: export/
+          if-no-files-found: error
+          retention-days: 14
