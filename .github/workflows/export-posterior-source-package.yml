@@ -6,6 +6,9 @@ on:
       - agent/export-posterior-source-package
     paths:
       - '.github/workflows/export-posterior-source-package.yml'
+  pull_request:
+    paths:
+      - '.github/workflows/export-posterior-source-package.yml'
   workflow_dispatch:
 
 permissions:
