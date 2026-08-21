@@ -1,0 +1,70 @@
+# Phase 4 primary-literature comparison
+
+Status: **PASS ESTIMAND-AWARE COMPARISON; NOT AN INDEPENDENT VALIDATION**
+
+This gate compares the frozen v4 occurrence result only with traceable primary
+occurrence-rate studies. It does not pool unlike definitions, and it does not
+treat the spread among publications as a statistical uncertainty interval.
+
+## Frozen v4 occurrence estimand
+
+The v4 quantity is the mean number of planets per star in `0.9--1.1 R_earth`
+and `0.9--1.1 I_earth`, intersected with the conservative Kopparapu habitable
+zone, averaged over the JJ-weighted `5300--6000 K` host population. The
+Galactic count then applies this occurrence to the `7--9 kpc` TAMS-selected
+host measure.
+
+| Completeness branch | mean `f_EE`, q50 | 68% posterior interval | `Lambda_EE`, q50 | 68% posterior interval |
+|---|---:|---:|---:|---:|
+| Constant | 1.226% | 0.579--2.353% | 3.224 million | 1.522--6.189 million |
+| Zero | 1.738% | 0.799--3.388% | 4.572 million | 2.103--8.912 million |
+
+These intervals propagate the fitted occurrence posterior and host-temperature
+mixture. They do not include occurrence-model-form uncertainty, the local
+support failure, or the open Galactic-population systematics.
+
+## Source-model fidelity check
+
+Bryson et al. (2021) report broad conservative-HZ occurrence values of 0.37
+planets per star for their high-completeness treatment and 0.60 for their
+low-completeness treatment. The reconstructed v4 broad-HZ medians are 0.388
+and 0.659. This is a useful source-fidelity check, but not independent
+validation: v4 reconstructs and integrates the Bryson DR25 occurrence model.
+
+Within the same posterior draws, the v4 narrow box contains a median 3.119% of
+the broad-HZ count in the constant branch and 2.606% in the zero branch. This
+explains why the integrated v4 occurrence is numerically below broad-HZ
+literature values without implying a scientific conflict.
+
+## Primary-study comparison
+
+| Primary study | Reported quantity | Why it is not a like-for-like test |
+|---|---|---|
+| Bryson et al. (2021), doi:10.3847/1538-3881/abc418 | `eta_Earth` over `0.5--1.5 R_earth`, conservative HZ, `4800--6300 K` | Source model and much broader domain; not independent |
+| Kunimoto & Matthews (2020), doi:10.3847/1538-3881/ab88b0 | 84.1% upper limit below 0.18 planets per G star for `0.75--1.5 R_earth`, `0.99--1.70 au` | Semimajor axis rather than instellation, broader radius, different host definition |
+| Burke et al. (2015), doi:10.1088/0004-637X/809/1/8 | `zeta_1.0` about 0.1, with an allowed 0.01--2 range | Period replaces instellation, Q1--Q16 rather than DR25, large systematic range |
+| Pascucci et al. (2019), doi:10.3847/2041-8213/ab3dac | Preferred broad-HZ extrapolation around 5--10% | Different domain and model; mainly demonstrates model-form sensitivity in sparse extrapolation |
+| Bergsten et al. (2022), doi:10.3847/1538-3881/ac8fea | `Gamma_Earth = 15% (+6%,-4%)` | Differential density per log-period/log-radius area, not an integrated occurrence for the v4 box |
+
+No listed primary result simultaneously matches the v4 radius, instellation,
+climate intersection, host-temperature range, and catalog/model definition.
+Point-estimate differences therefore cannot establish inconsistency.
+
+## Scientific interpretation gate
+
+The exact nominal DR25 target contains zero candidates and zero summed
+reliability. Accordingly, the frozen v4 number must be described as a
+**conditional separable-power-law model projection** into a locally empty
+target region. It is not a direct candidate-supported occurrence measurement.
+
+The literature comparison strengthens two manuscript requirements:
+
+- state that Bryson et al. (2021) is the source model, not independent
+  corroboration;
+- keep occurrence-model form and long-period/local-support uncertainty outside
+  the reported posterior interval and identify them as material epistemic
+  limitations.
+
+Machine-readable source definitions, results, comparison roles, and prohibited
+inferences are frozen in `frozen-literature/primary_literature_comparison.json`.
+The primary-source search cutoff is 2026-08-22.

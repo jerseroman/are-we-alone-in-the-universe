@@ -1,0 +1,187 @@
+{
+  "status": "PASS_ESTIMAND_AWARE_COMPARISON",
+  "scientific_interpretation": "CONDITIONAL_MODEL_PROJECTION_ONLY",
+  "search_cutoff": "2026-08-22",
+  "inclusion_policy": "Primary peer-reviewed occurrence-rate studies with an Earth-analog, habitable-zone, or directly relevant FGK occurrence estimand. Reviews are excluded from the numerical comparison.",
+  "inputs": {
+    "numerical_freeze": {
+      "path": "research\\bryson-joint-posterior\\frozen-v4\\V4_NUMERICAL_FREEZE.json",
+      "sha256": "e37a4add5f0fbbb7363252adb2f85a41b0fbd1f4572761f90dc285ddd2b476eb"
+    },
+    "dr25_support_audit": {
+      "path": "research\\v4-validation\\frozen-dr25-support\\dr25_support_audit.json",
+      "sha256": "920c61fcbf873cd460ade6dd88870fd2c30ce835de10314ea44d519a5168b909"
+    },
+    "primary_literature_registry": {
+      "path": "research\\v4-validation\\primary_literature_sources.json",
+      "sha256": "178cba9f36af0bcc2da5ae6b24ade2671ad7e47664ba8b2e402de71ff5de2e76"
+    }
+  },
+  "v4_estimand": {
+    "unit": "planets per star",
+    "radius_R_earth": [
+      0.9,
+      1.1
+    ],
+    "instellation_I_earth": [
+      0.9,
+      1.1
+    ],
+    "climate_intersection": "conservative Kopparapu habitable zone",
+    "host_temperature_K": [
+      5300.0,
+      6000.0
+    ],
+    "spatial_domain_kpc": [
+      7.0,
+      9.0
+    ]
+  },
+  "v4_posterior": {
+    "constant": {
+      "mean_f_EE": {
+        "q2.5": 0.0024786114288092576,
+        "q16": 0.005787557221218124,
+        "q50": 0.012255079394085128,
+        "q84": 0.023527727675029548,
+        "q97.5": 0.04121486470162053
+      },
+      "mean_f_HZ": {
+        "q2.5": 0.06451363670849902,
+        "q16": 0.16005357501265838,
+        "q50": 0.3883056884517271,
+        "q84": 0.9069829183882389,
+        "q97.5": 1.996663894839248
+      },
+      "narrow_to_broad_HZ_ratio": {
+        "q2.5": 0.01910171998752548,
+        "q16": 0.02487550190260522,
+        "q50": 0.031187600386790245,
+        "q84": 0.0376443684419013,
+        "q97.5": 0.044308209291661245
+      },
+      "Lambda_EE": {
+        "q2.5": 652028.4607654538,
+        "q16": 1522486.3335499624,
+        "q50": 3223845.6020202106,
+        "q84": 6189250.918054584,
+        "q97.5": 10842064.42353256
+      }
+    },
+    "zero": {
+      "mean_f_EE": {
+        "q2.5": 0.0033771076597711243,
+        "q16": 0.007992744162414665,
+        "q50": 0.017381670273021337,
+        "q84": 0.03387835009765266,
+        "q97.5": 0.06021460735661248
+      },
+      "mean_f_HZ": {
+        "q2.5": 0.0965339228213042,
+        "q16": 0.2537282156524479,
+        "q50": 0.6590690724909568,
+        "q84": 1.6215912614902759,
+        "q97.5": 3.7502180874536095
+      },
+      "narrow_to_broad_HZ_ratio": {
+        "q2.5": 0.014928021636556363,
+        "q16": 0.020031117093545773,
+        "q50": 0.02605747593014544,
+        "q84": 0.03272421695692232,
+        "q97.5": 0.03998929694721947
+      },
+      "Lambda_EE": {
+        "q2.5": 888388.6694162593,
+        "q16": 2102587.2038421687,
+        "q50": 4572456.812682157,
+        "q84": 8912106.27478533,
+        "q97.5": 15840174.580809454
+      }
+    }
+  },
+  "local_empirical_support": {
+    "status": "FAIL_LOCAL_EMPIRICAL_SUPPORT",
+    "nominal_target_candidates": 0,
+    "nominal_target_reliability_sum": 0.0
+  },
+  "primary_sources": [
+    {
+      "key": "Bryson2021",
+      "authors": "Bryson et al.",
+      "year": 2021,
+      "journal": "The Astronomical Journal",
+      "doi": "10.3847/1538-3881/abc418",
+      "primary_url": "https://arxiv.org/abs/2010.14812",
+      "quantity": "eta_Earth",
+      "definition": "0.5--1.5 R_earth in the conservative habitable zone around 4800--6300 K stars",
+      "reported_result": "0.37 (-0.21,+0.48) planets per star under high completeness and 0.60 (-0.36,+0.90) under low completeness; optimistic HZ values are 0.58 and 0.88.",
+      "comparison_role": "source_model_anchor",
+      "comparability": "The v4 posterior is reconstructed from this DR25 model and therefore is not an independent replication. Bryson's radius, HZ, and temperature domain is much broader than the v4 target."
+    },
+    {
+      "key": "KunimotoMatthews2020",
+      "authors": "Kunimoto and Matthews",
+      "year": 2020,
+      "journal": "The Astronomical Journal",
+      "doi": "10.3847/1538-3881/ab88b0",
+      "primary_url": "https://arxiv.org/abs/2004.05296",
+      "quantity": "G-star HZ occurrence upper limit",
+      "definition": "0.75--1.5 R_earth and 0.99--1.70 au around G stars",
+      "reported_result": "84.1% credible upper limit below 0.18 planets per star.",
+      "comparison_role": "independent_different_estimand",
+      "comparability": "Broader radius range, semimajor-axis rather than instellation bounds, and a G-star host definition; not a like-for-like numerical test."
+    },
+    {
+      "key": "Burke2015",
+      "authors": "Burke et al.",
+      "year": 2015,
+      "journal": "The Astrophysical Journal",
+      "doi": "10.1088/0004-637X/809/1/8",
+      "primary_url": "https://arxiv.org/abs/1506.04175",
+      "quantity": "zeta_1.0",
+      "definition": "planets within 20% of Earth's orbital period and radius around GK dwarfs",
+      "reported_result": "Central estimate about 0.1 planets per star, with an allowed range from 0.01 to 2 after statistical and systematic uncertainty.",
+      "comparison_role": "independent_conceptually_near",
+      "comparability": "Conceptually close narrow Earth-analog box, but period replaces instellation, the catalog is Q1--Q16 rather than DR25, and the allowed range is strongly systematics-dominated."
+    },
+    {
+      "key": "Pascucci2019",
+      "authors": "Pascucci et al.",
+      "year": 2019,
+      "journal": "The Astrophysical Journal Letters",
+      "doi": "10.3847/2041-8213/ab3dac",
+      "primary_url": "https://arxiv.org/abs/1908.06192",
+      "quantity": "eta_Earth under a stripped-core-aware occurrence model",
+      "definition": "Extrapolation from a 0.5--6 R_earth, 2--400 day occurrence fit to Earth-size planets in the habitable zone",
+      "reported_result": "Approximately 5--10% under the preferred interpretation; occurrence-model choices change the extrapolated value by factors of about 4--8.",
+      "comparison_role": "independent_model_form_warning",
+      "comparability": "Different catalog/model/domain and a broad HZ extrapolation. It is evidence that model form can dominate sparse long-period extrapolations, not a direct numerical validation of v4."
+    },
+    {
+      "key": "Bergsten2022",
+      "authors": "Bergsten et al.",
+      "year": 2022,
+      "journal": "The Astronomical Journal",
+      "doi": "10.3847/1538-3881/ac8fea",
+      "primary_url": "https://arxiv.org/abs/2209.04047",
+      "quantity": "Gamma_Earth",
+      "definition": "normalized differential occurrence density near Earth for FGK stars, inferred from a 2--100 day occurrence model and extrapolated to longer periods",
+      "reported_result": "Gamma_Earth = 15% (+6%,-4%) per natural-log period by natural-log radius area.",
+      "comparison_role": "independent_density_not_integral",
+      "comparability": "Gamma_Earth is a local density, not an integrated planets-per-star value for the v4 box. Converting it requires an explicit integration domain and model assumptions."
+    }
+  ],
+  "comparison_findings": [
+    "No listed literature value has the same radius, instellation, climate-intersection, host-temperature, and catalog definition as v4.",
+    "Bryson et al. (2021) is the source model for the reconstructed v4 posterior and is therefore a source-fidelity check, not independent validation.",
+    "The v4 mean occurrence is numerically below broad-HZ literature estimates, as expected for its much narrower integrated phase-space box.",
+    "The absence of nominal DR25 candidates in the exact v4 box prevents a direct candidate-supported interpretation.",
+    "Published literature supports treating occurrence-model form and long-period extrapolation as material epistemic uncertainty not included in the v4 posterior interval."
+  ],
+  "prohibited_inferences": [
+    "Do not call literature values inconsistent with v4 solely because their point estimates differ.",
+    "Do not convert Gamma_Earth to an integrated eta value without specifying and applying an integration model.",
+    "Do not describe v4 as an independent reproduction of Bryson et al. (2021).",
+    "Do not treat the literature spread as a statistical confidence interval."
+  ]
+}
