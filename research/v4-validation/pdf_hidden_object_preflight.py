@@ -145,6 +145,11 @@ def main() -> None:
     parser.add_argument("--out", required=True, type=Path)
     args = parser.parse_args()
     pdf = args.pdf.resolve()
+    try:
+        pdf_label = pdf.relative_to(Path.cwd().resolve()).as_posix()
+    except ValueError:
+        # Audit records are publication metadata; never leak a workstation path.
+        pdf_label = pdf.name
     reader = PdfReader(str(pdf), strict=True)
     if reader.is_encrypted:
         raise RuntimeError("Encrypted PDF is not accepted")
@@ -166,7 +171,7 @@ def main() -> None:
 
     audit: dict[str, Any] = {
         "status": "PENDING",
-        "pdf": str(pdf),
+        "pdf": pdf_label,
         "sha256": sha256(pdf),
         "pages": len(reader.pages),
         "encrypted": reader.is_encrypted,
