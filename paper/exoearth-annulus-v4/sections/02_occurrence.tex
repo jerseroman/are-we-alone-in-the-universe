@@ -1,0 +1,155 @@
+\section{Occurrence Posterior and Habitable-Zone Integration}\label{sec:occurrence}
+
+\subsection{Bryson occurrence function}
+
+We adopt Model~1 from \citet{Bryson2021}. The differential number of planets
+per star per unit $r$ and $I$ is
+\begin{equation}
+ \lambda(r,I,T\mid\bm\theta)
+ =F_0C_1r^\alpha I^\beta T^\gamma g(T),
+ \label{eq:lambda}
+\end{equation}
+where $\bm\theta=(F_0,\alpha,\beta,\gamma)$ is written in manuscript order,
+$T$ is in kelvin, and
+\begin{equation}
+ g(T)=
+ \begin{cases}
+ 10^{-11.839}T^{3.16}, & T\leq5117\ {\rm K},\\
+ 10^{-16.769}T^{4.49}, & T>5117\ {\rm K}.
+ \end{cases}
+ \label{eq:gT}
+\end{equation}
+$C_1$ normalizes the model over $0.5\leq r\leq2.5$,
+$0.2\leq I\leq2.2$, and a uniform temperature measure over 3900--6300 K.
+Appendix~\ref{app:analytic} gives the analytic normalization.
+
+The constant- and zero-completeness treatments are distinct likelihood
+scenarios inherited from the source analysis. They are not samples from one
+mixture distribution and are not assigned model probabilities here. The
+source interpretation places the unknown long-period completeness between
+these cases, but this statement is conditional on the adopted extrapolation
+family rather than an assumption-free physical bound.
+
+\subsection{Corrected catalog-error propagation}\label{subsec:measurement}
+
+For a catalog value $\mu$ with reported lower and upper uncertainties
+$\sigma_-$ and $\sigma_+$, the v4 primary analysis draws
+\begin{align}
+ B&\sim{\rm Bernoulli}(1/2),\qquad U=|Z|,\quad Z\sim\mathcal{N}(0,1),\nonumber\\
+ X&=\begin{cases}
+ \mu-\sigma_-U,&B=0,\\
+ \mu+\sigma_+U,&B=1.
+ \end{cases}
+ \label{eq:measurement_draw}
+\end{align}
+This construction places the quoted one-sigma lower and upper excursions at
+the 15.9th and 84.1st percentiles when the uncertainties are interpreted as
+two-sided Gaussian-equivalent errors. It replaces the source notebook's
+signed-normal mixture, which does not preserve the intended association
+between direction and asymmetric scale. After perturbing instellation, radius,
+and $\Teff$, all source-domain conditions are reapplied:
+\begin{equation}
+ 0.2\leq I\leq2.2,
+ \quad0.5\leq r\leq2.5,
+ \quad3900\leq T\leq6300\ {\rm K}.
+ \label{eq:source_domain}
+\end{equation}
+The source-faithful legacy mechanism is retained only as a regression and
+sensitivity mode.
+
+Each outer realization also applies the catalog reliability mechanism before
+fitting. Thus the calculation marginalizes over the implemented reliability
+and measurement procedure, but not over unmodeled catalog systematics or
+occurrence functional forms.
+
+\subsection{Poisson likelihood and adaptive MCMC}\label{subsec:mcmc}
+
+For retained candidates $x_p=(I_p,r_p,T_p)$, the source inhomogeneous-Poisson
+log likelihood can be written schematically as
+\begin{equation}
+ \log\mathcal{L}(\bm\theta)
+ =\sum_p\log\lambda(x_p\mid\bm\theta)
+ -\int\lambda(x\mid\bm\theta)C(x)\,\dd x,
+ \label{eq:poisson_likelihood}
+\end{equation}
+where $C(x)$ is the branch-specific summed completeness surface evaluated on
+the source grid. We retain the source uniform priors inside its numerical
+bounds: $0\leq F_0<50000$, $-5\leq\alpha<5$,
+$-5\leq\beta<5$, and $-500\leq\gamma<50$, with zero density outside.
+
+For each completeness branch we generate 400 independently seeded outer
+reliability/measurement realizations. Each four-parameter conditional
+posterior is sampled with 16 ensemble walkers after 1000 discarded burn-in
+steps. Autocorrelation time is checked every 1000 production steps. Acceptance
+requires, for every parameter, at least $100\tau$, no more than 5\% relative
+change between successive $\tau$ estimates, and two consecutive qualifying
+checks. The constant production used a 20,000-step ceiling. Five zero-branch
+realizations reached that ceiling without satisfying the unchanged gate, so
+the entire zero branch was rerun with identical seeds and criteria and a
+30,000-step ceiling; no failed realization was discarded.
+
+Adaptive chains have unequal lengths. The aggregation therefore retains 1024
+deterministically spaced post-burn rows from every outer realization, assigning
+equal weight to each catalog realization. Outer quantile Monte Carlo error is
+estimated by resampling whole realizations as clusters; matched contiguous
+chain blocks diagnose residual inner-chain error. The two completeness
+branches remain separate through this aggregation and the Galactic propagation.
+
+\subsection{Present-day conservative HZ}
+
+For a climatic boundary, the effective stellar flux is
+\begin{align}
+ S_{\rm eff}(T)={}&S_{{\rm eff},\odot}+aT'
+ +bT'^2+cT'^3+dT'^4,\nonumber\\
+ T'={}&T-5780\ {\rm K},
+ \label{eq:kopparapu}
+\end{align}
+using \citet{Kopparapu2013}. The canonical conservative HZ uses the
+$1\,\Mearth$ runaway-greenhouse inner boundary from \citet{Kopparapu2014} and
+the maximum-greenhouse outer boundary. ``Conservative'' names this prescribed
+boundary pair; it is not a universal lower bound over climate models.
+
+Let $S_{\rm out}(T)$ and $S_{\rm in}(T)$ denote the outer and inner flux
+boundaries. The broad HZ and narrow target domains are
+\begin{equation}
+ \mathcal{D}_{\rm HZ}(T)
+ =[0.5,1.5]\times[S_{\rm out}(T),S_{\rm in}(T)],
+ \label{eq:d_hz}
+\end{equation}
+\begin{align}
+ \mathcal{D}_{\rm EE}(T)=[0.9,1.1]\times
+ \big[&\max\{0.9,S_{\rm out}(T)\},\nonumber\\
+      &\min\{1.1,S_{\rm in}(T)\}\big],
+ \label{eq:d_ee}
+\end{align}
+with an empty domain when the upper limit does not exceed the lower. Across
+5300--6000 K the outer HZ does not clip $I=0.9$; the runaway-greenhouse
+boundary crosses $I=1.1$ near 5727 K and clips the inner edge at lower
+temperatures.
+
+\subsection{Posterior Galactic estimator}
+
+For $k\in\{{\rm HZ},{\rm EE}\}$ and posterior draw $s$, the expected planets
+per star at temperature $T$ are
+\begin{equation}
+ f_{k,s}(T)=\iint_{\mathcal{D}_k(T)}
+ \lambda(r,I,T\mid\bm\theta_s)\,\dd r\,\dd I.
+ \label{eq:fk}
+\end{equation}
+At radial node $R_j$, the occurrence-weighted surface density is
+\begin{equation}
+ \Sigma_{k,s}(R_j)=\sum_i H_{ij}w_{ij}f_{k,s}(T_{ij}).
+ \label{eq:sigma_k}
+\end{equation}
+The propagated estimator is
+\begin{equation}
+ \boxed{
+ \Lambda_{k,s}^{(\Delta R)}
+ =10^6\Delta R\sum_{j=0}^{4}c_j,2\pi R_j
+ \sum_i H_{ij}w_{ij}f_{k,s}(T_{ij}) .}
+ \label{eq:galactic_estimator}
+\end{equation}
+Posterior summaries are quantiles of $\{\Lambda_{k,s}\}$ after equalizing the
+outer-realization mixture. Equation~(\ref{eq:galactic_estimator}) preserves the
+temperature dependence of both occurrence and HZ clipping; it is not a single
+rate multiplied by a host count.

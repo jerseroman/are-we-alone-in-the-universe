@@ -1,0 +1,104 @@
+\section{Results}\label{sec:results}
+
+\subsection{Host population}
+
+The canonical selector yields
+\begin{equation}
+ N_\star=263{,}061{,}992.37
+ \label{eq:nstar_result}
+\end{equation}
+model hosts in the 7--9 kpc annulus. The thin disk contributes
+$2.11\times10^8$ and the thick disk $5.23\times10^7$, or 19.9\% of the total.
+From the pre-TAMS parent measure of $2.9877\times10^8$, the radius boundary
+rejects $3.3857\times10^7$ and the compact-object veto rejects
+$1.8513\times10^6$ in the mutually exclusive audit decomposition.
+Table~\ref{tab:demographics} summarizes the selected host distribution.
+
+\begin{table*}[t]
+\caption{Integrated host-property distribution in the 7--9 kpc annulus}
+\label{tab:demographics}
+\centering
+\begin{tabular}{lccrrrr}
+\toprule
+Quantity & Unit & Weighted mean & 16th percentile & Median & 84th percentile\\
+\midrule
+Effective temperature & K & 5646 & 5424 & 5670 & 5841\\
+Age & Gyr & 9.35 & 6.41 & 9.59 & 12.16\\
+$[\mathrm{Fe/H}]$ & dex & -0.020 & -0.284 & +0.033 & +0.222\\
+Current mass & $M_\odot$ & 0.913 & 0.810 & 0.910 & 1.015\\
+Stellar radius & $R_\odot$ & 1.035 & 0.864 & 0.999 & 1.237\\
+$\log g$ & dex (cgs) & 4.379 & 4.250 & 4.400 & 4.492\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+The genuine solar-composition low-mass phase-7 curve selects exactly the same
+integrated population as the inherited one-dimensional boundary. In
+particular, omitting the special 5200 K table anchor changes $N_\star$ and the
+plug-in $\LamEE$ by 0.0000\%. This validates the numerical implementation but
+does not quantify uncertainty from metallicity, helium abundance, or
+isochrone-family choice.
+
+\subsection{Occurrence and Galactic expectations}
+
+Table~\ref{tab:posterior_results} gives the frozen posterior quantiles. Under
+constant completeness, the median narrow-domain occurrence is 0.01226 planets
+per selected star and the propagated median is
+\begin{equation}
+ \LamEE^{\rm const}=3.224\times10^6,
+ \quad 68\%:\ [1.522,6.189]\times10^6.
+ \label{eq:canonical_results}
+\end{equation}
+Under zero completeness,
+\begin{equation}
+ \LamEE^{\rm zero}=4.572\times10^6,
+ \quad 68\%:\ [2.103,8.912]\times10^6.
+ \label{eq:zero_results}
+\end{equation}
+The corresponding 95\% intervals are $0.652$--$10.842$ million and
+$0.888$--$15.840$ million. The branch medians differ by 41.83\%, but that
+difference is a model scenario contrast rather than a credible-interval
+component.
+
+\begin{table*}[t]
+\caption{Frozen posterior occurrence and Galactic population quantiles}
+\label{tab:posterior_results}
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{llrrrrr}
+\toprule
+Branch & Quantity & 2.5\% & 16\% & Median & 84\% & 97.5\%\\
+\midrule
+Constant & $\langle\fHZ\rangle$ & 0.0645 & 0.1601 & 0.3883 & 0.9070 & 1.9967\\
+Constant & $\langle\fEE\rangle$ & 0.00248 & 0.00579 & 0.01226 & 0.02353 & 0.04121\\
+Constant & $\LamHZ$ ($10^6$) & 16.971 & 42.104 & 102.148 & 238.593 & 525.246\\
+Constant & $\LamEE$ ($10^6$) & 0.652 & 1.522 & 3.224 & 6.189 & 10.842\\
+\midrule
+Zero & $\langle\fHZ\rangle$ & 0.0965 & 0.2537 & 0.6591 & 1.6216 & 3.7502\\
+Zero & $\langle\fEE\rangle$ & 0.00338 & 0.00799 & 0.01738 & 0.03388 & 0.06021\\
+Zero & $\LamHZ$ ($10^6$) & 25.394 & 66.746 & 173.376 & 426.579 & 986.540\\
+Zero & $\LamEE$ ($10^6$) & 0.888 & 2.103 & 4.572 & 8.912 & 15.840\\
+\bottomrule
+\end{tabular}
+\tablecomments{Occurrence quantities are planets per star, not fractions of
+stars. Intervals are conditional on the fitted Model~1 occurrence surface and
+the frozen host/HZ construction.}
+\end{table*}
+
+Within matched posterior draws, the narrow target contains a median 3.119\%
+of broad-HZ occurrence in the constant branch and 2.606\% in the zero branch.
+This ratio is derived from the same occurrence model; it is not an independent
+planet fraction.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.96\textwidth]{v4_posterior_intervals.pdf}
+\caption{Corrected posterior summaries for narrow-domain occurrence per star
+(left) and the propagated 7--9 kpc population expectation (right). Pale and
+dark segments show 95\% and 68\% posterior intervals; circles mark medians.
+The two completeness branches are separate scenarios. These intervals do not
+include occurrence-model-form, local-support, host-population, climate, or
+transport uncertainty.}
+\label{fig:posterior}
+\end{figure*}

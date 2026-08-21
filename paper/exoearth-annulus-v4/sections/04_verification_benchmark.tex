@@ -1,0 +1,81 @@
+\section{Verification and Empirical-Support Audit}\label{sec:verification}
+
+\subsection{Statistical and numerical gates}
+
+All 400 constant-branch and all 400 zero-branch outer realizations passed the
+adaptive convergence gate. The minimum, median, and maximum production lengths
+were 8000, 12,000, and 17,000 steps for the constant branch and 9000, 14,000,
+and 22,000 for the zero branch. The minimum effective sample size over every
+parameter and realization was 1682.3 and 1662.4, respectively. There were no
+optimizer failures.
+
+The largest outer-realization median Monte Carlo standard error, expressed as
+a fraction of the associated 16th--84th percentile width, was 1.63\% for the
+constant branch and 1.56\% for zero completeness. The corresponding maximum
+inner-chain fractions were 0.10\% and 0.15\%. Independent MCMC-seed families
+passed the frozen stability comparison. These values are far below the
+predeclared 10\% outer and 5\% inner gates.
+
+The measurement implementation has a bitwise source-faithful legacy regression
+mode and a corrected quantile-recovery suite. Aggregation rejects mixed modes,
+unequal outer weights, failed convergence, and inconsistent diagnostic
+metadata. The host/HZ propagation separately verifies non-negative weights,
+nested domains, unit conversions, and reproduction of the frozen quantiles.
+Refining the radial grid from 0.5 to 0.25 kpc changes the plug-in $\LamEE$ by
++0.231\%, below the predeclared 1\% numerical threshold.
+
+These checks establish engineering and numerical consistency of the frozen
+pipeline. They do not establish that the separable occurrence surface is an
+adequate scientific description inside the target box.
+
+\subsection{Direct DR25 support}\label{subsec:dr25support}
+
+The exact target is geometrically contained in the fitted DR25 source domain:
+$0.9$--$1.1\,\Rearth$ lies inside $0.5$--$2.5\,\Rearth$,
+$0.9$--$1.1\,\Searth$ lies inside $0.2$--$2.2\,\Searth$, and the selected
+temperatures lie inside 3900--6300 K. Geometric containment, however, does not
+guarantee local data support.
+
+The merged nominal planet-candidate catalog contains 2277 rows. Fifty-four
+rows lie in the fitted source domain after the nominal cuts, with summed total
+reliability 42.23. For the selected 5300--6000 K stars, 54 candidates satisfy
+the narrow radius range, while only three satisfy the conservative-HZ
+instellation intersection. No nominal candidate satisfies the radius and
+fixed 0.9--1.1 instellation box simultaneously; the exact climate-clipped
+target therefore has candidate count zero and reliability sum zero.
+
+Across 400 corrected outer realizations, the constant branch has target-count
+quantiles $(0,0,0,0,1)$ at probabilities $(2.5,16,50,84,97.5)$\% and a
+95.75\% zero-count fraction. The zero branch has the same quantile vector and
+a 96.75\% zero-count fraction. Only K08107.01 and K08242.01 enter the target
+under any perturbation, with 17 total appearances in the constant branch and
+13 in the zero branch. Consequently, the local empirical-support gate is a
+scientific \emph{failure}, even though the geometry and code checks pass.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.96\textwidth]{v4_dr25_local_support.pdf}
+\caption{Nominal DR25 candidates near one component of the target selection.
+Left: radius-near and conservative-HZ-near candidates for 5300--6000 K hosts;
+the fixed target box is green. Right: the exact neighborhood, with the two
+nominal candidates that can enter only after measurement perturbation outlined
+in red. The climate condition further clips the fixed green box. No nominal
+candidate lies in the full target.}
+\label{fig:dr25support}
+\end{figure*}
+
+\section{Source-Model Fidelity Benchmark}\label{sec:benchmark}
+
+\citet{Bryson2021} report broad conservative-HZ occurrence of 0.37 planets per
+star under high completeness and 0.60 under low completeness for their broader
+$0.5$--$1.5\,\Rearth$, 4800--6300 K definition. The reconstructed v4 broad-HZ
+medians are 0.388 and 0.659. The agreement in scale supports source fidelity,
+but it is not independent validation: the present posterior is reconstructed
+from the same public DR25 model and inputs.
+
+The point-vector reference inherited from version~3 gives
+$\LamEE=3.3765\times10^6$ for the constant branch. The corrected posterior
+median is $3.2238\times10^6$; these are different statistical functionals and
+need not coincide. The v4 inference uses the pooled equal-weight joint
+posterior rather than independently sampled marginal summaries or a scaled
+broad-HZ interval.

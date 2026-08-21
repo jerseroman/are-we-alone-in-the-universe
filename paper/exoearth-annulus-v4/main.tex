@@ -1,0 +1,170 @@
+\documentclass[twocolumn]{aastex701}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{url}
+\usepackage{seqsplit}
+
+\graphicspath{{figures/}}
+
+\newcommand{\Rearth}{R_{\oplus}}
+\newcommand{\Mearth}{M_{\oplus}}
+\newcommand{\Searth}{S_{\oplus}}
+\newcommand{\Teff}{T_{\rm eff}}
+\newcommand{\Rgc}{R_{\rm GC}}
+\newcommand{\LamEE}{\Lambda_{\rm EE}}
+\newcommand{\LamHZ}{\Lambda_{\rm HZ}}
+\newcommand{\fEE}{f_{\rm EE}}
+\newcommand{\fHZ}{f_{\rm HZ}}
+\newcommand{\HZcons}{{\rm HZ}_{\rm cons}}
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\ind}{\mathbf{1}}
+\newcommand{\hashid}[1]{\texttt{\seqsplit{#1}}}
+
+\shorttitle{A Conditional ExoEarth Projection in the 7--9 kpc Annulus}
+\shortauthors{Jer\v{s}e}
+
+\begin{document}
+
+\hypersetup{
+  pdftitle={A Posterior Model Projection of Narrow-domain ExoEarth Candidates in the Milky Way's 7--9 kpc Annulus},
+  pdfauthor={Roman Jerse},
+  pdfsubject={Posterior model projection of narrow-domain ExoEarth candidates around old G dwarfs}
+}
+
+\title{A Posterior Model Projection of Narrow-domain ExoEarth Candidates in the Milky Way's 7--9 kpc Annulus}
+
+\author{Roman Jer\v{s}e}
+\affiliation{Independent Researcher, Slovenia}
+\email{}
+
+\begin{abstract}
+Kepler occurrence rates are defined per target star, whereas a Galactic
+projection additionally requires an explicit host-star measure and a transport
+assumption. We reconstruct the Bryson et al. Model~1 occurrence posterior from
+the public DR25 inputs using corrected two-sided measurement-error propagation,
+400 reliability/measurement realizations per completeness branch, and adaptive
+ensemble Markov chain Monte Carlo. We propagate every retained posterior
+realization through a pinned Just--Jahrei\ss/PARSEC host population. The target
+is narrowly defined by $0.9\leq R_p/\Rearth\leq1.1$ and
+$0.9\leq S_p/\Searth\leq1.1$, intersected with the present-day conservative
+habitable zone, around operationally main-sequence $5300$--$6000$ K stars at
+least 4.57 Gyr old in the $7$--$9$ kpc annulus. The host model gives
+$N_\star=2.6306\times10^8$. The constant-completeness scenario yields median
+$\langle\fEE\rangle=0.0123$ (68\% interval $0.0058$--$0.0235$) and
+$\LamEE=3.22$ million ($1.52$--$6.19$ million). The zero-completeness scenario
+yields $0.0174$ ($0.0080$--$0.0339$) and $4.57$ million
+($2.10$--$8.91$ million), respectively. Both branches pass the declared
+convergence and Monte Carlo error gates. However, the exact nominal DR25 target
+contains zero candidates and zero summed catalog reliability, and more than
+95\% of corrected catalog realizations also contain none. The reported
+intervals therefore quantify the fitted posterior conditional on the adopted
+separable occurrence model and frozen host model; they do not include local
+support, occurrence-model-form, climate, host-population, or Galactic-transport
+uncertainty. The result is a reproducible conditional model projection, not a
+direct candidate-supported occurrence measurement and not a census of
+habitable or inhabited worlds.
+\end{abstract}
+
+\keywords{Exoplanet astronomy --- Exoplanet population studies --- Habitable planets --- Milky Way disk --- G dwarf stars --- Astrostatistics}
+
+\section{Introduction}\label{sec:intro}
+
+The Kepler mission established that small planets are common and made
+occurrence-rate inference central to exoplanet demography
+\citep[e.g.,][]{Howard2012,Fressin2013,Petigura2013}. Modern analyses must
+account for target selection, injection--recovery completeness, catalog
+reliability, stellar-property uncertainties, and the functional form of the
+underlying population \citep{Burke2015,ForemanMackey2014,Kunimoto2020}. These
+issues are most severe for small planets at low instellation, where detections
+are sparse and smooth models are extrapolated into weakly supported regions.
+
+\citet{Bryson2021} formulated a differential occurrence model in planet
+radius, instellation, and host effective temperature. Its output is a number
+of planets per star. Converting that result into a Galactic population
+expectation requires a second measure describing eligible stars and an
+assumption that the Kepler-calibrated occurrence law can be transported to
+that population.
+
+Version~3 of this analysis implemented that transport with fixed median
+parameter vectors. The present work replaces those plug-in values with a newly
+reconstructed, corrected joint posterior; validates the host and TAMS
+selection; audits direct DR25 support in the exact target; and freezes numerical,
+model, climate, and spatial sensitivities before interpreting the result. The
+constant- and zero-completeness treatments remain separate scenarios and are
+never pooled into a confidence interval.
+
+The demonstration intentionally answers a narrow astronomical question. It
+does not infer inhabited planets, biospheres, continuously habitable worlds,
+or complete physical Earth analogs. It estimates a radius--instellation
+selection around an old, operationally defined G-star population within a
+geometric Galactic annulus.
+
+\section{Estimand and Nomenclature}\label{sec:estimand}
+
+We define dimensionless planet radius and bolometric instellation as
+\begin{equation}
+ r\equiv\frac{R_p}{\Rearth},
+ \qquad
+ I\equiv\frac{S_p}{\Searth}.
+ \label{eq:variables}
+\end{equation}
+A \emph{narrow-domain ExoEarth candidate} satisfies
+\begin{equation}
+ 0.9\leq r\leq1.1,
+ \qquad
+ 0.9\leq I\leq1.1,
+ \label{eq:ee_box}
+\end{equation}
+and lies in the present-day conservative circumstellar habitable zone of its
+host, evaluated with the $1\,\Mearth$ inner-boundary prescription of
+\citet{Kopparapu2013,Kopparapu2014}. The modifier ``narrow-domain'' is
+essential because ExoEarth has no unique radius convention across the
+literature.
+
+This definition does not determine planet mass, density, composition,
+atmospheric state, surface water, geologic activity, magnetic field, or
+biology. Radius alone is not a sufficient compositional classifier
+\citep{Rogers2015}, and present-day habitable-zone membership does not imply
+continuous residence in the zone.
+
+Target hosts are thin- or thick-disk stellar assemblies satisfying
+\begin{equation}
+ 5300\leq\Teff\leq6000\ {\rm K},
+ \qquad
+ t_\star\geq4.57\ {\rm Gyr},
+ \label{eq:host_window}
+\end{equation}
+classified as main-sequence objects by Section~\ref{subsec:selector}, within
+\begin{equation}
+ 7\leq\Rgc\leq9\ {\rm kpc}.
+ \label{eq:annulus}
+\end{equation}
+
+$N_\star$ is the expected number of selected hosts. $\LamHZ$ is the expected
+number of planets with $0.5\leq r\leq1.5$ in the present-day conservative HZ,
+and $\LamEE$ is the expectation in Equation~(\ref{eq:ee_box}). These are
+expected planets, not the probability that a star hosts at least one planet.
+The result is conditional on
+\begin{equation}
+ \mathcal{M}=\{M_{\rm JJ},M_{\rm iso},M_{\rm TAMS},
+ M_{\rm occ},M_{\rm HZ},D_R,Q_R\},
+ \label{eq:model_stack}
+\end{equation}
+which denotes the Galactic model, isochrones, stellar selector, occurrence
+model, climate prescription, radial domain, and quadrature.
+
+\input{sections/01_hosts}
+\input{sections/02_occurrence}
+\input{sections/03_results}
+\input{sections/04_verification_benchmark}
+\input{sections/05_sensitivity}
+\input{sections/06_discussion}
+\input{sections/07_conclusions_data}
+\input{sections/08_appendices}
+\input{sections/09_philosophical_opinion}
+
+\end{document}

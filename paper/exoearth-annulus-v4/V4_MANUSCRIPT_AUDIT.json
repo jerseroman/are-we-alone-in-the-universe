@@ -1,0 +1,45 @@
+{
+  "status": "PASS_STATIC_PRECOMPILE",
+  "scientific_interpretation": "CONDITIONAL_MODEL_PROJECTION_ONLY",
+  "inputs": {
+    "numerical_freeze": "e37a4add5f0fbbb7363252adb2f85a41b0fbd1f4572761f90dc285ddd2b476eb",
+    "dr25_support_audit": "920c61fcbf873cd460ade6dd88870fd2c30ce835de10314ea44d519a5168b909",
+    "sensitivity_freeze": "31fb1eb492644c0272eda0452be2dd022c2d07da1d04e0fb881a807acae29d99",
+    "literature_comparison": "e372303a52eebc73cabe81b40566fc60e5a66885401bfbf392afb2a6a0ef96e9"
+  },
+  "source_provenance": {
+    "v3_commit": "5a3528aea6d6f28da8e9db4d40f0c84cbb43d501",
+    "v3_tree": "5a8596716297fbef47bef55b262341806780a990",
+    "pdf_reconstruction_used": false,
+    "aastex701_sha256": "c1bb436807f8bb37eb5203056db5a5a60e1c9ae6a3feb6501d7c414b9b08b062"
+  },
+  "cross_references": {
+    "citation_key_count": 28,
+    "label_count": 55,
+    "reference_count": 13,
+    "missing_citations": [],
+    "duplicate_labels": [],
+    "undefined_references": []
+  },
+  "figures": {
+    "v4_posterior_intervals.pdf": "22d4164277182825e700f81fb4ec585f33a3486a528047a3213e03572c20d3ed",
+    "v4_dr25_local_support.pdf": "7f407b37a8a49f6d4cc265d4956ee11e70f7a1be40430fd22b2cf778d4c57b32",
+    "v4_sensitivity_register.pdf": "c0c8c93af4e9fee06505246628fa28b46cbffb2597346feb3bac7436f0cf5b5e"
+  },
+  "required_numerical_anchors": {
+    "host_count": "263{,}061{,}992.37",
+    "constant_median_millions": "3.224",
+    "zero_median_millions": "4.572",
+    "constant_q16_millions": "1.522",
+    "constant_q84_millions": "6.189",
+    "zero_q16_millions": "2.103",
+    "zero_q84_millions": "8.912",
+    "constant_zero_fraction": "95.75",
+    "zero_zero_fraction": "96.75",
+    "constant_legacy_host_change": "-28.58",
+    "zero_legacy_host_change": "-29.58",
+    "low_mass_climate_change": "-57.28",
+    "branch_median_change": "41.83"
+  },
+  "source_manifest_sha256": "6336b169ad67bf3203229ceaa8ba7fe9100fad9723835b2f83a17e04c80587f5"
+}

@@ -1,0 +1,96 @@
+\section{Discussion}\label{sec:discussion}
+
+\subsection{Comparison with primary occurrence studies}
+
+Published Earth-analog occurrence estimates are not interchangeable because
+their radius, orbital coordinate, HZ definition, stellar sample, catalog, and
+reported statistical functional differ. The v4 median per-star occurrence,
+1.23\% under constant completeness and 1.74\% under zero completeness, is
+numerically below broad-HZ estimates as expected for its much narrower
+integrated phase space.
+
+\citet{Bryson2021} use $0.5$--$1.5\,\Rearth$, a complete conservative HZ, and
+4800--6300 K stars for their quoted $\eta_\oplus$ values. Their 0.37 and 0.60
+broad-HZ results are the source-model anchors for this analysis, not independent
+corroboration. \citet{Kunimoto2020} report an 84.1\% upper limit below 0.18
+planets per G star for $0.75$--$1.5\,\Rearth$ and 0.99--1.70 au; semimajor axis,
+radius, and host definitions all differ from v4. The conceptually narrower
+$\zeta_{1.0}$ of \citet{Burke2015} uses planet radius and orbital period within
+20\% of Earth, yielding a central value near 0.1 but an allowed 0.01--2 range
+once major statistical and systematic uncertainty is considered.
+
+Using a stripped-core-aware occurrence interpretation, \citet{Pascucci2019}
+obtain broad-HZ values of roughly 5--10\% and show that extrapolation choices
+can change the result by factors of several. \citet{Bergsten2022} report
+$\Gamma_\oplus=15^{+6}_{-4}\%$, a local differential density per logarithmic
+period--radius area rather than an integrated planets-per-star quantity for the
+v4 box. Converting it would require an explicit domain and occurrence model.
+
+No one of these primary results simultaneously matches the v4 radius,
+instellation, climate intersection, host-temperature range, and catalog/model
+definition. Point-estimate differences therefore do not by themselves
+establish inconsistency. The common conclusion relevant here is that sparse
+long-period data and occurrence-model form are material epistemic limitations.
+
+\subsection{Local support and model-form risk}
+
+The zero-candidate audit sharpens the limitation that version~3 described only
+as sparsity. The posterior remains mathematically finite because a separable
+power law is fitted over the larger source domain and then integrated over the
+target. Thus the interval describes uncertainty in that fitted projection; it
+does not demonstrate that the local surface is smooth, separable, or free of a
+break near Earth radius and instellation.
+
+The Model~2 point comparison is useful but insufficient. It changes one
+temperature parameterization within the Bryson framework and does not test
+arbitrary curvature, radius--instellation interactions, or stripped-core
+structure \citep{LopezRice2018,Pascucci2019}. A more complete analysis would
+fit competing occurrence surfaces to the same perturbed catalogs and perform
+posterior predictive checks targeted at the empty local region.
+
+\subsection{Host-population and transport uncertainty}\label{subsec:transport}
+
+The JJ host count is a deterministic output of the pinned parameter realization
+and isochrone library. The sub-percent radial-grid change is only a numerical
+diagnostic. Posterior uncertainty in star-formation and age--metallicity
+histories, IMF parameters, component normalizations, radial migration, and the
+choice among PARSEC, MIST, and BaSTI is not propagated. The reported host count
+is reproducible but not astrophysically known to sub-percent precision.
+
+Equation~(\ref{eq:galactic_estimator}) transports a Kepler-calibrated model to
+an older Galactic population. Conditional on $\Teff$, it assumes no additional
+dependence of planet occurrence or survival on age, $[\mathrm{Fe/H}]$,
+$[\alpha/\mathrm{Fe}]$, disk membership, or Galactocentric radius. This is a
+null transport assumption, not an empirical result.
+
+The Kepler source denominator also includes observational-quality and binary
+cuts that the intrinsic JJ single-star population does not reproduce. Close
+companions can suppress planet occurrence \citep{Kraus2016}, while unresolved
+multiplicity alters radii and completeness. The direction and magnitude of a
+correction cannot be identified from the current inputs, so multiplicity
+remains unquantified rather than receiving an ad hoc factor.
+
+\subsection{Meaning of the Galactic annulus}
+
+The 7--9 kpc interval is an absolute geometric mask motivated by historically
+highlighted Galactic-habitable-zone work \citep{Lineweaver2004}; it does not
+import that study's time-dependent metallicity, supernova, terrestrial-planet,
+or biological weighting. Sharply bounded Galactic habitable zones are
+themselves model-dependent \citep{Prantzos2008,Gowanlock2011}. The present
+result is therefore an estimate within an annulus, not the number of ExoEarth
+candidates in a physically complete Galactic habitable zone.
+
+\subsection{What the reported values mean}
+
+The statement $\LamEE=3.22$ million in the constant branch means that the
+frozen model stack assigns that median expected number of planets to the stated
+radius--instellation--present-day-HZ domain and host population. The zero branch
+assigns 4.57 million under a different completeness extrapolation. These are
+not observed counts, not numbers of systems with at least one selected planet,
+and not counts of rocky, ocean-bearing, habitable, or inhabited worlds.
+
+The displayed posterior intervals are statistically meaningful for the
+implemented conditional model, but narrower in scope than the total scientific
+uncertainty. Reproducibility of a conditional projection and empirical validity
+of the projection are separate questions; v4 passes the former and explicitly
+fails the local-support component of the latter.

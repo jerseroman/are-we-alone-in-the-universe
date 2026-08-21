@@ -1,0 +1,105 @@
+\appendix
+\setcounter{equation}{0}
+\renewcommand{\theequation}{A\arabic{equation}}
+\renewcommand{\theHequation}{A.\arabic{equation}}
+
+\section{Analytic Occurrence Integrals}\label{app:analytic}
+
+For exponent $q$, define
+\begin{equation}
+ \mathcal{J}(x_0,x_1;q)=
+ \begin{cases}
+ \displaystyle\frac{x_1^{q+1}-x_0^{q+1}}{q+1}, & q\neq-1,\\[6pt]
+ \ln(x_1/x_0), & q=-1.
+ \end{cases}
+ \label{eq:primitive}
+\end{equation}
+With $T_0=3900$ K, $T_b=5117$ K, and $T_1=6300$ K, the Model~1 normalization is
+\begin{align}
+ C_1^{-1}={}&
+ \mathcal{J}(0.5,2.5;\alpha)
+ \mathcal{J}(0.2,2.2;\beta)\nonumber\\
+ &\times\frac{1}{T_1-T_0}\big[
+ 10^{-11.839}\mathcal{J}(T_0,T_b;\gamma+3.16)\nonumber\\
+ &\hspace{36mm}+10^{-16.769}\mathcal{J}(T_b,T_1;\gamma+4.49)
+ \big].
+ \label{eq:c1}
+\end{align}
+Because Equation~(\ref{eq:lambda}) is separable within each temperature branch, $f_k(T)$ is evaluated analytically in $r$ and $I$ using Equation~(\ref{eq:primitive}). The only numerical quadrature in the final Galactic estimator is the radial integration after the row-level sums have been constructed.
+
+\section{Bryson Model~2 Sensitivity}\label{app:model2}
+
+For the Model~2 sensitivity, the source occurrence function is
+\begin{equation}
+ \lambda_2(r,I,T\mid\bm\theta_2)=F_0C_2r^\alpha I^\beta T^\gamma,
+ \label{eq:model2}
+\end{equation}
+without the fixed geometric factor $g(T)$. Its normalization is
+\begin{equation}
+ C_2^{-1}=\mathcal{J}(0.5,2.5;\alpha)
+ \mathcal{J}(0.2,2.2;\beta)
+ \frac{\mathcal{J}(T_0,T_1;\gamma)}{T_1-T_0}.
+ \label{eq:c2}
+\end{equation}
+The adopted \citet{Bryson2021} \texttt{hab2}, Poisson, ``With Uncertainty,'' constant-completeness median vector is
+\begin{equation}
+ (F_0,\alpha,\beta,\gamma,C_2)
+ =(1.13,-1.13,-0.85,+1.19,1.072724\times10^{-5}).
+\end{equation}
+Evaluated on the same frozen JJ rows and HZ prescription, this gives $\LamEE=3.487759\times10^6$, or $+3.296\%$ relative to the Model~1 constant-completeness reference.
+
+\section{Frozen and Native PARSEC-TAMS Boundaries}\label{app:tams}
+
+Table~\ref{tab:tams_nodes} lists the inherited monotonic segment used by the
+canonical 5300--6000 K selector. The 5200 K, $1.15R_\odot$ row is retained
+verbatim as source provenance. An independent regeneration uses genuine
+solar-composition low-mass phase-7 nodes at 5151.34 K ($0.75\,M_\odot$),
+5304.81 K ($0.80\,M_\odot$), and 5390.14 K ($0.85\,M_\odot$), followed by the
+native hotter sequence. This curve brackets the full target without the 5200 K
+row and produces no integrated selector disagreement. Thus the special anchor
+is not numerically responsible for the canonical host count.
+
+\begin{table}[h]
+\caption{Frozen TAMS nodes used for G-star interpolation}
+\label{tab:tams_nodes}
+\centering
+\begin{tabular}{rr}
+\toprule
+$T_{\rm eff}$ (K) & $R_{\rm TAMS}/R_\odot$\\
+\midrule
+5200.00000 & 1.15000\\
+5390.13944 & 1.22926\\
+5517.85139 & 1.28542\\
+5633.13293 & 1.35053\\
+5738.25706 & 1.42375\\
+5844.13178 & 1.49188\\
+5951.82290 & 1.55332\\
+6060.24246 & 1.61155\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Frozen Verification Checklist}\label{app:checks}
+
+The v4 freeze requires: (1) input and artifact checksums; (2) bitwise legacy
+measurement regression and corrected quantile recovery; (3) post-perturbation
+source-domain filtering; (4) 400 of 400 converged adaptive chains in each
+branch; (5) equal outer-realization weights; (6) whole-realization outer MCSE
+and contiguous-block inner MCSE below their declared thresholds; (7)
+independent MCMC-seed stability; (8) finite non-negative host weights and
+occurrence values; (9) radial-node, unit, and thin/thick closure; (10) correct
+temperature, age, component, TAMS, and compact-remnant selection; (11) nested
+HZ/target domains and analytic occurrence integrals; (12) native solar TAMS
+agreement without the 5200 K anchor; (13) 0.5-to-0.25 kpc radial convergence;
+(14) exact DR25 target-support masks; and (15) estimand-aware separation of
+posterior scenarios, point alternatives, and categorical failures.
+
+The metallicity-dependent TAMS artifact does not pass this checklist. Its
+high-mass/giant contamination and missing low-metallicity temperature coverage
+are recorded as a failed, excluded experiment. Likewise, the zero-candidate
+DR25 result is a scientific support failure, not a software failure. These
+distinctions prevent engineering reproducibility from being mislabeled as
+observational validation.
+
+\bibliography{references}
+\bibliographystyle{aasjournalv7}

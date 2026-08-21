@@ -1,0 +1,57 @@
+\section{Conclusions}\label{sec:conclusions}
+
+We reconstructed and propagated a corrected joint occurrence posterior through
+a temperature-resolved Galactic host measure. For the specified old G-star
+population in the 7--9 kpc annulus, the frozen host model gives
+$N_\star=2.6306\times10^8$. The narrow-domain posterior results are
+\begin{align}
+ \LamEE^{\rm const}&=3.22^{+2.97}_{-1.70}\ {\rm million},\nonumber\\
+ \LamEE^{\rm zero}&=4.57^{+4.34}_{-2.47}\ {\rm million},
+\end{align}
+where uncertainties are 16th--84th percentile posterior intervals within each
+separate completeness scenario.
+
+All 800 outer MCMC realizations pass the adaptive convergence gate, the outer
+and inner quantile Monte Carlo errors are small relative to posterior width,
+the radial quadrature is stable below 0.3\%, and the native low-mass solar TAMS
+curve reproduces the canonical host selection. The legacy measurement mechanism
+changes the constant median by only 0.026\%.
+
+The main scientific limitation is not numerical. There are zero nominal DR25
+candidates and zero summed reliability in the exact target, and more than 95\%
+of corrected catalog realizations also contain zero. Occurrence-model form,
+host normalization, climate prescription, stellar multiplicity, and Galactic
+transport are not contained in the posterior intervals. The defensible
+conclusion is therefore conditional: the fitted separable Bryson Model~1
+surface, transported through the frozen JJ/PARSEC/TAMS population, projects a
+median of several million narrow-domain candidates into this annulus. The work
+does not provide a direct candidate-supported measurement or a complete
+astrophysical uncertainty budget.
+
+\section{Data and Software Availability}\label{sec:data}
+
+The public project repository is
+\url{https://github.com/jerseroman/are-we-alone-in-the-universe}.
+The persistent project concept DOI is
+\href{https://doi.org/10.5281/zenodo.20474527}{10.5281/zenodo.20474527}; exact
+reproduction additionally requires the v4 release record and commit identified
+in its checksum manifest.
+
+The immutable manuscript-v3 source is commit
+\hashid{5a3528aea6d6f28da8e9db4d40f0c84cbb43d501}. The v4 source-provenance
+manifest records the source tree and every imported LaTeX/BibTeX blob before
+editing. The Bryson research-code source is
+\hashid{d200f54b6f0df49e0dae530e69983cdce5397bfb}. Corrected-posterior execution
+is recorded by GitHub Actions runs 32470830404, 32472776218, 32506666772, and
+32527877921. The release evidence contains the frozen numerical, host/TAMS,
+DR25-support, sensitivity, and primary-literature records together with
+SHA-256 manifests.
+
+The analysis uses Python, NumPy \citep{Harris2020}, pandas
+\citep{McKinney2010}, Matplotlib \citep{Hunter2007}, Astropy
+\citep{Astropy2022}, \texttt{emcee} \citep{ForemanMackey2013}, and
+\texttt{jjmodel} \citep{Sysoliatina2022}. The manuscript figures are generated
+only from committed frozen CSV/JSON artifacts. Local raw production artifacts
+are represented by their recorded hashes and GitHub Actions run identifiers;
+the reproducibility archive supplies the compact frozen outputs required to
+audit every reported number.

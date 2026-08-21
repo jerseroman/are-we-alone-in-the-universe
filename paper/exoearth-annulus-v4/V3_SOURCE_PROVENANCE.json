@@ -1,0 +1,23 @@
+{
+  "status": "EXACT_ARCHIVED_SOURCE_IMPORTED_BEFORE_V4_EDITS",
+  "source_branch": "archive/exoearth-annulus-v3-20260820",
+  "source_commit": "5a3528aea6d6f28da8e9db4d40f0c84cbb43d501",
+  "source_tree": "5a8596716297fbef47bef55b262341806780a990",
+  "source_path": "paper/exoearth-annulus",
+  "destination_path": "paper/exoearth-annulus-v4",
+  "verification_method": "Each imported working-tree file was passed through git hash-object with destination attributes before editing and matched the archived source blob exactly.",
+  "source_blobs": {
+    "main.tex": "7534aec5d9e559cac0d48d30870400222da68e50",
+    "references.bib": "c6c9e2655f8f337b60298a5036ac97ed8222ec35",
+    "sections/01_hosts.tex": "b5ecef4eb18dc5bf6670b1f65bf127ae41cef395",
+    "sections/02_occurrence.tex": "f38b35aadb62107ab3d6315e01d1e567e48f063e",
+    "sections/03_results.tex": "8c952f2cb2ba84e7b4cde57d3f8dce20292bfc14",
+    "sections/04_verification_benchmark.tex": "d331a297f012245e51ade89e6fa304df09558d13",
+    "sections/05_sensitivity.tex": "41cf311a1870c95e02e87a45de7d998dc22cb155",
+    "sections/06_discussion.tex": "41c9d0ece25f57ddaeba835f2a95d6f928334929",
+    "sections/07_conclusions_data.tex": "871f102fbbdc976ed95de92acb65ef0563338783",
+    "sections/08_appendices.tex": "e7a8ed9f5dd48ddcf5cfb01d82006ee6fe725ce6",
+    "sections/09_philosophical_opinion.tex": "a32f5d87ef20cf918183d77a8eadbfa726a79591"
+  },
+  "pdf_reconstruction_used": false
+}

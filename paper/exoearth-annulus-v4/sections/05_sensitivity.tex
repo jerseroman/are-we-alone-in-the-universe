@@ -1,0 +1,79 @@
+\section{Sensitivity and Uncertainty}\label{sec:sensitivity}
+
+The frozen register separates posterior scenarios, numerical checks, model
+alternatives, climate prescriptions, alternative estimands, categorical
+validation failures, and unparameterized systematics. These entries are not
+exchangeable random errors and are not combined in quadrature.
+
+\begin{table*}[t]
+\caption{Audited sensitivity of the narrow ExoEarth expectation}
+\label{tab:sensitivity}
+\centering
+\small
+\begin{tabular}{llrl}
+\toprule
+Category & Comparison & Change in $\LamEE$ & Statistical role\\
+\midrule
+Measurement & Legacy versus corrected propagation & +0.026\% & Posterior q50 regression\\
+Completeness & Zero versus constant branch & +41.83\% & Separate scenario\\
+Host selector & Legacy fixed-$\log g$, constant & -28.58\% & Posterior model sensitivity\\
+Host selector & Legacy fixed-$\log g$, zero & -29.58\% & Posterior model sensitivity\\
+TAMS & Native curve without 5200 K anchor & 0.000\% & Plug-in numerical validation\\
+Numerics & Radial grid 0.5 to 0.25 kpc & +0.231\% & Plug-in convergence check\\
+Occurrence & Bryson Model~2 versus Model~1 & +3.30\% & Point-vector model alternative\\
+Climate & Inner HZ flux $\times0.95$ & -24.84\% & Boundary perturbation\\
+Climate & Inner HZ flux $\times1.05$ & +7.15\% & Boundary perturbation\\
+Climate & $0.1\,\Mearth$ runaway boundary & -57.28\% & Alternative prescription\\
+Climate & $5\,\Mearth$ runaway boundary & +7.15\% & Alternative prescription\\
+HZ definition & Optimistic versus conservative & +7.15\% & Alternative estimand\\
+Temperature & JJ weighted versus uniform & +0.380\% & Weighting diagnostic\\
+\bottomrule
+\end{tabular}
+\tablecomments{The basis differs by row and is stated explicitly. Posterior
+rows use branch-specific medians; point-vector rows use the frozen constant
+reference $3.3765\times10^6$. None is an added posterior error bar.}
+\end{table*}
+
+The legacy measurement algorithm changes the constant posterior median by only
+0.026\%, so correcting its asymmetric-error construction is methodologically
+necessary but does not drive the headline median. The host selector and climate
+prescription have much larger effects. Model~2 changes the point estimate by
+3.30\%, but no Model~2 posterior was propagated and that single alternative
+does not span arbitrary radius--instellation structure.
+
+The $\pm1\%$ inner-boundary perturbations are asymmetric: multiplying the
+runaway-greenhouse flux by 0.99 changes the plug-in result by -3.67\%, whereas
+a factor 1.01 gives +2.71\%. Factors 0.95 and 1.05 give -24.84\% and +7.15\%.
+This nonlinearity follows from clipping the fixed 0.9--1.1 instellation box by
+the temperature-dependent inner HZ. The $0.1$ and $5\,\Mearth$ rows alter the
+published climate prescription; they do not model the unknown planet-mass
+distribution inside the radius interval.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.95\textwidth]{v4_sensitivity_register.pdf}
+\caption{Frozen one-at-a-time sensitivity register. Colors distinguish
+numerical checks, scenarios, model alternatives, and alternative prescriptions.
+Spatial-domain changes are shown separately because they redefine the target
+population. The DR25 local-support failure and excluded metallicity-TAMS test
+are categorical findings, not plotted numerical error bars.}
+\label{fig:sensitivity}
+\end{figure*}
+
+Changing the radial mask changes the estimand. Relative to the 7--9 kpc
+constant point-vector result, the 6--10 kpc domain gives
+$\LamEE=6.8239\times10^6$ (+102.10\%) and the full 4--14 kpc JJ domain gives
+$1.5479\times10^7$ (+358.43\%). They are alternative populations rather than
+uncertainty intervals for the annulus.
+
+The archived metallicity-dependent TAMS surface is not a valid sensitivity.
+Its input contains 42 giant or high-mass phase-7 contaminants, reaching
+$155\,M_\odot$ and $2312\,R_\odot$, while several low-metallicity tracks do not
+cover 5300--6000 K. The previously reported +1.59\% change is retracted and
+excluded. A valid low-mass metallicity-dependent TAMS analysis remains open.
+
+Other unparameterized epistemic uncertainties remain open: JJ component
+normalization and star-formation history, isochrone family, radial migration,
+multiplicity mismatch, occurrence transport with age and metallicity, and
+occurrence functional form in the locally empty target. No defensible joint
+distribution is available, so a combined total uncertainty is not reported.

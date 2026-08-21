@@ -1,0 +1,61 @@
+\section{Host-Star Population}\label{sec:hosts}
+
+\subsection{Generalized Just--Jahrei\ss\ model}
+
+The host population is generated with the generalized Just--Jahrei\ss\ (JJ) Galactic disk model \citep{JustJahreiss2010,Sysoliatina2022}, pinned to commit \texttt{2828a2e8bfc3} (\texttt{jjmodel} v1.0.1; the full hash is given in Section~\ref{sec:data}). We use the pinned \texttt{tutorial2/parameters} and \texttt{sfrd\_peaks\_parameters} realization, the default four-slope broken-power-law IMF (\texttt{imfkey=0}), a solar Galactocentric distance of 8.17 kpc, and a runtime radial grid $4\leq R\leq14$ kpc with $\Delta R=0.5$ kpc. Only the thin and thick stellar disks are retained; the stellar halo is excluded.
+
+Stellar assemblies are generated with the JJ-distributed Padova library based on PARSEC v1.2S tracks \citep{Bressan2012} and the associated PARSEC--COLIBRI isochrone generation \citep{Marigo2017}; the workflow downloads the multiband archive identified by DOI \href{https://doi.org/10.11588/data/ZCXHOE}{10.11588/data/ZCXHOE}. The COLIBRI extension is part of the library provenance but does not determine the selected main-sequence G-star rows. Each synthetic row $i$ at radial node $R_j$ carries a vertically integrated present-day surface-number weight $w_{ij}$ in ${\rm pc}^{-2}$.
+
+The resulting host count is a JJ/PARSEC-conditioned expectation, not a direct Gaia census. The model is axisymmetric and vertically integrated; spiral arms and azimuthal substructure are not resolved. The sub-percent radial-grid diagnostic reported below is not a posterior uncertainty on $N_\star$: uncertainties in the JJ parameter realization, IMF, age--metallicity and star-formation prescriptions, and isochrone family are not propagated in this work.
+
+\subsection{Operational main-sequence selector}\label{subsec:selector}
+
+For each synthetic row, the stellar radius is reconstructed from current mass and surface gravity,
+\begin{equation}
+ \frac{R_{\star,ij}}{R_\odot}
+ =\left[
+ \frac{M_{f,ij}}{M_\odot}
+ 10^{\log g_\odot-\log g_{ij}}
+ \right]^{1/2},
+ \qquad \log g_\odot=4.438.
+ \label{eq:rstar}
+\end{equation}
+The host indicator is
+\begin{align}
+ H_{ij}={}&
+ \ind(d_{ij}\in\{\mathrm{thin},\mathrm{thick}\})
+ \ind(5300\leq T_{ij}\leq6000)\nonumber\\
+ &\times\ind(t_{ij}\geq4.57)
+ \ind(\log g_{ij}<7)\nonumber\\
+ &\times\ind\!\left[R_{\star,ij}\leq
+ R_{\rm TAMS}(T_{ij})\right].
+ \label{eq:host_indicator}
+\end{align}
+The final factor is the operational main-sequence classifier. The preceding $\log g<7$ factor is only a veto against compact-remnant contamination, because a compact object can otherwise fall below a one-sided radius boundary.
+
+$R_{\rm TAMS}(T)$ is the frozen public \texttt{tams\_parsec.txt} boundary from the Berger/Huber evolutionary-state implementation \citep{Berger2018,HuberEvolstate}. The exact upstream table is pinned at commit \hashid{5e904afad81805c4e3ac4c3f78510a2a1df33d14}; the verbatim project copy has SHA-256 \hashid{d2c47b264a298a599064a9e58f19f309886e7b96f36cc9603c9ca55494f87aac}. Its generator uses solar-composition PARSEC v1.2S tracks ($Z=0.017$, $Y=0.279$) and reconstructs radius from luminosity and temperature. The canonical interpolation is linear in $T$ and $\log_{10}(R_{\rm TAMS}/R_\odot)$, and extrapolation is forbidden. Appendix~\ref{app:tams} lists the adopted segment.
+
+This is a temperature-dependent evolutionary boundary, not the fixed $R_\star<1.35R_\odot$ cut rejected in the source analysis. It is used as a transport approximation to the Berger/Huber \texttt{Evol} classification inherited by the Bryson denominator, not as a claim that the complete Kepler and JJ stellar selections are identical. A separate audit regenerated genuine low-mass solar-composition phase-7 nodes from 5151 to 6060 K. They reproduce the selected population exactly, including the 5300--5390 K interval, without using the table's special 5200 K anchor. The archived metallicity-dependent differential test failed low-mass coverage and contamination checks and is excluded rather than reported as a numerical sensitivity.
+
+Because the JJ age coordinate is a midpoint grid, the formal threshold $4.57$ Gyr admits no row exactly at that age. The youngest selected midpoint is 4.5875 Gyr. A Stefan--Boltzmann radius reconstructed from $L$ and $\Teff$ differs from Equation~(\ref{eq:rstar}) by 0.31\% at the median and 0.40\% at the 95th percentile. Only 0.336\% of the integrated canonical host weight lies within 1\% of the adopted TAMS boundary. Replacing the mass--gravity radius by the luminosity--temperature radius changes $N_\star$ by $+0.131\%$ and $\LamEE$ by $+0.148\%$ in the 7--9 kpc annulus, directly testing the classification stability of the radius reconstruction.
+
+\subsection{Host measure and radial quadrature}
+
+The selected-host surface density is
+\begin{equation}
+ \Sigma_\star(R_j)=\sum_i H_{ij}w_{ij}.
+ \label{eq:sigma_star}
+\end{equation}
+The host count in the annulus is
+\begin{equation}
+ N_\star=10^6\int_{7}^{9}2\pi R\,\Sigma_\star(R)\,\dd R,
+ \label{eq:nstar}
+\end{equation}
+where $R$ is in kpc and $10^6$ converts ${\rm kpc}^2$ to ${\rm pc}^2$. The canonical calculation evaluates this definition with the composite trapezoid rule on $R_j=(7,7.5,8,8.5,9)$ kpc,
+\begin{align}
+ N_\star^{(\Delta R)}={}&10^6\Delta R
+ \sum_{j=0}^{4}c_j\,2\pi R_j\Sigma_\star(R_j),\nonumber\\
+ c_0=c_4={}&\tfrac12,\qquad c_1=c_2=c_3=1.
+ \label{eq:nstar_trapezoid}
+\end{align}
+with $\Delta R=0.5$ kpc. Refinement to $\Delta R=0.25$ kpc is treated as a numerical convergence check, not as an astrophysical uncertainty on the host normalization.
