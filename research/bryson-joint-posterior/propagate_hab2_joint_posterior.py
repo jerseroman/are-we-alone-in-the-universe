@@ -28,6 +28,11 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from clustered_monte_carlo import (
+    cluster_bootstrap_quantile_mcse,
+    contiguous_batch_quantile_mcse,
+)
+
 SOURCE_RADIUS = (0.5, 2.5)
 SOURCE_INSTELLATION = (0.2, 2.2)
 SOURCE_TEMPERATURE = (3900.0, 6300.0)
@@ -264,6 +269,9 @@ def main() -> None:
     parser.add_argument("--branch", required=True, choices=("constant", "zero"))
     parser.add_argument("--out", required=True, type=Path)
     parser.add_argument("--chunk-size", type=int, default=2000)
+    parser.add_argument("--cluster-bootstrap-replicates", type=int, default=1000)
+    parser.add_argument("--bootstrap-seed", type=int, default=2026082102)
+    parser.add_argument("--inner-chain-batches", type=int, default=8)
     args = parser.parse_args()
 
     started = time.time()
@@ -292,6 +300,15 @@ def main() -> None:
             raise RuntimeError(f"Posterior branch mismatch: {branches}")
     if not np.isfinite(samples.loc[:, list(required)].to_numpy(dtype=float)).all():
         raise RuntimeError("Non-finite joint-posterior sample")
+    if "global_trial" not in samples.columns:
+        raise RuntimeError(
+            "Posterior samples must retain global_trial for cluster-aware uncertainty"
+        )
+    realization_counts = samples.groupby("global_trial", sort=True).size().to_numpy()
+    if len(realization_counts) < 2 or not np.all(
+        realization_counts == realization_counts[0]
+    ):
+        raise RuntimeError("Posterior outer realizations do not have equal weights")
 
     output_frames: list[pd.DataFrame] = []
     for start in range(0, len(samples), args.chunk_size):
@@ -317,6 +334,19 @@ def main() -> None:
         "Lambda_EE",
         "Lambda_EE_over_Lambda_HZ",
     )
+    cluster_bootstrap_mcse = cluster_bootstrap_quantile_mcse(
+        draws,
+        quantities,
+        "global_trial",
+        args.cluster_bootstrap_replicates,
+        args.bootstrap_seed,
+    )
+    inner_chain_mcse = contiguous_batch_quantile_mcse(
+        draws,
+        quantities,
+        "global_trial",
+        args.inner_chain_batches,
+    )
     summary = {
         "status": (
             "occurrence-posterior propagation conditional on frozen "
@@ -327,6 +357,8 @@ def main() -> None:
             "path": str(args.samples),
             "sha256": sha256(args.samples),
             "row_count": int(len(samples)),
+            "outer_realizations": int(len(realization_counts)),
+            "equal_samples_per_outer_realization": int(realization_counts[0]),
         },
         "host_rows": {
             "path": str(args.hosts),
@@ -340,6 +372,20 @@ def main() -> None:
         "posterior_quantiles": {
             name: quantiles(draws[name].to_numpy(dtype=float))
             for name in quantities
+        },
+        "posterior_quantile_monte_carlo_error": {
+            "outer_realization_cluster_bootstrap": cluster_bootstrap_mcse,
+            "outer_realization_cluster_bootstrap_replicates": (
+                args.cluster_bootstrap_replicates
+            ),
+            "outer_realization_cluster_bootstrap_seed": args.bootstrap_seed,
+            "inner_chain_contiguous_batch_mcse": inner_chain_mcse,
+            "inner_chain_batches": args.inner_chain_batches,
+            "interpretation": (
+                "The bootstrap resamples complete reliability/measurement "
+                "realizations. Posterior rows are never treated as independent "
+                "outer Monte Carlo draws."
+            ),
         },
         "runtime_seconds": float(time.time() - started),
         "software": {
