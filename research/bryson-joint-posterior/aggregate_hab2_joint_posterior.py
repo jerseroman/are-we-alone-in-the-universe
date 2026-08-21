@@ -18,6 +18,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from measurement_error import LEGACY_SOURCE_MIXTURE, MEASUREMENT_ERROR_MODES
+
 PARAMETERS = ("F0", "alpha", "beta", "gamma")
 ARCHIVED = {
     "constant": {
@@ -52,6 +54,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--steps", type=int, default=2000)
     parser.add_argument("--runner-thin", type=int, default=10)
     parser.add_argument(
+        "--expected-measurement-error-mode",
+        choices=MEASUREMENT_ERROR_MODES,
+        default=None,
+        help="Fail unless every shard used this measurement-error mode.",
+    )
+    parser.add_argument(
         "--propagation-stride",
         type=int,
         default=5,
@@ -80,6 +88,57 @@ def parse_shard(label: str) -> int:
     return int(match.group(1))
 
 
+def resolve_measurement_error_mode(
+    summaries: list[dict[str, Any]], expected_mode: str | None = None
+) -> tuple[str, dict[str, Any]]:
+    """Reject mixed shard modes and return their common interpretation."""
+
+    shard_modes: set[str] = set()
+    explicit_metadata: list[dict[str, Any]] = []
+    for summary in summaries:
+        metadata = summary.get("measurement_error")
+        if metadata is None:
+            mode = LEGACY_SOURCE_MIXTURE
+        elif isinstance(metadata, dict) and metadata.get("mode") in MEASUREMENT_ERROR_MODES:
+            mode = str(metadata["mode"])
+            explicit_metadata.append(metadata)
+        else:
+            raise RuntimeError("Invalid measurement-error metadata in shard summary")
+        shard_modes.add(mode)
+
+    if len(shard_modes) != 1:
+        raise RuntimeError(f"Cannot mix measurement-error modes: {sorted(shard_modes)}")
+    mode = next(iter(shard_modes))
+    if expected_mode is not None and mode != expected_mode:
+        raise RuntimeError(
+            f"Measurement-error mode mismatch: expected {expected_mode!r}, found {mode!r}"
+        )
+    if explicit_metadata:
+        metadata = explicit_metadata[0]
+    else:
+        metadata = {
+            "mode": LEGACY_SOURCE_MIXTURE,
+            "metadata_inferred_from_pre_v4_shard_summaries": True,
+        }
+    return mode, metadata
+
+
+def validate_diagnostic_modes(
+    diagnostics: list[dict[str, Any]], expected_mode: str
+) -> None:
+    """Require trial diagnostics to agree with the shard summaries."""
+
+    diagnostic_modes = {
+        str(entry.get("measurement_error_mode", LEGACY_SOURCE_MIXTURE))
+        for entry in diagnostics
+    }
+    if diagnostic_modes != {expected_mode}:
+        raise RuntimeError(
+            "Diagnostic measurement-error modes do not match shard summaries: "
+            f"{sorted(diagnostic_modes)} versus {expected_mode!r}"
+        )
+
+
 def main() -> None:
     args = parse_args()
     root = args.root.resolve()
@@ -95,6 +154,9 @@ def main() -> None:
     summary_paths = sorted(
         root.rglob(f"posterior_summary_{args.branch}_production-shard-*.json")
     )
+    audit_paths = sorted(
+        root.rglob(f"perturbation_audit_{args.branch}_production-shard-*.csv")
+    )
     if len(chain_paths) != args.expected_shards:
         raise RuntimeError(
             f"Expected {args.expected_shards} chain shards, found {len(chain_paths)}"
@@ -108,10 +170,62 @@ def main() -> None:
             f"Expected {args.expected_shards} summary shards, found {len(summary_paths)}"
         )
 
+    shard_summaries: list[dict[str, Any]] = []
+    for path in summary_paths:
+        summary = json.loads(path.read_text(encoding="utf-8"))
+        if summary.get("branch") != args.branch:
+            raise RuntimeError(f"Summary branch mismatch in {path}")
+        if summary.get("period_cutoff_days") is not None:
+            raise RuntimeError(f"Unexpected period cutoff in {path}")
+        shard_summaries.append(summary)
+
+    measurement_error_mode, measurement_error = resolve_measurement_error_mode(
+        shard_summaries, args.expected_measurement_error_mode
+    )
+
+    summaries_require_audit = any(
+        "perturbation_audit_file" in summary for summary in shard_summaries
+    )
+    if summaries_require_audit and len(audit_paths) != args.expected_shards:
+        raise RuntimeError(
+            f"Expected {args.expected_shards} perturbation-audit shards, "
+            f"found {len(audit_paths)}"
+        )
+    if not summaries_require_audit and audit_paths:
+        raise RuntimeError(
+            "Perturbation-audit CSVs are present but shard summaries do not declare them"
+        )
+
+    full_audit_path: Path | None = None
+    if summaries_require_audit:
+        audit_frames: list[pd.DataFrame] = []
+        for path in audit_paths:
+            frame = pd.read_csv(path)
+            if set(frame.branch.astype(str)) != {args.branch}:
+                raise RuntimeError(f"Audit branch mismatch in {path}")
+            modes = set(frame.measurement_error_mode.astype(str))
+            if modes != {measurement_error_mode}:
+                raise RuntimeError(
+                    f"Audit measurement-error mode mismatch in {path}: {modes}"
+                )
+            labels = set(frame.run_label.astype(str))
+            if len(labels) != 1:
+                raise RuntimeError(f"Multiple audit run labels in {path}: {labels}")
+            shard = parse_shard(next(iter(labels)))
+            if frame.trial.nunique() != args.trials_per_shard:
+                raise RuntimeError(f"Audit trial count mismatch in {path}")
+            frame.insert(3, "shard", shard)
+            frame.insert(5, "global_trial", shard * args.trials_per_shard + frame.trial)
+            audit_frames.append(frame)
+        full_audit = pd.concat(audit_frames, ignore_index=True)
+        full_audit.sort_values(["global_trial", "source_row"], inplace=True)
+        full_audit.reset_index(drop=True, inplace=True)
+        full_audit_path = out / f"perturbation_audit_{args.branch}_full.csv.gz"
+        full_audit.to_csv(full_audit_path, index=False, compression="gzip")
+
     samples_per_trial = args.walkers * (args.steps // args.runner_thin)
     expected_rows_per_shard = args.trials_per_shard * samples_per_trial
     frames: list[pd.DataFrame] = []
-    shard_summaries: list[dict[str, Any]] = []
 
     for path in chain_paths:
         frame = pd.read_csv(path)
@@ -153,11 +267,11 @@ def main() -> None:
 
     # Preserve equal representation from every outer realization when creating
     # the smaller sample file used by the Galactic propagation stage.
-    propagation = (
-        full.groupby("global_trial", group_keys=False, sort=True)
-        .apply(lambda frame: frame.iloc[:: args.propagation_stride])
-        .reset_index(drop=True)
-    )
+    within_trial_row = full.groupby("global_trial", sort=False).cumcount()
+    propagation = full.loc[
+        within_trial_row.mod(args.propagation_stride).eq(0)
+    ].copy()
+    propagation.reset_index(drop=True, inplace=True)
     expected_propagation = (
         args.expected_shards
         * args.trials_per_shard
@@ -205,6 +319,7 @@ def main() -> None:
         raise RuntimeError(
             f"Diagnostic realization count {len(diagnostics)} is incomplete"
         )
+    validate_diagnostic_modes(diagnostics, measurement_error_mode)
 
     acceptance = np.asarray(
         [entry["mean_acceptance_fraction"] for entry in diagnostics], dtype=float
@@ -251,14 +366,6 @@ def main() -> None:
             for index, name in enumerate(source_names)
         }
 
-    for path in summary_paths:
-        summary = json.loads(path.read_text(encoding="utf-8"))
-        if summary.get("branch") != args.branch:
-            raise RuntimeError(f"Summary branch mismatch in {path}")
-        if summary.get("period_cutoff_days") is not None:
-            raise RuntimeError(f"Unexpected period cutoff in {path}")
-        shard_summaries.append(summary)
-
     diagnostics_path = out / f"trial_diagnostics_{args.branch}_full.jsonl"
     with diagnostics_path.open("w", encoding="utf-8") as handle:
         for entry in diagnostics:
@@ -273,6 +380,7 @@ def main() -> None:
         "source_commit": "d200f54b6f0df49e0dae530e69983cdce5397bfb",
         "branch": args.branch,
         "period_cutoff_days": None,
+        "measurement_error": measurement_error,
         "mixture_definition": (
             "equal number of post-burn ensemble samples from each of 400 "
             "reliability and measurement-error realizations"
@@ -288,6 +396,9 @@ def main() -> None:
         "full_sample_count": int(len(full)),
         "propagation_stride_within_each_realization": args.propagation_stride,
         "galactic_propagation_sample_count": int(len(propagation)),
+        "perturbation_audit_file": (
+            full_audit_path.name if full_audit_path is not None else None
+        ),
         "posterior_quantiles": quantiles,
         "comparison_with_archived_printed_marginal_summary": comparison,
         "correlation_matrix_file": correlation_path.name,
@@ -328,6 +439,8 @@ def main() -> None:
         diagnostics_path,
         summary_path,
     ]
+    if full_audit_path is not None:
+        manifest_targets.append(full_audit_path)
     manifest_path = out / f"SHA256SUMS_{args.branch}_aggregate.txt"
     manifest_path.write_text(
         "".join(f"{sha256(path)}  {path.name}\n" for path in manifest_targets),

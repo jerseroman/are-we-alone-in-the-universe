@@ -7,9 +7,11 @@ This is a clean, seeded implementation of the public notebook
 ``d200f54b6f0df49e0dae530e69983cdce5397bfb``.
 
 The source notebook pools MCMC samples over reliability/measurement-error
-realisations.  This runner preserves that construction, but records the random
-seed, trial-level diagnostics, perturbed planet samples, input checksums, and
-source-versus-manuscript parameter ordering.
+realisations.  This runner can either preserve the notebook's measurement-error
+construction exactly or use the v4 quantile-matched two-sided correction.  It
+records the selected mode, random seed, trial-level diagnostics, a complete
+post-perturbation domain audit, input checksums, and source-versus-manuscript
+parameter ordering.
 
 Important parameter-order convention
 ------------------------------------
@@ -46,6 +48,13 @@ import pandas as pd
 from astropy.io import fits
 from scipy.interpolate import interp2d
 from scipy.optimize import minimize
+
+from measurement_error import (
+    LEGACY_SOURCE_MIXTURE,
+    MEASUREMENT_ERROR_MODES,
+    measurement_error_metadata,
+    perturb_planets,
+)
 
 BRYSON_COMMIT = "d200f54b6f0df49e0dae530e69983cdce5397bfb"
 PUBLISHED = {
@@ -169,71 +178,6 @@ def load_completeness(path: Path, cs):
     return summed_teff, mean_teff
 
 
-def perturb_planets(all_kois: pd.DataFrame, cs, period_max: float | None):
-    selected_mask = np.random.rand(len(all_kois)) < np.asarray(
-        all_kois.totalReliability, dtype=float
-    )
-    selected = all_kois.loc[selected_mask].copy()
-
-    flux = np.zeros(len(selected), dtype=float)
-    plus = np.random.rand(len(selected)) > 0.5
-    minus = ~plus
-    flux[plus] = (
-        np.asarray(selected.loc[plus, "gaia_iso_insol"], dtype=float)
-        + np.asarray(selected.loc[plus, "gaia_iso_insol_errp"], dtype=float)
-        * np.random.randn(int(np.sum(plus)))
-    )
-    flux[minus] = (
-        np.asarray(selected.loc[minus, "gaia_iso_insol"], dtype=float)
-        - np.asarray(selected.loc[minus, "gaia_iso_insol_errm"], dtype=float)
-        * np.random.randn(int(np.sum(minus)))
-    )
-
-    radius = np.zeros(len(selected), dtype=float)
-    plus = np.random.rand(len(selected)) > 0.5
-    minus = ~plus
-    radius[plus] = (
-        np.asarray(selected.loc[plus, "gaia_iso_prad"], dtype=float)
-        + np.asarray(selected.loc[plus, "gaia_iso_prad_errp"], dtype=float)
-        * np.random.randn(int(np.sum(plus)))
-    )
-    radius[minus] = (
-        np.asarray(selected.loc[minus, "gaia_iso_prad"], dtype=float)
-        - np.asarray(selected.loc[minus, "gaia_iso_prad_errm"], dtype=float)
-        * np.random.randn(int(np.sum(minus)))
-    )
-
-    teff = np.zeros(len(selected), dtype=float)
-    plus = np.random.rand(len(selected)) > 0.5
-    minus = ~plus
-    teff[plus] = (
-        np.asarray(selected.loc[plus, "teff"], dtype=float)
-        + np.asarray(selected.loc[plus, "teff_err1"], dtype=float)
-        * np.random.randn(int(np.sum(plus)))
-    )
-    teff[minus] = (
-        np.asarray(selected.loc[minus, "teff"], dtype=float)
-        - np.asarray(selected.loc[minus, "teff_err2"], dtype=float)
-        * np.random.randn(int(np.sum(minus)))
-    )
-
-    in_domain = (
-        (cs.periodRange[0] <= flux)
-        & (flux <= cs.periodRange[1])
-        & np.isfinite(radius)
-        & (cs.rpRange[0] <= radius)
-        & (radius <= cs.rpRange[1])
-    )
-    if period_max is not None:
-        in_domain &= np.asarray(selected.koi_period, dtype=float) <= period_max
-
-    selected = selected.loc[in_domain].copy()
-    selected["perturbed_flux"] = flux[in_domain]
-    selected["perturbed_radius"] = radius[in_domain]
-    selected["perturbed_teff"] = teff[in_domain]
-    return selected
-
-
 def safe_initial_positions(center: np.ndarray, bounds, n_walkers: int) -> np.ndarray:
     positions = center[None, :] + 1.0e-5 * np.random.randn(n_walkers, len(center))
     for index, (lower, upper) in enumerate(bounds):
@@ -287,6 +231,16 @@ def main() -> None:
         help="Optional source-period cutoff. Omit to reproduce the no-suffix archived run.",
     )
     parser.add_argument("--run-label", default="pilot")
+    parser.add_argument(
+        "--measurement-error-mode",
+        choices=MEASUREMENT_ERROR_MODES,
+        default=LEGACY_SOURCE_MIXTURE,
+        help=(
+            "Measurement-error construction. The default preserves the public "
+            "notebook exactly; v4 corrected runs must explicitly select "
+            "quantile_matched_two_sided."
+        ),
+    )
     args = parser.parse_args()
 
     started = time.time()
@@ -330,6 +284,7 @@ def main() -> None:
 
     chain_rows: list[list[Any]] = []
     planet_rows: list[list[Any]] = []
+    audit_frames: list[pd.DataFrame] = []
     diagnostics: list[dict[str, Any]] = []
     pooled: list[np.ndarray] = []
 
@@ -337,11 +292,28 @@ def main() -> None:
         trial_seed = int(args.seed + 1_000_003 * trial)
         np.random.seed(trial_seed)
         trial_start = time.time()
-        selected = perturb_planets(base_kois, cs, args.period_max_days)
+        perturbation = perturb_planets(
+            base_kois,
+            rng=np.random,
+            instellation_range=cs.periodRange,
+            radius_range=cs.rpRange,
+            teff_range=cs.tempRange,
+            period_max_days=args.period_max_days,
+            mode=args.measurement_error_mode,
+        )
+        selected = perturbation.retained
         if len(selected) < 4:
             raise RuntimeError(
                 f"Trial {trial} retained only {len(selected)} candidates; cannot fit four parameters."
             )
+
+        trial_audit = perturbation.audit.copy()
+        trial_audit.insert(0, "trial_seed", trial_seed)
+        trial_audit.insert(0, "trial", trial)
+        trial_audit.insert(0, "measurement_error_mode", args.measurement_error_mode)
+        trial_audit.insert(0, "run_label", args.run_label)
+        trial_audit.insert(0, "branch", args.branch)
+        audit_frames.append(trial_audit)
 
         koi_flux = np.asarray(selected.perturbed_flux, dtype=float)
         koi_radius = np.asarray(selected.perturbed_radius, dtype=float)
@@ -436,7 +408,9 @@ def main() -> None:
             {
                 "trial": trial,
                 "seed": trial_seed,
+                "measurement_error_mode": args.measurement_error_mode,
                 "selected_after_domain": int(len(selected)),
+                "perturbation_counts": perturbation.counts,
                 "optimizer_success": bool(optimum.success),
                 "optimizer_status": int(optimum.status),
                 "optimizer_message": str(optimum.message),
@@ -455,6 +429,7 @@ def main() -> None:
                 {
                     "branch": args.branch,
                     "trial": trial,
+                    "measurement_error_mode": args.measurement_error_mode,
                     "selected": len(selected),
                     "optimizer_success": bool(optimum.success),
                     "acceptance": float(np.mean(sampler.acceptance_fraction)),
@@ -517,6 +492,9 @@ def main() -> None:
         )
         writer.writerows(planet_rows)
 
+    audit_path = out / f"perturbation_audit_{args.branch}_{args.run_label}.csv"
+    pd.concat(audit_frames, ignore_index=True).to_csv(audit_path, index=False)
+
     diagnostics_path = out / f"trial_diagnostics_{args.branch}_{args.run_label}.json"
     diagnostics_path.write_text(
         json.dumps(diagnostics, indent=2, default=jsonable), encoding="utf-8"
@@ -525,8 +503,15 @@ def main() -> None:
     summary = {
         "status": "pilot_only" if args.run_label == "pilot" else "production",
         "scientific_interpretation": (
-            "A newly seeded rerun of the public Bryson likelihood, not the missing "
-            "historical chain and not a bitwise reproduction of the published stochastic run."
+            "A source-faithful newly seeded rerun of the public Bryson likelihood; "
+            "not the missing historical chain or a bitwise reproduction of the "
+            "published stochastic run."
+            if args.measurement_error_mode == LEGACY_SOURCE_MIXTURE
+            else
+            "A newly seeded corrected variant of the public Bryson likelihood, "
+            "using quantile-matched two-sided measurement perturbations and all "
+            "three post-perturbation source-domain filters; not the missing "
+            "historical chain."
         ),
         "source_repository": "stevepur/DR25-occurrence-public",
         "source_commit": BRYSON_COMMIT,
@@ -535,6 +520,7 @@ def main() -> None:
         "parameter_order_source": ["F0", "beta_inst", "alpha_radius", "gamma"],
         "parameter_order_manuscript": ["F0", "alpha_radius", "beta_inst", "gamma"],
         "period_cutoff_days": args.period_max_days,
+        "measurement_error": measurement_error_metadata(args.measurement_error_mode),
         "base_seed": args.seed,
         "trials": args.trials,
         "walkers": 8,
@@ -545,6 +531,7 @@ def main() -> None:
         "posterior_quantiles": posterior,
         "comparison_with_archived_published_marginal_medians": comparison,
         "trial_diagnostics_file": diagnostics_path.name,
+        "perturbation_audit_file": audit_path.name,
         "input_files": {
             "stellar_catalog": {
                 "path": str(args.stellar_catalog),
@@ -579,7 +566,13 @@ def main() -> None:
         json.dumps(summary, indent=2, default=jsonable), encoding="utf-8"
     )
 
-    manifest_targets = [chain_path, planets_path, diagnostics_path, summary_path]
+    manifest_targets = [
+        chain_path,
+        planets_path,
+        audit_path,
+        diagnostics_path,
+        summary_path,
+    ]
     manifest_path = out / f"SHA256SUMS_{args.branch}_{args.run_label}.txt"
     manifest_path.write_text(
         "".join(f"{sha256(path)}  {path.name}\n" for path in manifest_targets),
