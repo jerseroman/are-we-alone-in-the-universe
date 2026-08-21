@@ -82,7 +82,7 @@ transport uncertainty.
 - Frozen raw eligible-host table:
   `a2b6f407c70c236f2be9a9084f53fe9ba461f06aa5f44d6caae11696467e5a28`
 - Machine-readable freeze record:
-  `05ed1d2c623a0008379520c8cfecc7860caa28d30b0069553a1d295bf33781d4`
+  `6d175c12bd7bd5835e3c75847a6a7f8f420f2dbf41ab8f70e4eccaf380f9570e`
 
 ## Remaining scientific gates
 
