@@ -78,4 +78,3 @@ python research/v4-validation/pdf_hidden_object_preflight.py \
 
 The frozen production evidence is associated with GitHub Actions runs
 32470830404, 32472776218, 32506666772, and 32527877921.
-

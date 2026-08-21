@@ -1,0 +1,102 @@
+{
+  "status": "PASS_HIDDEN_TEXT_OBJECT_PREFLIGHT",
+  "pdf": "output/pdf/ExoEarth_Annulus_Manuscript_v4.pdf",
+  "sha256": "a44c12ccbbdcce08fed6405013f0b88eb95e37301a4ef380f9bdce79c4507844",
+  "pages": 13,
+  "encrypted": false,
+  "forbidden_root_entries": [],
+  "forbidden_name_entries": [],
+  "open_action_type": "/GoTo",
+  "invisible_text_render_operations": 0,
+  "nonpositive_text_size_operations": 0,
+  "zero_opacity_graphics_states": 3,
+  "zero_opacity_text_show_operations": 0,
+  "text_show_operations": 2791,
+  "marked_content_operations": 0,
+  "font_resources": 138,
+  "unembedded_font_resources": 0,
+  "font_subtypes": {
+    "/Type1": 131,
+    "/Type0": 7
+  },
+  "image_xobjects": 0,
+  "form_xobjects": 6,
+  "xobject_subtypes": {
+    "/Form": 6
+  },
+  "annotations": {
+    "/Link": 129
+  },
+  "page_text_characters": [
+    4008,
+    4130,
+    4049,
+    3965,
+    4222,
+    2872,
+    2922,
+    2488,
+    5041,
+    3473,
+    2393,
+    4316,
+    5399
+  ],
+  "page_boxes_points": [
+    [
+      612.0,
+      792.0
+    ],
+    [
+      612.0,
+      792.0
+    ],
+    [
+      612.0,
+      792.0
+    ],
+    [
+      612.0,
+      792.0
+    ],
+    [
+      612.0,
+      792.0
+    ],
+    [
+      612.0,
+      792.0
+    ],
+    [
+      612.0,
+      792.0
+    ],
+    [
+      612.0,
+      792.0
+    ],
+    [
+      612.0,
+      792.0
+    ],
+    [
+      612.0,
+      792.0
+    ],
+    [
+      612.0,
+      792.0
+    ],
+    [
+      612.0,
+      792.0
+    ],
+    [
+      612.0,
+      792.0
+    ]
+  ],
+  "empty_text_pages": [],
+  "active_action_hits": [],
+  "failures": []
+}

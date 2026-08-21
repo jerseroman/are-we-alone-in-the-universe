@@ -37,4 +37,3 @@ uncertainty budget, or an estimate of inhabited worlds.
 
 The attached release audit and archive manifest provide the exact v4 source
 commit and SHA-256 checksum for every distributed file.
-
