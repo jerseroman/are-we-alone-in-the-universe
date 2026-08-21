@@ -6,10 +6,12 @@ on:
       - work/exoearth-v4-statistics
     paths:
       - 'research/bryson-joint-posterior/**'
+      - 'research/v4-validation/**'
       - '.github/workflows/bryson-v4-measurement-tests.yml'
   pull_request:
     paths:
       - 'research/bryson-joint-posterior/**'
+      - 'research/v4-validation/**'
       - '.github/workflows/bryson-v4-measurement-tests.yml'
   workflow_dispatch:
 
@@ -43,6 +45,8 @@ jobs:
             research/bryson-joint-posterior/clustered_monte_carlo.py \
             research/bryson-joint-posterior/compare_mcmc_seed_families.py \
             research/bryson-joint-posterior/freeze_v4_numerical_results.py \
+            research/bryson-joint-posterior/propagate_hab2_joint_posterior.py \
+            research/v4-validation/host_tams_audit.py \
             research/bryson-joint-posterior/aggregate_hab2_joint_posterior.py
 
       - name: Run measurement and MCMC-control regression suites
@@ -53,3 +57,8 @@ jobs:
           test_mcmc_convergence.py
           test_clustered_monte_carlo.py
           test_adaptive_aggregation.py
+          test_propagate_host_measure.py
+
+      - name: Run host and TAMS audit regression suite
+        working-directory: research/v4-validation
+        run: python -m unittest -v test_host_tams_audit.py

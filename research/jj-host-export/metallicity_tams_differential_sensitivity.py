@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Differential metallicity-dependent PARSEC-TAMS sensitivity.
+"""Audit a proposed differential metallicity-dependent PARSEC-TAMS sensitivity.
 
 The canonical Berger/Huber one-dimensional TAMS curve remains the absolute
 solar-metallicity baseline. Public PARSEC v1.2S evolutionary tracks are used
@@ -8,22 +8,27 @@ only to measure the *differential* response of the TAMS radius to metallicity:
   log R_2D(T,Z) = log R_Huber(T) +
                   [log R_PARSEC(T,Z) - log R_PARSEC(T,Z_solar)].
 
-This construction has three useful properties:
+This construction would have three useful properties if the public track
+archive supplied a continuous low-mass TAMS surface over the complete
+5300--6000 K manuscript domain:
   1. at solar metallicity it is exactly the frozen canonical selector;
   2. it is insensitive to the special 5200 K / 1.15 Rsun low-Teff boundary
      anchor in the public Huber table, which is not reproduced by the current
      PARSEC track archive under the generator's age<20 Gyr rule;
   3. it isolates precisely the systematic under audit: metallicity transport.
 
-JJ row-level FeH is treated as scaled-solar [M/H] for this sensitivity test.
-That approximation is explicit; alpha-enhancement is not modeled.
+The archived experiment previously admitted massive giant/supergiant phase-7
+points into a temperature interpolation. This implementation now permits only
+finite low-mass (M <= 2 Msun), compact (R < 10 Rsun) phase-7 anchors and stops
+before computing any host counts when even one required metallicity curve lacks
+full temperature coverage. JJ row-level FeH would be treated as scaled-solar
+[M/H]; alpha-enhancement would remain unmodeled.
 """
 from __future__ import annotations
 
 import argparse, csv, hashlib, json, math, tarfile
 from pathlib import Path
 import numpy as np
-import requests
 from astropy.io import ascii
 from tams_reference import tams_radius_rsun
 
@@ -31,6 +36,8 @@ BASE_URL='https://people.sissa.it/~sbressan/CAF09_V1.2S_M36_LT'
 TMIN,TMAX=5300.,6000.
 LOGG_MAX=7.0
 TRACK_AGE_MAX_GYR=30.0
+LOW_MASS_MAX_MSUN=2.0
+MAX_TAMS_RADIUS_RSUN=10.0
 ZX_SUN=0.0207
 Y_P=0.2485
 DYDZ=1.78
@@ -53,6 +60,7 @@ def mh_from_z(z):
  return math.log10((z/x)/ZX_SUN)
 
 def download(url,p):
+ import requests
  if p.exists() and p.stat().st_size>1024:return
  with requests.get(url,stream=True,timeout=120) as r:
   r.raise_for_status()
@@ -66,6 +74,15 @@ def safe_extract(tf,d):
   q=(d/m.name).resolve()
   if root not in q.parents and q!=root:raise RuntimeError(m.name)
  tf.extractall(d)
+
+def validate_low_mass_curve_points(points,z):
+ pts=[q for q in points if 4700<=q[0]<=6400 and np.isfinite(q[2]) and q[2]<=LOW_MASS_MAX_MSUN and q[1]<MAX_TAMS_RADIUS_RSUN]
+ pts.sort(key=lambda q:q[0])
+ if len(pts)<4:raise RuntimeError(f'Z={z}: insufficient low-mass TAMS points ({len(pts)})')
+ T=np.array([q[0] for q in pts]);R=np.array([q[1] for q in pts])
+ if T.min()>TMIN or T.max()<TMAX:
+  raise RuntimeError(f'Z={z}: low-mass TAMS coverage {T.min()}..{T.max()} K does not span {TMIN}..{TMAX} K')
+ return pts,T,R
 
 def build_curve(z,y,arcname,cache):
  arc=cache/arcname; download(f'{BASE_URL}/{arcname}',arc)
@@ -89,11 +106,7 @@ def build_curve(z,y,arcname,cache):
   R=math.sqrt(10**L*(T/5777.)**(-4))
   mass=float(t['MASS'][k]) if 'MASS' in t.colnames else float('nan')
   pts.append((float(T),float(R),mass,p.name,float(age[k]/1e9)))
- pts=[q for q in pts if 4700<=q[0]<=6400]
- pts.sort(key=lambda q:q[0])
- if len(pts)<4:raise RuntimeError(f'Z={z}: insufficient TAMS points')
- T=np.array([q[0] for q in pts]); R=np.array([q[1] for q in pts])
- if T.min()>TMIN or T.max()<TMAX:raise RuntimeError(f'Z={z} coverage {T.min()}..{T.max()}')
+ pts,T,R=validate_low_mass_curve_points(pts,z)
  return {'Z':z,'Y':y,'MH':mh_from_z(z),'archive':arcname,'archive_sha256':sha256(arc),'points':pts,'T':T,'R':R}
 
 def raw_logr(c,T):
@@ -145,7 +158,15 @@ def main():
  am=np.array([mh_from_z(z) for z,_,_ in ANCHORS]); lo=max(0,np.searchsorted(am,feh.min(),'right')-1);hi=min(len(ANCHORS)-1,np.searchsorted(am,feh.max(),'left'))
  anchors=list(ANCHORS[int(lo):int(hi)+1])
  if not any(abs(z-.017)<1e-12 for z,_,_ in anchors):anchors.append((.017,.279,'Z0.017Y0.279.tar.gz'))
- curves=[build_curve(*x,cache) for x in anchors]; curves=sorted(curves,key=lambda c:c['MH']);solar=next(c for c in curves if abs(c['Z']-.017)<1e-12)
+ curves=[];coverage_failures=[]
+ for anchor in anchors:
+  try:curves.append(build_curve(*anchor,cache))
+  except RuntimeError as exc:coverage_failures.append({'Z':anchor[0],'archive':anchor[2],'error':str(exc)})
+ if coverage_failures:
+  assessment={'experiment':'differential_metallicity_PARSEC_TAMS_sensitivity','status':'FAIL_NOT_PUBLISHABLE','decision':'No metallicity-dependent TAMS correction is computed or used in manuscript v4.','reason':'The public archive does not provide a validated low-mass phase-7 TAMS surface over 5300--6000 K at every required metallicity.','low_mass_filter':{'maximum_mass_Msun':LOW_MASS_MAX_MSUN,'maximum_radius_Rsun_exclusive':MAX_TAMS_RADIUS_RSUN,'track_age_horizon_Gyr':TRACK_AGE_MAX_GYR},'coverage_failures':coverage_failures}
+  with open(out/'metallicity_tams_differential_sensitivity.json','w') as f:json.dump(assessment,f,indent=2)
+  print(json.dumps(assessment,indent=2));return
+ curves=sorted(curves,key=lambda c:c['MH']);solar=next(c for c in curves if abs(c['Z']-.017)<1e-12)
  val,mT,mR=validate_solar(solar,Path(a.reference_tams))
  rt2=differential_rtams(T,feh,curves,solar);rs=np.array([r['Rstar'] for r in parent]);lg=np.array([r['logg'] for r in parent]);B2=(rs<=rt2)&(lg<LOGG_MAX)
  for i,r in enumerate(parent):r['B2']=bool(B2[i]);r['RT2']=float(rt2[i])

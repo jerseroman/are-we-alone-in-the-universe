@@ -16,27 +16,21 @@ The frozen one-dimensional boundary is the public `tams_parsec.txt` table from `
 
 Within the project G-star interval, interpolation is linear in `Teff` and `log10(R_TAMS/Rsun)`. Extrapolation outside the reference table is forbidden. The published low-temperature table anchor `(5200 K, 1.15 Rsun)` is retained as part of the frozen Berger/Huber boundary. Direct regeneration from the currently public PARSEC track archive reproduces the physical reference points from 5390.13944 through 6060.24246 K to better than `5e-6 K` in temperature and `3e-6` in relative radius; the special 5200-K boundary anchor is not produced by the current phase-7 track set under the generator's `<20 Gyr` condition.
 
-## Metallicity-transfer limitation and sensitivity test
+## Metallicity-transfer limitation and rejected sensitivity test
 
 The canonical Berger/Huber TAMS boundary is a one-dimensional relation `R_TAMS(Teff)` and has no explicit `[Fe/H]` coordinate. It is intentionally retained as the primary selector because it most closely matches the evolutionary-state selection inherited by the Bryson/Kepler occurrence-rate calibration. This is an approximation, not a claim that the TAMS radius is metallicity-independent.
 
-JJ stellar-assembly tables carry a row-level `FeH` value assigned from the model age-metallicity relation. In the canonical 7–9 kpc sample, 19.8939% of the integrated one-dimensional-TAMS host weight is assigned to the thick disk. A dedicated sensitivity test therefore evaluated a metallicity-dependent PARSEC TAMS correction on the exact same weighted JJ parent population.
+JJ stellar-assembly tables carry a row-level `FeH` value assigned from the model age-metallicity relation. In the canonical 7–9 kpc sample, 19.8939% of the integrated one-dimensional-TAMS host weight is assigned to the thick disk. A metallicity-dependent boundary is therefore a relevant model systematic, but the archived differential experiment does not provide a valid quantitative estimate of it.
 
-To avoid replacing the empirically inherited Berger/Huber absolute boundary with a differently constructed absolute track envelope, the sensitivity is formulated differentially:
+The rejected experiment attempted to avoid replacing the empirically inherited Berger/Huber absolute boundary by using the differential construction
 
 `R_TAMS,2D(T,Z) = R_TAMS,Huber(T) * R_TAMS,PARSEC(T,Z) / R_TAMS,PARSEC(T,Z_solar)`.
 
-Thus the sensitivity selector is identically equal to the frozen canonical selector at solar metallicity, while public PARSEC v1.2S tracks supply only the metallicity response. PARSEC scaled-solar metallicity anchors bracket the actual JJ parent range `-0.9056 <= FeH <= +0.4158`. Raw phase-7 curves use the available low-mass track horizon up to 30 Gyr to maintain complete 5300–6000 K coverage. For this sensitivity calculation JJ `FeH` is treated as scaled-solar `[M/H]`; alpha enhancement is not modeled and remains a limitation.
+That algebra is sound, but the required interpolated surface was not. The archived anchor table contains 42 phase-7 points with either `M > 2 Msun` or `R >= 10 Rsun`; its most extreme entries reach 155.288 Msun and 2311.56 Rsun. These giant/supergiant points contaminated an interpolation intended to represent low-mass G-star TAMS radii. After restricting the anchors to finite low-mass (`M <= 2 Msun`) and compact (`R < 10 Rsun`) phase-7 points, several metallicity tracks no longer span the complete 5300–6000 K analysis domain without extrapolation.
 
-For the Lineweaver 7–9 kpc domain, replacing the one-dimensional selector by this differential metallicity-dependent selector changes:
+Consequently, the formerly reported `+1.5902%` change in `Lambda_earth10` and all associated metallicity-dependent host-count deltas are **retracted and excluded from manuscript v4**. They are neither sensitivity intervals nor corrections to the primary result. The canonical solar-composition one-dimensional selector remains the reproducible inherited baseline, while metallicity-dependent TAMS classification is retained as an open systematic that requires a purpose-built, continuous low-mass evolutionary grid before it can be quantified.
 
-- `N_G`: 263,061,992.37 -> 267,357,883.68 (**+1.6330%**),
-- `Lambda_ESHZ`: 105,716,685.08 -> 107,436,371.65 (**+1.6267%**),
-- `Lambda_earth10`: 3,376,462.67 -> 3,430,154.46 (**+1.5902%**).
-
-The thin-disk host contribution increases by approximately 1.388%, and the thick-disk contribution by approximately 2.620%. The resulting thick-disk host fraction is 20.087%, compared with 19.894% in the canonical one-dimensional selection. Across the full JJ 4–14 kpc model domain, the corresponding L2 change is +2.375%.
-
-Therefore the metallicity dependence of the TAMS boundary is **not negligible but is modest relative to the major occurrence/HZ systematics** in this implementation. Importantly, the weighted aggregate test does not support assuming a priori that the solar one-dimensional boundary must always be overly permissive for the metal-poor population; the direction is population- and temperature-dependent and is treated empirically as a model sensitivity.
+If a valid surface becomes available, JJ `FeH` would still need an explicit transport assumption (for example, scaled-solar `[M/H]` versus an alpha-enhanced composition), and the result would require a separate sensitivity analysis rather than a post-fit correction.
 
 No absolute `P_metals` multiplier is introduced. The TAMS metallicity test concerns stellar evolutionary-state classification only. Any metallicity dependence of planet occurrence would require a separate occurrence-rate transport model.
 

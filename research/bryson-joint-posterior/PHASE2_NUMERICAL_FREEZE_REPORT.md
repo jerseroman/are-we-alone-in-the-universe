@@ -82,13 +82,14 @@ transport uncertainty.
 - Frozen raw eligible-host table:
   `a2b6f407c70c236f2be9a9084f53fe9ba461f06aa5f44d6caae11696467e5a28`
 - Machine-readable freeze record:
-  `6d175c12bd7bd5835e3c75847a6a7f8f420f2dbf41ab8f70e4eccaf380f9570e`
+  `e37a4add5f0fbbb7363252adb2f85a41b0fbd1f4572761f90dc285ddd2b476eb`
 
 ## Remaining scientific gates
 
-The radial-grid sensitivity is numerically accepted, but host/TAMS and DR25
-support validation are not closed by this statistical freeze. In particular,
-the metallicity-dependent TAMS differential remains **OPEN** until the anchor
-construction is independently shown to follow a physically connected low-mass
-TAMS sequence. This phase therefore authorizes host/TAMS/DR25 audit work, not
-manuscript or figure production.
+The radial-grid sensitivity is numerically accepted. The subsequent host/TAMS
+audit passed the canonical-selector checks while rejecting and removing the
+invalid archived metallicity-dependent differential from this freeze. A valid
+metallicity-dependent low-mass TAMS sensitivity remains **OPEN** as a model
+systematic, not as a numerical correction. DR25 support validation remains a
+separate gate. This phase therefore still does not authorize manuscript or
+figure production.

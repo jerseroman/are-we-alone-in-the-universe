@@ -34,9 +34,9 @@
       "path": "local-artifacts\\v4\\tams-convergence\\tams_radial_convergence_results.json",
       "sha256": "0417cef11f6763049e1aafebcccba10b4c2bbed17d254cd96713cd85bdeffa10"
     },
-    "tams_metallicity_sensitivity": {
-      "path": "local-artifacts\\v4\\tams-metallicity-differential\\metallicity_tams_differential_sensitivity.json",
-      "sha256": "d1a9799775d2b317144ac0ca7eb319ad2c2c1125b004a5409850cb4cd24a61a8"
+    "host_tams_audit": {
+      "path": "research\\v4-validation\\frozen-host-tams\\host_tams_audit.json",
+      "sha256": "f7187f206e1b13fc3b6ca90ac9c5bb58062adf1c4ed949db936f32c0b407e66c"
     }
   },
   "gates": {
@@ -139,11 +139,126 @@
     "N_star_7_9_kpc": 263061992.36674237,
     "provider": "jj_padova_dr05_parsec_tams_v1",
     "tams_radial_convergence": "PASS",
-    "metallicity_dependent_tams_role": "differential sensitivity only; not part of the primary selector",
-    "metallicity_sensitivity_fractional_change_7_9": {
-      "N_G": 0.01633033822869214,
-      "Lambda_ESHZ": 0.016266936201721587,
-      "Lambda_earth10": 0.015901784966391205
+    "metallicity_dependent_tams_role": "EXCLUDED: archived differential surface is invalid; a valid metallicity-dependent low-mass TAMS sensitivity remains open",
+    "metallicity_dependent_tams_audit": {
+      "status": "FAIL",
+      "reason": "The archived differential surface mixes massive phase-7 giant or supergiant points into Teff interpolation, while several low-mass metallicity tracks do not cover 5300--6000 K without extrapolation.",
+      "contaminating_point_count": 42,
+      "contaminating_Z_values": [
+        0.001,
+        0.002,
+        0.004,
+        0.006,
+        0.008,
+        0.01,
+        0.014
+      ],
+      "maximum_contaminating_mass_Msun": 155.28811,
+      "maximum_contaminating_radius_Rsun": 2311.557681487369,
+      "low_mass_coverage": {
+        "0.001": {
+          "low_mass_point_count": 5,
+          "temperature_range_K": [
+            5895.355514669355,
+            6387.192421873255
+          ],
+          "covers_5300_to_6000_K_without_extrapolation": false
+        },
+        "0.002": {
+          "low_mass_point_count": 6,
+          "temperature_range_K": [
+            5737.464349407363,
+            6342.785139306298
+          ],
+          "covers_5300_to_6000_K_without_extrapolation": false
+        },
+        "0.004": {
+          "low_mass_point_count": 7,
+          "temperature_range_K": [
+            5671.526948608318,
+            6342.931189012851
+          ],
+          "covers_5300_to_6000_K_without_extrapolation": false
+        },
+        "0.006": {
+          "low_mass_point_count": 8,
+          "temperature_range_K": [
+            5497.433694962709,
+            6294.91688108549
+          ],
+          "covers_5300_to_6000_K_without_extrapolation": false
+        },
+        "0.008": {
+          "low_mass_point_count": 9,
+          "temperature_range_K": [
+            5534.3930590383525,
+            6391.017400767871
+          ],
+          "covers_5300_to_6000_K_without_extrapolation": false
+        },
+        "0.01": {
+          "low_mass_point_count": 9,
+          "temperature_range_K": [
+            5422.006076959508,
+            6295.496691057201
+          ],
+          "covers_5300_to_6000_K_without_extrapolation": false
+        },
+        "0.014": {
+          "low_mass_point_count": 13,
+          "temperature_range_K": [
+            5243.363903982019,
+            6395.139170517579
+          ],
+          "covers_5300_to_6000_K_without_extrapolation": true
+        },
+        "0.017": {
+          "low_mass_point_count": 16,
+          "temperature_range_K": [
+            5151.337446989074,
+            6376.758944326096
+          ],
+          "covers_5300_to_6000_K_without_extrapolation": true
+        },
+        "0.02": {
+          "low_mass_point_count": 18,
+          "temperature_range_K": [
+            5074.695638646524,
+            6378.227416392381
+          ],
+          "covers_5300_to_6000_K_without_extrapolation": true
+        },
+        "0.03": {
+          "low_mass_point_count": 22,
+          "temperature_range_K": [
+            5065.589581955096,
+            6389.398860998363
+          ],
+          "covers_5300_to_6000_K_without_extrapolation": true
+        },
+        "0.04": {
+          "low_mass_point_count": 21,
+          "temperature_range_K": [
+            4993.096964381284,
+            6379.9900292593775
+          ],
+          "covers_5300_to_6000_K_without_extrapolation": true
+        }
+      },
+      "metallicities_without_full_low_mass_coverage": [
+        "0.001",
+        "0.002",
+        "0.004",
+        "0.006",
+        "0.008",
+        "0.01"
+      ],
+      "decision": "Exclude the reported metallicity-TAMS delta from v4."
+    },
+    "native_solar_selector_without_5200_anchor": {
+      "N_star": 0.0,
+      "Lambda_HZ_plugin": 0.0,
+      "Lambda_EE_plugin": 0.0
     }
   },
   "posterior_parameters": {

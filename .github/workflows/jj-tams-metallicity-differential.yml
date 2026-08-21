@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'research/jj-host-export/metallicity_tams_differential_sensitivity.py'
+      - 'research/jj-host-export/test_metallicity_tams_validation.py'
       - 'research/jj-host-export/tams_ab_test.py'
       - 'research/jj-host-export/tams_reference.py'
       - 'research/jj-host-export/reference-data/**'
@@ -19,6 +20,8 @@ jobs:
         with: {python-version: '3.10'}
       - name: Install dependencies
         run: python -m pip install 'numpy==1.23.5' 'scipy==1.10.1' 'astropy==5.3.4' 'matplotlib==3.7.5' 'fast-histogram==0.14' 'requests>=2.28'
+      - name: Test low-mass TAMS coverage guard
+        run: python -m unittest discover -s research/jj-host-export -p 'test_*.py' -v
       - name: Checkout pinned JJ
         run: |
           git clone https://github.com/askenja/jjmodel.git /tmp/jjmodel-src
@@ -58,15 +61,13 @@ jobs:
       - name: Provenance and hashes
         run: |
           cat > results/metallicity-differential/PROVENANCE_METALLICITY_DIFFERENTIAL.md <<'EOF'
-          # Differential metallicity-dependent PARSEC-TAMS audit
+          # Differential metallicity-dependent PARSEC-TAMS coverage audit
           The frozen Berger/Huber R_TAMS(Teff) curve is retained as the absolute Z-solar baseline.
-          Public PARSEC v1.2S CAF09_V1.2S_M36_LT tracks provide only the differential metallicity response in log R_TAMS.
-          For every row: R_2D(T,FeH)=R_Huber(T)*R_PARSEC(T,FeH)/R_PARSEC(T,Z=0.017).
-          This construction is exactly identical to the canonical selector at solar metallicity.
-          JJ row FeH is used directly as scaled-solar [M/H] for this sensitivity; alpha-enhancement is not modeled.
-          PARSEC phase-7 track points are extracted with a 30-Gyr track horizon to preserve 5300-6000 K coverage at all relevant metallicities.
-          The solar physical phase-7 sequence is independently required to reproduce the public Huber points from 5390.13944 through 6060.24246 K. The special 5200 K / 1.15 Rsun boundary anchor is retained only in the frozen Huber absolute baseline and is not used to validate raw phase-7 tracks.
-          No planet-occurrence, HZ, age, spatial, or GHZ factor is changed in this audit.
+          The proposed differential construction is R_2D(T,FeH)=R_Huber(T)*R_PARSEC(T,FeH)/R_PARSEC(T,Z=0.017).
+          Only finite phase-7 anchors with M<=2 Msun and R<10 Rsun are admissible.
+          The script records FAIL_NOT_PUBLISHABLE and stops before host integration if any required metallicity curve does not cover 5300-6000 K without extrapolation.
+          The archived quantitative metallicity-TAMS deltas are retracted and are not inputs to manuscript v4.
+          No planet-occurrence, HZ, age, spatial, GHZ, or canonical host-selection factor is changed in this coverage audit.
           EOF
           sha256sum results/metallicity-differential/* | sort > results/metallicity-differential/SHA256SUMS_all.txt
       - uses: actions/upload-artifact@v4

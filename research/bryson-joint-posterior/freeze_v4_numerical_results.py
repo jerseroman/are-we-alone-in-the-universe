@@ -153,7 +153,7 @@ def main() -> None:
         parser.add_argument(f"--{branch}-seed-stability", required=True, type=Path)
     parser.add_argument("--host-summary", required=True, type=Path)
     parser.add_argument("--tams-convergence", required=True, type=Path)
-    parser.add_argument("--tams-metallicity-sensitivity", required=True, type=Path)
+    parser.add_argument("--host-tams-audit", required=True, type=Path)
     parser.add_argument("--out", required=True, type=Path)
     args = parser.parse_args()
 
@@ -190,15 +190,23 @@ def main() -> None:
     for quantity, comparison in convergence["comparisons"]["lineweaver_7_9"]["0.5_to_0.25"].items():
         if abs(float(comparison["delta_fraction"])) >= 0.01:
             raise RuntimeError(f"TAMS radial convergence failed for {quantity}")
-    metallicity = load_json(args.tams_metallicity_sensitivity)
-    if metallicity.get("experiment") != "differential_metallicity_PARSEC_TAMS_sensitivity":
-        raise RuntimeError("Unexpected TAMS metallicity sensitivity input")
+    host_tams_audit = load_json(args.host_tams_audit)
+    if host_tams_audit.get("status") not in {
+        "PASS_WITH_INVALID_METALLICITY_TEST_EXCLUDED",
+        "PASS",
+    }:
+        raise RuntimeError("Host/TAMS audit did not pass")
+    metallicity_audit = host_tams_audit.get("metallicity_dependent_TAMS_audit", {})
+    if metallicity_audit.get("status") != "FAIL":
+        raise RuntimeError(
+            "Expected the invalid archived metallicity-TAMS surface to be rejected"
+        )
 
     inputs.update(
         {
             "host_summary": args.host_summary,
             "tams_convergence": args.tams_convergence,
-            "tams_metallicity_sensitivity": args.tams_metallicity_sensitivity,
+            "host_tams_audit": args.host_tams_audit,
         }
     )
     freeze = {
@@ -217,10 +225,13 @@ def main() -> None:
             "provider": host["host_provider_id"],
             "tams_radial_convergence": "PASS",
             "metallicity_dependent_tams_role": (
-                "differential sensitivity only; not part of the primary selector"
+                "EXCLUDED: archived differential surface is invalid; a valid "
+                "metallicity-dependent low-mass TAMS sensitivity remains open"
             ),
-            "metallicity_sensitivity_fractional_change_7_9": (
-                metallicity["domains"]["lineweaver_7_9"]["delta_2D_vs_1D"]
+            "metallicity_dependent_tams_audit": metallicity_audit,
+            "native_solar_selector_without_5200_anchor": (
+                host_tams_audit["low_temperature_anchor_dependence"]
+                ["native_selector_fractional_change_vs_canonical"]
             ),
         },
         "posterior_parameters": {
@@ -233,12 +244,14 @@ def main() -> None:
         },
     }
     freeze_path = out / "V4_NUMERICAL_FREEZE.json"
-    freeze_path.write_text(json.dumps(freeze, indent=2), encoding="utf-8")
+    with freeze_path.open("w", encoding="utf-8", newline="\n") as handle:
+        json.dump(freeze, handle, indent=2)
+        handle.write("\n")
 
     with (out / "v4_parameter_quantiles.csv").open(
         "w", newline="", encoding="utf-8"
     ) as handle:
-        writer = csv.writer(handle)
+        writer = csv.writer(handle, lineterminator="\n")
         writer.writerow(["branch", "parameter", *QUANTILES])
         for branch in ("constant", "zero"):
             for parameter in PARAMETERS:
@@ -248,7 +261,7 @@ def main() -> None:
     with (out / "v4_galactic_quantiles.csv").open(
         "w", newline="", encoding="utf-8"
     ) as handle:
-        writer = csv.writer(handle)
+        writer = csv.writer(handle, lineterminator="\n")
         writer.writerow(["branch", "quantity", *QUANTILES])
         for branch in ("constant", "zero"):
             for quantity in GALACTIC_QUANTITIES:
@@ -263,9 +276,10 @@ def main() -> None:
         "The constant- and zero-completeness branches are separate model "
         "scenarios and are not combined into an uncertainty interval.\n",
     ]
-    (out / "V4_NUMERICAL_FREEZE.md").write_text(
-        "\n".join(markdown), encoding="utf-8"
-    )
+    with (out / "V4_NUMERICAL_FREEZE.md").open(
+        "w", encoding="utf-8", newline="\n"
+    ) as handle:
+        handle.write("\n".join(markdown))
     print(json.dumps(freeze, indent=2))
 
 

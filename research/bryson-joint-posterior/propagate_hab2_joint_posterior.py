@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Propagate a Bryson Model-1 joint posterior through the frozen JJ estimator.
 
-The host rows are collapsed exactly—not binned—onto their 539 distinct
-``Teff`` values after assigning the composite-trapezoid radial measure over
-7--9 kpc.  This preserves the row-level estimator while permitting vectorized
-posterior propagation.
+The host rows are collapsed exactly—not binned—onto their distinct ``Teff``
+values after assigning the composite-trapezoid radial measure over 7--9 kpc.
+The canonical provider has 539 values; alternative audited selectors must
+declare their own expected count. This preserves the row-level estimator while
+permitting vectorized posterior propagation.
 
 Input posterior rows must contain the correlated columns
 ``F0, alpha, beta, gamma`` in manuscript order.  Constant- and
@@ -102,7 +103,10 @@ def seff(teff: np.ndarray, coefficients) -> np.ndarray:
     return s0 + a * delta + b * delta**2 + c * delta**3 + d * delta**4
 
 
-def collapse_host_measure(path: Path) -> pd.DataFrame:
+def collapse_host_measure(
+    path: Path,
+    expected_distinct_temperatures: int | None = 539,
+) -> pd.DataFrame:
     required = {"R_kpc", "Teff_K", "N_surface_pc-2"}
     hosts = pd.read_csv(path, usecols=list(required))
     if set(hosts.columns) != required:
@@ -133,9 +137,14 @@ def collapse_host_measure(path: Path) -> pd.DataFrame:
         .sort_values("Teff_K")
         .reset_index(drop=True)
     )
-    if len(collapsed) != 539:
+    if (
+        expected_distinct_temperatures is not None
+        and len(collapsed) != expected_distinct_temperatures
+    ):
         raise RuntimeError(
-            f"Expected 539 exact distinct host temperatures, found {len(collapsed)}"
+            "Expected "
+            f"{expected_distinct_temperatures} exact distinct host temperatures, "
+            f"found {len(collapsed)}"
         )
     if not np.isfinite(collapsed.to_numpy(dtype=float)).all():
         raise RuntimeError("Non-finite collapsed host measure")
@@ -272,22 +281,55 @@ def main() -> None:
     parser.add_argument("--cluster-bootstrap-replicates", type=int, default=1000)
     parser.add_argument("--bootstrap-seed", type=int, default=2026082102)
     parser.add_argument("--inner-chain-batches", type=int, default=8)
+    parser.add_argument(
+        "--expected-distinct-host-temperatures",
+        type=int,
+        default=539,
+        help="Fail unless the exact collapsed host-temperature count matches.",
+    )
+    parser.add_argument(
+        "--expected-host-count",
+        type=float,
+        default=263061992.36674237,
+        help="Fail unless the integrated 7--9 kpc host count matches.",
+    )
+    parser.add_argument(
+        "--skip-canonical-plugin-validation",
+        action="store_true",
+        help=(
+            "Skip the frozen canonical plug-in anchors for an explicitly named "
+            "alternative host-selector sensitivity."
+        ),
+    )
+    parser.add_argument(
+        "--host-selection-label",
+        default="canonical PARSEC-TAMS selector",
+    )
     args = parser.parse_args()
 
     started = time.time()
     out = args.out.resolve()
     out.mkdir(parents=True, exist_ok=True)
 
-    collapsed = collapse_host_measure(args.hosts)
+    collapsed = collapse_host_measure(
+        args.hosts,
+        expected_distinct_temperatures=args.expected_distinct_host_temperatures,
+    )
     collapsed_path = out / "collapsed_host_temperature_measure.csv"
     collapsed.to_csv(collapsed_path, index=False)
     teff = collapsed.Teff_K.to_numpy(dtype=float)
     host_weight = collapsed.integrated_host_weight.to_numpy(dtype=float)
     n_star = float(np.sum(host_weight))
-    if abs(n_star - 263061992.36674237) / 263061992.36674237 > 1.0e-10:
+    if abs(n_star - args.expected_host_count) / args.expected_host_count > 1.0e-10:
         raise RuntimeError(f"Frozen host-count validation failed: {n_star}")
 
-    plugin_validation = validate_plugin(args.branch, teff, host_weight)
+    if args.skip_canonical_plugin_validation:
+        plugin_validation = {
+            "status": "not_applicable_to_alternative_host_selector",
+            "host_selection_label": args.host_selection_label,
+        }
+    else:
+        plugin_validation = validate_plugin(args.branch, teff, host_weight)
 
     samples = pd.read_csv(args.samples)
     required = {"F0", "alpha", "beta", "gamma"}
@@ -349,8 +391,9 @@ def main() -> None:
     )
     summary = {
         "status": (
-            "occurrence-posterior propagation conditional on frozen "
-            "JJ/PARSEC/TAMS and 1-Mearth conservative-HZ model"
+            "occurrence-posterior propagation conditional on the declared "
+            f"host selector ({args.host_selection_label}) and 1-Mearth "
+            "conservative-HZ model"
         ),
         "branch": args.branch,
         "source_posterior_samples": {
@@ -365,6 +408,7 @@ def main() -> None:
             "sha256": sha256(args.hosts),
             "N_star_7_9_kpc": n_star,
             "exact_distinct_Teff_values": int(len(collapsed)),
+            "host_selection_label": args.host_selection_label,
             "collapsed_measure_file": collapsed_path.name,
             "collapsed_measure_sha256": sha256(collapsed_path),
         },
