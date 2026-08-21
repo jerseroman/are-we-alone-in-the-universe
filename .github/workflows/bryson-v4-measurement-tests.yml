@@ -61,4 +61,4 @@ jobs:
 
       - name: Run host and TAMS audit regression suite
         working-directory: research/v4-validation
-        run: python -m unittest -v test_host_tams_audit.py
+        run: python -m unittest discover -p 'test_*.py' -v
