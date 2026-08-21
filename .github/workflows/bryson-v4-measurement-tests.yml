@@ -42,6 +42,7 @@ jobs:
             research/bryson-joint-posterior/mcmc_convergence.py \
             research/bryson-joint-posterior/clustered_monte_carlo.py \
             research/bryson-joint-posterior/compare_mcmc_seed_families.py \
+            research/bryson-joint-posterior/freeze_v4_numerical_results.py \
             research/bryson-joint-posterior/aggregate_hab2_joint_posterior.py
 
       - name: Run measurement and MCMC-control regression suites
