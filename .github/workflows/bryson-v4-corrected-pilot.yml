@@ -100,7 +100,7 @@ jobs:
         branch: [constant, zero]
         seed_family: [1, 2]
     runs-on: ubuntu-22.04
-    timeout-minutes: 240
+    timeout-minutes: 300
 
     steps:
       - uses: actions/checkout@v4
@@ -165,7 +165,7 @@ jobs:
             --burnin 1000 \
             --steps 3000 \
             --adaptive-production \
-            --max-steps 12000 \
+            --max-steps 20000 \
             --check-interval 1000 \
             --tau-multiple 100 \
             --tau-relative-tolerance 0.05 \
