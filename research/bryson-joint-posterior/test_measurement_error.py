@@ -275,6 +275,7 @@ class MeasurementErrorTests(unittest.TestCase):
                 json.dumps(
                     [
                         {
+                            "trial": 0,
                             "measurement_error_mode": QUANTILE_MATCHED_TWO_SIDED,
                             "mean_acceptance_fraction": 0.4,
                             "runtime_seconds": 1.0,

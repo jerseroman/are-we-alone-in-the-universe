@@ -18,6 +18,12 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from clustered_monte_carlo import (
+    cluster_bootstrap_quantile_mcse,
+    contiguous_batch_quantile_mcse,
+    equalize_realizations,
+    quantile_summary,
+)
 from measurement_error import LEGACY_SOURCE_MIXTURE, MEASUREMENT_ERROR_MODES
 
 PARAMETERS = ("F0", "alpha", "beta", "gamma")
@@ -54,6 +60,23 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--steps", type=int, default=2000)
     parser.add_argument("--runner-thin", type=int, default=10)
     parser.add_argument(
+        "--samples-per-realization",
+        type=int,
+        default=None,
+        help=(
+            "For adaptive chains, deterministically select this many evenly "
+            "spaced post-burn rows from every realization."
+        ),
+    )
+    parser.add_argument(
+        "--require-all-converged",
+        action="store_true",
+        help="Fail unless every adaptive realization passed its tau gates.",
+    )
+    parser.add_argument("--cluster-bootstrap-replicates", type=int, default=0)
+    parser.add_argument("--bootstrap-seed", type=int, default=2026082101)
+    parser.add_argument("--inner-chain-batches", type=int, default=0)
+    parser.add_argument(
         "--expected-measurement-error-mode",
         choices=MEASUREMENT_ERROR_MODES,
         default=None,
@@ -69,16 +92,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def qsummary(values: np.ndarray) -> dict[str, float]:
-    q025, q16, q50, q84, q975 = np.quantile(
-        values, [0.025, 0.16, 0.5, 0.84, 0.975]
-    )
-    return {
-        "q2.5": float(q025),
-        "q16": float(q16),
-        "q50": float(q50),
-        "q84": float(q84),
-        "q97.5": float(q975),
-    }
+    return quantile_summary(values)
 
 
 def parse_shard(label: str) -> int:
@@ -183,6 +197,46 @@ def main() -> None:
         shard_summaries, args.expected_measurement_error_mode
     )
 
+    diagnostics: list[dict[str, Any]] = []
+    for path in diagnostics_paths:
+        match = re.search(r"production-shard-(\d+)", path.name)
+        if match is None:
+            raise RuntimeError(f"Cannot identify diagnostic shard from {path}")
+        shard = int(match.group(1))
+        entries = json.loads(path.read_text(encoding="utf-8"))
+        for entry in entries:
+            entry["shard"] = shard
+            entry["global_trial"] = (
+                shard * args.trials_per_shard + int(entry["trial"])
+            )
+            diagnostics.append(entry)
+    if len(diagnostics) != args.expected_shards * args.trials_per_shard:
+        raise RuntimeError(
+            f"Diagnostic realization count {len(diagnostics)} is incomplete"
+        )
+    validate_diagnostic_modes(diagnostics, measurement_error_mode)
+    adaptive_entries = [
+        entry for entry in diagnostics if bool(entry.get("adaptive_production"))
+    ]
+    converged_count = int(
+        sum(bool(entry.get("converged")) for entry in adaptive_entries)
+    )
+    if args.require_all_converged:
+        if len(adaptive_entries) != len(diagnostics):
+            raise RuntimeError(
+                "--require-all-converged was requested but not every realization "
+                "used adaptive production"
+            )
+        if converged_count != len(diagnostics):
+            failed = [
+                int(entry["global_trial"])
+                for entry in diagnostics
+                if not bool(entry.get("converged"))
+            ]
+            raise RuntimeError(
+                f"Adaptive convergence failed for global trials {failed}"
+            )
+
     summaries_require_audit = any(
         "perturbation_audit_file" in summary for summary in shard_summaries
     )
@@ -223,15 +277,18 @@ def main() -> None:
         full_audit_path = out / f"perturbation_audit_{args.branch}_full.csv.gz"
         full_audit.to_csv(full_audit_path, index=False, compression="gzip")
 
-    samples_per_trial = args.walkers * (args.steps // args.runner_thin)
-    expected_rows_per_shard = args.trials_per_shard * samples_per_trial
+    fixed_samples_per_trial = args.walkers * (args.steps // args.runner_thin)
     frames: list[pd.DataFrame] = []
 
     for path in chain_paths:
         frame = pd.read_csv(path)
-        if len(frame) != expected_rows_per_shard:
+        if (
+            args.samples_per_realization is None
+            and len(frame) != args.trials_per_shard * fixed_samples_per_trial
+        ):
             raise RuntimeError(
-                f"Unexpected row count {len(frame)} in {path}; expected {expected_rows_per_shard}"
+                f"Unexpected row count {len(frame)} in {path}; expected "
+                f"{args.trials_per_shard * fixed_samples_per_trial}"
             )
         if set(frame.branch.astype(str)) != {args.branch}:
             raise RuntimeError(f"Branch mismatch in {path}")
@@ -243,16 +300,19 @@ def main() -> None:
         if frame.trial.nunique() != args.trials_per_shard:
             raise RuntimeError(f"Trial count mismatch in {path}")
         counts = frame.groupby("trial", sort=False).size().to_numpy()
-        if not np.all(counts == samples_per_trial):
-            raise RuntimeError(f"Unequal mixture weights in {path}")
+        if args.samples_per_realization is None:
+            if not np.all(counts == fixed_samples_per_trial):
+                raise RuntimeError(f"Unequal mixture weights in {path}")
+        elif np.any(counts < args.samples_per_realization):
+            raise RuntimeError(
+                f"A realization in {path} has fewer than "
+                f"{args.samples_per_realization} retained MCMC rows"
+            )
         frame.insert(2, "shard", shard)
         frame.insert(4, "global_trial", shard * args.trials_per_shard + frame.trial)
         frames.append(frame)
 
     full = pd.concat(frames, ignore_index=True)
-    expected_total = args.expected_shards * expected_rows_per_shard
-    if len(full) != expected_total:
-        raise RuntimeError(f"Aggregate row count {len(full)} != {expected_total}")
     if full.global_trial.nunique() != args.expected_shards * args.trials_per_shard:
         raise RuntimeError("Global trial identifiers are incomplete or duplicated")
     if not np.isfinite(full.loc[:, PARAMETERS].to_numpy(dtype=float)).all():
@@ -262,6 +322,18 @@ def main() -> None:
         ["global_trial", "production_step", "walker"], inplace=True
     )
     full.reset_index(drop=True, inplace=True)
+    if args.samples_per_realization is not None:
+        full = equalize_realizations(
+            full, "global_trial", args.samples_per_realization
+        )
+        samples_per_trial = args.samples_per_realization
+    else:
+        samples_per_trial = fixed_samples_per_trial
+    expected_total = (
+        args.expected_shards * args.trials_per_shard * samples_per_trial
+    )
+    if len(full) != expected_total:
+        raise RuntimeError(f"Aggregate row count {len(full)} != {expected_total}")
     full_path = out / f"joint_posterior_{args.branch}_full.csv.gz"
     full.to_csv(full_path, index=False, compression="gzip")
 
@@ -291,6 +363,23 @@ def main() -> None:
         name: qsummary(values[:, index])
         for index, name in enumerate(PARAMETERS)
     }
+    cluster_bootstrap_mcse = None
+    if args.cluster_bootstrap_replicates:
+        cluster_bootstrap_mcse = cluster_bootstrap_quantile_mcse(
+            full,
+            PARAMETERS,
+            "global_trial",
+            args.cluster_bootstrap_replicates,
+            args.bootstrap_seed,
+        )
+    inner_chain_mcse = None
+    if args.inner_chain_batches:
+        inner_chain_mcse = contiguous_batch_quantile_mcse(
+            full,
+            PARAMETERS,
+            "global_trial",
+            args.inner_chain_batches,
+        )
     correlation = pd.DataFrame(
         np.corrcoef(values, rowvar=False), index=PARAMETERS, columns=PARAMETERS
     )
@@ -312,15 +401,6 @@ def main() -> None:
             ),
         }
 
-    diagnostics: list[dict[str, Any]] = []
-    for path in diagnostics_paths:
-        diagnostics.extend(json.loads(path.read_text(encoding="utf-8")))
-    if len(diagnostics) != args.expected_shards * args.trials_per_shard:
-        raise RuntimeError(
-            f"Diagnostic realization count {len(diagnostics)} is incomplete"
-        )
-    validate_diagnostic_modes(diagnostics, measurement_error_mode)
-
     acceptance = np.asarray(
         [entry["mean_acceptance_fraction"] for entry in diagnostics], dtype=float
     )
@@ -335,6 +415,7 @@ def main() -> None:
     )
 
     tau_rows: list[np.ndarray] = []
+    ess_rows: list[np.ndarray] = []
     for entry in diagnostics:
         tau = entry.get("autocorrelation_time")
         if tau is None:
@@ -342,6 +423,15 @@ def main() -> None:
         array = np.asarray(tau, dtype=float)
         if array.shape == (4,) and np.all(np.isfinite(array)) and np.all(array > 0):
             tau_rows.append(array)
+            completed_steps = int(entry.get("production_steps_completed", args.steps))
+            ess = entry.get("effective_sample_size_source_order")
+            ess_array = (
+                np.asarray(ess, dtype=float)
+                if ess is not None
+                else args.walkers * completed_steps / array
+            )
+            if ess_array.shape == (4,) and np.all(np.isfinite(ess_array)):
+                ess_rows.append(ess_array)
     tau_summary = None
     ess_summary = None
     if tau_rows:
@@ -357,9 +447,11 @@ def main() -> None:
             }
             for index, name in enumerate(source_names)
         }
-        ess_matrix = args.walkers * args.steps / tau_matrix
+        ess_matrix = np.vstack(ess_rows)
         ess_summary = {
             name: {
+                "minimum_per_realization": float(np.min(ess_matrix[:, index])),
+                "q16_per_realization": float(np.quantile(ess_matrix[:, index], 0.16)),
                 "median_per_realization": float(np.median(ess_matrix[:, index])),
                 "sum_over_realizations": float(np.sum(ess_matrix[:, index])),
             }
@@ -382,8 +474,8 @@ def main() -> None:
         "period_cutoff_days": None,
         "measurement_error": measurement_error,
         "mixture_definition": (
-            "equal number of post-burn ensemble samples from each of 400 "
-            "reliability and measurement-error realizations"
+            "equal number of deterministically spaced post-burn ensemble "
+            "samples from every reliability and measurement-error realization"
         ),
         "parameter_order": ["F0", "alpha_radius", "beta_inst", "gamma"],
         "shards": args.expected_shards,
@@ -391,8 +483,22 @@ def main() -> None:
         "total_trials": args.expected_shards * args.trials_per_shard,
         "walkers": args.walkers,
         "burnin_steps": int(shard_summaries[0]["burnin_steps"]),
-        "production_steps": args.steps,
+        "production_steps_requested_minimum": args.steps,
+        "production_steps_completed_q16_q50_q84": [
+            float(value)
+            for value in np.quantile(
+                np.asarray(
+                    [
+                        entry.get("production_steps_completed", args.steps)
+                        for entry in diagnostics
+                    ],
+                    dtype=float,
+                ),
+                [0.16, 0.50, 0.84],
+            )
+        ],
         "runner_thin": args.runner_thin,
+        "equalized_samples_per_realization": samples_per_trial,
         "full_sample_count": int(len(full)),
         "propagation_stride_within_each_realization": args.propagation_stride,
         "galactic_propagation_sample_count": int(len(propagation)),
@@ -400,6 +506,20 @@ def main() -> None:
             full_audit_path.name if full_audit_path is not None else None
         ),
         "posterior_quantiles": quantiles,
+        "posterior_quantile_monte_carlo_error": {
+            "outer_realization_cluster_bootstrap": cluster_bootstrap_mcse,
+            "outer_realization_cluster_bootstrap_replicates": (
+                args.cluster_bootstrap_replicates
+            ),
+            "outer_realization_cluster_bootstrap_seed": args.bootstrap_seed,
+            "inner_chain_contiguous_batch_mcse": inner_chain_mcse,
+            "inner_chain_batches": args.inner_chain_batches,
+            "interpretation": (
+                "Whole outer realizations, not posterior rows, are resampled. "
+                "The separate contiguous-block estimate diagnoses residual "
+                "within-chain Monte Carlo error while retaining every outer realization."
+            ),
+        },
         "comparison_with_archived_printed_marginal_summary": comparison,
         "correlation_matrix_file": correlation_path.name,
         "diagnostics": {
@@ -417,6 +537,8 @@ def main() -> None:
                 for value in np.quantile(candidate_count, [0.16, 0.50, 0.84])
             ],
             "realizations_with_estimable_autocorrelation": len(tau_rows),
+            "adaptive_realizations": len(adaptive_entries),
+            "adaptive_realizations_converged": converged_count,
             "autocorrelation_time_by_source_parameter": tau_summary,
             "estimated_chain_ess_by_source_parameter": ess_summary,
         },

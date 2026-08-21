@@ -39,8 +39,16 @@ jobs:
         run: |
           python -m py_compile \
             research/bryson-joint-posterior/measurement_error.py \
+            research/bryson-joint-posterior/mcmc_convergence.py \
+            research/bryson-joint-posterior/clustered_monte_carlo.py \
+            research/bryson-joint-posterior/compare_mcmc_seed_families.py \
             research/bryson-joint-posterior/aggregate_hab2_joint_posterior.py
 
-      - name: Run measurement-model regression suite
+      - name: Run measurement and MCMC-control regression suites
         working-directory: research/bryson-joint-posterior
-        run: python -m unittest -v test_measurement_error.py
+        run: >-
+          python -m unittest -v
+          test_measurement_error.py
+          test_mcmc_convergence.py
+          test_clustered_monte_carlo.py
+          test_adaptive_aggregation.py

@@ -55,6 +55,7 @@ from measurement_error import (
     measurement_error_metadata,
     perturb_planets,
 )
+from mcmc_convergence import run_production_chain
 
 BRYSON_COMMIT = "d200f54b6f0df49e0dae530e69983cdce5397bfb"
 PUBLISHED = {
@@ -220,10 +221,39 @@ def main() -> None:
     parser.add_argument("--branch", required=True, choices=("constant", "zero"))
     parser.add_argument("--out", required=True, type=Path)
     parser.add_argument("--seed", required=True, type=int)
+    parser.add_argument(
+        "--mcmc-seed-offset",
+        type=int,
+        default=0,
+        help=(
+            "Optional offset that separates the MCMC random stream from the "
+            "outer reliability/measurement realization. Zero preserves the "
+            "legacy single-stream behavior."
+        ),
+    )
     parser.add_argument("--trials", type=int, default=4)
     parser.add_argument("--burnin", type=int, default=60)
     parser.add_argument("--steps", type=int, default=200)
     parser.add_argument("--thin", type=int, default=2)
+    parser.add_argument("--walkers", type=int, default=8)
+    parser.add_argument(
+        "--adaptive-production",
+        action="store_true",
+        help=(
+            "Extend production in check-interval chunks until the requested "
+            "chain-length/tau and successive-tau stability gates pass."
+        ),
+    )
+    parser.add_argument(
+        "--max-steps",
+        type=int,
+        default=None,
+        help="Maximum adaptive production steps per realization.",
+    )
+    parser.add_argument("--check-interval", type=int, default=1000)
+    parser.add_argument("--tau-multiple", type=float, default=100.0)
+    parser.add_argument("--tau-relative-tolerance", type=float, default=0.05)
+    parser.add_argument("--tau-stability-checks", type=int, default=2)
     parser.add_argument(
         "--period-max-days",
         type=float,
@@ -242,6 +272,25 @@ def main() -> None:
         ),
     )
     args = parser.parse_args()
+
+    if args.trials <= 0 or args.burnin <= 0 or args.steps <= 0 or args.thin <= 0:
+        parser.error("trials, burnin, steps, and thin must all be positive")
+    if args.walkers < 8 or args.walkers % 2:
+        parser.error("walkers must be an even integer of at least 8")
+    if args.check_interval <= 0:
+        parser.error("check-interval must be positive")
+    if args.tau_multiple <= 0.0:
+        parser.error("tau-multiple must be positive")
+    if not 0.0 < args.tau_relative_tolerance < 1.0:
+        parser.error("tau-relative-tolerance must be between zero and one")
+    if args.tau_stability_checks <= 0:
+        parser.error("tau-stability-checks must be positive")
+    if args.adaptive_production:
+        if args.max_steps is None:
+            parser.error("--max-steps is required with --adaptive-production")
+        if args.max_steps < args.steps:
+            parser.error("max-steps must be at least steps")
+    maximum_steps = args.max_steps if args.max_steps is not None else args.steps
 
     started = time.time()
     root = args.bryson_root.resolve()
@@ -340,7 +389,14 @@ def main() -> None:
             raise RuntimeError(f"Trial {trial} produced a non-finite optimizer state")
 
         ndim = len(optimum.x)
-        n_walkers = 2 * ndim
+        n_walkers = args.walkers
+        if n_walkers < 2 * ndim:
+            raise RuntimeError(
+                f"Need at least {2 * ndim} walkers for {ndim} dimensions"
+            )
+        mcmc_seed = int(trial_seed + args.mcmc_seed_offset)
+        if args.mcmc_seed_offset:
+            np.random.seed(mcmc_seed)
         positions = safe_initial_positions(
             np.asarray(optimum.x, dtype=float), model.getBounds(), n_walkers
         )
@@ -352,18 +408,32 @@ def main() -> None:
         )
         state = sampler.run_mcmc(positions, args.burnin, progress=False)
         sampler.reset()
-        sampler.run_mcmc(state, args.steps, progress=False)
+        _, tau, converged, convergence_checks = run_production_chain(
+            sampler,
+            state,
+            minimum_steps=args.steps,
+            adaptive=args.adaptive_production,
+            maximum_steps=maximum_steps,
+            check_interval=args.check_interval,
+            tau_multiple=args.tau_multiple,
+            relative_tolerance=args.tau_relative_tolerance,
+            required_stable_checks=args.tau_stability_checks,
+        )
+        production_steps_completed = int(sampler.iteration)
 
         chain = sampler.get_chain(thin=args.thin)
         log_probability = sampler.get_log_prob(thin=args.thin)
         flat = chain.reshape((-1, ndim))
         pooled.append(flat)
 
-        tau: list[float] | None
-        try:
-            tau = [float(value) for value in sampler.get_autocorr_time(tol=0)]
-        except Exception:
-            tau = None
+        ess = None
+        if tau is not None:
+            tau_array = np.asarray(tau, dtype=float)
+            if np.all(np.isfinite(tau_array)) and np.all(tau_array > 0.0):
+                ess = [
+                    float(n_walkers * production_steps_completed / value)
+                    for value in tau_array
+                ]
 
         for step_index in range(chain.shape[0]):
             for walker in range(chain.shape[1]):
@@ -375,6 +445,7 @@ def main() -> None:
                         args.run_label,
                         trial,
                         trial_seed,
+                        mcmc_seed,
                         step_index * args.thin,
                         walker,
                         float(log_probability[step_index, walker]),
@@ -408,6 +479,8 @@ def main() -> None:
             {
                 "trial": trial,
                 "seed": trial_seed,
+                "perturbation_seed": trial_seed,
+                "mcmc_seed": mcmc_seed,
                 "measurement_error_mode": args.measurement_error_mode,
                 "selected_after_domain": int(len(selected)),
                 "perturbation_counts": perturbation.counts,
@@ -421,6 +494,11 @@ def main() -> None:
                     float(value) for value in sampler.acceptance_fraction
                 ],
                 "autocorrelation_time": tau,
+                "effective_sample_size_source_order": ess,
+                "production_steps_completed": production_steps_completed,
+                "adaptive_production": bool(args.adaptive_production),
+                "converged": bool(converged) if args.adaptive_production else None,
+                "convergence_checks": convergence_checks,
                 "runtime_seconds": float(time.time() - trial_start),
             }
         )
@@ -433,6 +511,10 @@ def main() -> None:
                     "selected": len(selected),
                     "optimizer_success": bool(optimum.success),
                     "acceptance": float(np.mean(sampler.acceptance_fraction)),
+                    "production_steps": production_steps_completed,
+                    "converged": (
+                        bool(converged) if args.adaptive_production else None
+                    ),
                 }
             ),
             flush=True,
@@ -459,6 +541,7 @@ def main() -> None:
                 "run_label",
                 "trial",
                 "trial_seed",
+                "mcmc_seed",
                 "production_step",
                 "walker",
                 "log_probability",
@@ -501,7 +584,7 @@ def main() -> None:
     )
 
     summary = {
-        "status": "pilot_only" if args.run_label == "pilot" else "production",
+        "status": "pilot_only" if "pilot" in args.run_label else "production",
         "scientific_interpretation": (
             "A source-faithful newly seeded rerun of the public Bryson likelihood; "
             "not the missing historical chain or a bitwise reproduction of the "
@@ -522,10 +605,28 @@ def main() -> None:
         "period_cutoff_days": args.period_max_days,
         "measurement_error": measurement_error_metadata(args.measurement_error_mode),
         "base_seed": args.seed,
+        "mcmc_seed_offset": args.mcmc_seed_offset,
         "trials": args.trials,
-        "walkers": 8,
+        "walkers": args.walkers,
         "burnin_steps": args.burnin,
-        "production_steps": args.steps,
+        "production_steps": (
+            args.steps if not args.adaptive_production else None
+        ),
+        "production_steps_requested_minimum": args.steps,
+        "production_steps_requested_maximum": maximum_steps,
+        "production_steps_completed": [
+            int(entry["production_steps_completed"]) for entry in diagnostics
+        ],
+        "adaptive_production": {
+            "enabled": bool(args.adaptive_production),
+            "check_interval": args.check_interval,
+            "tau_multiple": args.tau_multiple,
+            "tau_relative_tolerance": args.tau_relative_tolerance,
+            "required_consecutive_stable_checks": args.tau_stability_checks,
+            "converged_realizations": int(
+                sum(bool(entry.get("converged")) for entry in diagnostics)
+            ),
+        },
         "thin": args.thin,
         "pooled_sample_count": int(len(pooled_samples)),
         "posterior_quantiles": posterior,
@@ -555,9 +656,17 @@ def main() -> None:
             "emcee": emcee.__version__,
         },
         "limitations": [
-            "Pilot settings are for code and data-path validation, not publication inference.",
+            *(
+                ["Pilot settings are for code and data-path validation, not publication inference."]
+                if "pilot" in args.run_label
+                else []
+            ),
             "The public snapshot contains no serialized historical posterior chain.",
-            "MCMC convergence must be assessed on the full production run.",
+            *(
+                ["Fixed-length MCMC convergence must be assessed after aggregation."]
+                if not args.adaptive_production
+                else []
+            ),
             "The two completeness branches remain separate model scenarios.",
         ],
     }
