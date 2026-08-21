@@ -1,6 +1,11 @@
 name: Bryson v4 corrected adaptive-MCMC pilot
 
 on:
+  push:
+    branches:
+      - work/exoearth-v4-statistics
+    paths:
+      - '.github/workflows/bryson-v4-corrected-pilot.yml'
   workflow_dispatch:
 
 concurrency:
