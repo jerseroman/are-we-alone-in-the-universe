@@ -1,0 +1,24 @@
+{
+  "title": "A Posterior Model Projection of Narrow-domain ExoEarth Candidates in the Milky Way's 7--9 kpc Annulus",
+  "upload_type": "publication",
+  "publication_type": "article",
+  "description": "Audited manuscript v4 and compact reproducibility archive for a conditional ExoEarth population projection. The exact nominal DR25 target contains zero candidates and zero summed reliability; the reported posterior intervals are conditional model projections and not direct candidate-supported occurrence measurements.",
+  "creators": [
+    {
+      "name": "Jerše, Roman",
+      "affiliation": "Independent Researcher, Slovenia"
+    }
+  ],
+  "access_right": "open",
+  "license": "agpl-3.0-only",
+  "keywords": [
+    "exoplanet occurrence rates",
+    "Kepler DR25",
+    "Milky Way disk",
+    "habitable zone",
+    "Bayesian inference",
+    "reproducible research"
+  ],
+  "version": "4.0-draft",
+  "notes": "Draft metadata only. Do not publish until the GitHub draft release, PDF preflight, and release audit are complete."
+}
