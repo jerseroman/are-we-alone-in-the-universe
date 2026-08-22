@@ -1,0 +1,5 @@
+c41654fd5911c6c8b8abc6acff7602a57ad78dcafb53feaa2111d7651f296683  V4_STATISTICAL_BASELINE_AUDIT.json
+9fff0d614cf49ca70ed5bfaa5a4d8cabf70fcc9df5ab95c24dd70d2c2bd34e12  V4_STATISTICAL_BASELINE_AUDIT.md
+134e710f8d6d9131afa50ef3cb87d9a02dc7a055bd92fd75e38c73d66cc3b69c  ../v4_statistical_baseline_github_evidence.json
+e37a4add5f0fbbb7363252adb2f85a41b0fbd1f4572761f90dc285ddd2b476eb  ../../bryson-joint-posterior/frozen-v4/V4_NUMERICAL_FREEZE.json
+8d38fe2680de64d994590e83a4e7b8f6376ba063f913856f9e236d935afcac59  ../../bryson-joint-posterior/frozen-v4/v4_galactic_quantiles.csv
