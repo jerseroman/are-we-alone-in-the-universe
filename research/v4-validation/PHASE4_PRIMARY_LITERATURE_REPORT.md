@@ -16,22 +16,25 @@ zone, averaged over the JJ-weighted `5300--6000 K` host population. The
 Galactic count then applies this occurrence to the `7--9 kpc` TAMS-selected
 host measure.
 
-| Completeness branch | mean `f_EE`, q50 | 68% posterior interval | `Lambda_EE`, q50 | 68% posterior interval |
+| Completeness branch | mean `f_EE`, q50 (planets/star) | 68% posterior interval | `Lambda_EE`, q50 | 68% posterior interval |
 |---|---:|---:|---:|---:|
-| Constant | 1.226% | 0.579--2.353% | 3.224 million | 1.522--6.189 million |
-| Zero | 1.738% | 0.799--3.388% | 4.572 million | 2.103--8.912 million |
+| Constant | 0.01226 | 0.00579--0.02353 | 3.224 million | 1.522--6.189 million |
+| Zero | 0.01738 | 0.00799--0.03388 | 4.572 million | 2.103--8.912 million |
 
 These intervals propagate the fitted occurrence posterior and host-temperature
-mixture. They do not include occurrence-model-form uncertainty, the local
-support failure, or the open Galactic-population systematics.
+mixture. They do not include occurrence-model-form uncertainty, the absence of
+direct local support, or the open Galactic-population systematics.
 
 ## Source-model fidelity check
 
-Bryson et al. (2021) report broad conservative-HZ occurrence values of 0.37
-planets per star for their high-completeness treatment and 0.60 for their
-low-completeness treatment. The reconstructed v4 broad-HZ medians are 0.388
-and 0.659. This is a useful source-fidelity check, but not independent
-validation: v4 reconstructs and integrates the Bryson DR25 occurrence model.
+Table 5 of Bryson et al. (2021) reports the temperature-matched 5300--6000 K
+G-star Model-1 conservative-HZ values of 0.38 planets per star for the
+constant-extrapolation low bound and 0.63 for the zero-extrapolation high
+bound. The reconstructed v4 broad-HZ medians are 0.388 and 0.659. This close
+agreement is a source-model fidelity check, not independent validation: v4
+reconstructs and integrates the Bryson DR25 occurrence model. The broader
+4800--6300 K eta-Earth values of 0.37 and 0.60 remain contextual rather than
+the primary benchmark.
 
 Within the same posterior draws, the v4 narrow box contains a median 3.119% of
 the broad-HZ count in the constant branch and 2.606% in the zero branch. This
@@ -42,7 +45,7 @@ literature values without implying a scientific conflict.
 
 | Primary study | Reported quantity | Why it is not a like-for-like test |
 |---|---|---|
-| Bryson et al. (2021), doi:10.3847/1538-3881/abc418 | `eta_Earth` over `0.5--1.5 R_earth`, conservative HZ, `4800--6300 K` | Source model and much broader domain; not independent |
+| Bryson et al. (2021), doi:10.3847/1538-3881/abc418 | Table 5 G-star Model 1 over `0.5--1.5 R_earth`, conservative HZ, `5300--6000 K`: 0.38 constant and 0.63 zero | Temperature-matched source model; radius and HZ domains remain broader; not independent |
 | Kunimoto & Matthews (2020), doi:10.3847/1538-3881/ab88b0 | 84.1% upper limit below 0.18 planets per G star for `0.75--1.5 R_earth`, `0.99--1.70 au` | Semimajor axis rather than instellation, broader radius, different host definition |
 | Burke et al. (2015), doi:10.1088/0004-637X/809/1/8 | `zeta_1.0` about 0.1, with an allowed 0.01--2 range | Period replaces instellation, Q1--Q16 rather than DR25, large systematic range |
 | Pascucci et al. (2019), doi:10.3847/2041-8213/ab3dac | Preferred broad-HZ extrapolation around 5--10% | Different domain and model; mainly demonstrates model-form sensitivity in sparse extrapolation |

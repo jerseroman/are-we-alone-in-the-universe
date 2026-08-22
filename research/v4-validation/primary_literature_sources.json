@@ -10,11 +10,11 @@
       "journal": "The Astronomical Journal",
       "doi": "10.3847/1538-3881/abc418",
       "primary_url": "https://arxiv.org/abs/2010.14812",
-      "quantity": "eta_Earth",
-      "definition": "0.5--1.5 R_earth in the conservative habitable zone around 4800--6300 K stars",
-      "reported_result": "0.37 (-0.21,+0.48) planets per star under high completeness and 0.60 (-0.36,+0.90) under low completeness; optimistic HZ values are 0.58 and 0.88.",
+      "quantity": "G-star conservative-HZ source-fidelity anchor",
+      "definition": "Table 5 Model 1 hab2 Poisson result with input uncertainties: 0.5--1.5 R_earth in the conservative habitable zone around 5300--6000 K stars",
+      "reported_result": "0.38 (-0.22,+0.50) planets per star for the constant-extrapolation low bound and 0.63 (-0.38,+0.94) for the zero-extrapolation high bound. The broader 4800--6300 K eta_Earth context is 0.37 and 0.60.",
       "comparison_role": "source_model_anchor",
-      "comparability": "The v4 posterior is reconstructed from this DR25 model and therefore is not an independent replication. Bryson's radius, HZ, and temperature domain is much broader than the v4 target."
+      "comparability": "The 5300--6000 K temperature range matches v4, while Bryson's radius and full conservative-HZ domains remain much broader. The v4 posterior is reconstructed from this DR25 model, so agreement tests source fidelity rather than independent replication."
     },
     {
       "key": "KunimotoMatthews2020",

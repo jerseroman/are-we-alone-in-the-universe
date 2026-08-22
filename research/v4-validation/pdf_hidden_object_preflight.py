@@ -265,6 +265,7 @@ def main() -> None:
         anchor for anchor in required_numerical_anchors if anchor not in all_text
     ]
     doi_uris = [uri for uri in external_uris if "doi.org/" in uri]
+    insecure_doi_uris = [uri for uri in doi_uris if uri.startswith("http://doi.org/")]
     malformed_doi_uris = [
         uri
         for uri in doi_uris
@@ -287,6 +288,7 @@ def main() -> None:
         }
     audit["external_uris"] = external_uris
     audit["doi_uris"] = doi_uris
+    audit["insecure_doi_uris"] = insecure_doi_uris
     audit["malformed_doi_uris"] = malformed_doi_uris
     audit["caption_number_counts"] = dict(sorted(figure_counts.items()))
     audit["table_number_counts"] = dict(sorted(table_counts.items()))
@@ -317,6 +319,8 @@ def main() -> None:
         failures.append("frozen numerical anchor missing from extracted PDF text")
     if malformed_doi_uris:
         failures.append("malformed DOI hyperlink")
+    if insecure_doi_uris:
+        failures.append("insecure HTTP DOI hyperlink")
     if metadata_mismatches:
         failures.append("missing or incorrect PDF metadata")
     audit["failures"] = failures

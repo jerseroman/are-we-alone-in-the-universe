@@ -49,8 +49,8 @@ quantiles $(0,0,0,0,1)$ at probabilities $(2.5,16,50,84,97.5)$\% and a
 95.75\% zero-count fraction. The zero branch has the same quantile vector and
 a 96.75\% zero-count fraction. Only K08107.01 and K08242.01 enter the target
 under any perturbation, with 17 total appearances in the constant branch and
-13 in the zero branch. Consequently, the local empirical-support gate is a
-scientific \emph{failure}, even though the geometry and code checks pass.
+13 in the zero branch. Consequently, the direct local empirical-support
+criterion is \emph{not met}, even though the geometry and code checks pass.
 
 \begin{figure*}[t]
 \centering
@@ -66,12 +66,16 @@ candidate lies in the full target.}
 
 \section{Source-Model Fidelity Benchmark}\label{sec:benchmark}
 
-\citet{Bryson2021} report broad conservative-HZ occurrence of 0.37 planets per
-star under high completeness and 0.60 under low completeness for their broader
-$0.5$--$1.5\,\Rearth$, 4800--6300 K definition. The reconstructed v4 broad-HZ
-medians are 0.388 and 0.659. The agreement in scale supports source fidelity,
-but it is not independent validation: the present posterior is reconstructed
-from the same public DR25 model and inputs.
+For the temperature-matched G-star column (5300--6000 K), Table~5 of
+\citet{Bryson2021} reports Model~1 conservative-HZ occurrence of
+$0.38^{+0.50}_{-0.22}$ planets per star for the constant-extrapolation low
+bound and $0.63^{+0.94}_{-0.38}$ for the zero-extrapolation high bound. The
+reconstructed v4 broad-HZ medians are 0.388 and 0.659. This close
+temperature-matched agreement supports source fidelity, but it is not
+independent validation: the present posterior is reconstructed from the same
+public DR25 model and inputs. Bryson et al.'s 0.37 and 0.60 results for the
+broader 4800--6300 K $\eta_\oplus$ temperature range remain useful context but
+are not the primary source-fidelity benchmark here.
 
 The point-vector reference inherited from version~3 gives
 $\LamEE=3.3765\times10^6$ for the constant branch. The corrected posterior

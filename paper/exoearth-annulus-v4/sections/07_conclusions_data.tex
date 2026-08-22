@@ -45,9 +45,14 @@ result, the 16-page PDF's SHA-256, and that no PDF-to-LaTeX reconstruction was
 used. The Bryson research-code source is
 \hashid{d200f54b6f0df49e0dae530e69983cdce5397bfb}. Corrected-posterior execution
 is recorded by GitHub Actions runs 32470830404, 32472776218, 32506666772, and
-32527877921. The release evidence contains the frozen numerical, host/TAMS,
-DR25-support, sensitivity, and primary-literature records together with
-SHA-256 manifests.
+32527877921. Run 32472776218 was a superseded partially failed production
+attempt: its independently successful 400-realization constant-branch
+aggregate is retained, while its failed 20,000-step zero-branch aggregate is
+excluded. That failure triggered the unchanged-criteria full zero-branch rerun
+32506666772 with a 30,000-step ceiling; all 400 rerun realizations passed. Run
+32527877921 propagated the retained constant branch. The release evidence
+contains the frozen numerical, host/TAMS, DR25-support, sensitivity, and
+primary-literature records together with SHA-256 manifests.
 
 The analysis uses Python, NumPy \citep{Harris2020}, SciPy
 \citep{Virtanen2020}, pandas

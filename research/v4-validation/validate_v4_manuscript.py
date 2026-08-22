@@ -125,12 +125,24 @@ def main() -> None:
         raise RuntimeError("Archived predecessor is still misrepresented as exact v3 source")
     if "Personal Philosophical Opinion" in all_text:
         raise RuntimeError("Personal philosophical section remains in manuscript")
-    if "\\documentclass[twocolumn]{aastex702}" not in all_text:
-        raise RuntimeError("Manuscript does not request AASTeX 7.0.2")
+    if "scientific \\emph{failure}" in all_text or "scientific support failure" in all_text:
+        raise RuntimeError("Overbroad scientific-failure wording remains in manuscript")
+    if "\\documentclass[twocolumn,linenumbers]{aastex702}" not in all_text:
+        raise RuntimeError("Manuscript does not request AASTeX 7.0.2 with line numbers")
     if "\\bibliographystyle{aasjournalv7.1}" not in all_text:
         raise RuntimeError("Manuscript does not request aasjournalv7.1")
+    if "\\providecommand{\\dodoi}[1]{doi:~\\href{https://doi.org/#1}" not in all_text:
+        raise RuntimeError("Manuscript does not override bibliography DOI links to HTTPS")
     if "10.5281/zenodo.20474527" in all_text:
         raise RuntimeError("Unrelated calculator DOI remains in manuscript")
+    for fragment in (
+        "0.38^{+0.50}_{-0.22}",
+        "0.63^{+0.94}_{-0.38}",
+        "superseded partially failed production",
+        "5727.1 K",
+    ):
+        if fragment not in all_text:
+            raise RuntimeError(f"Required audit correction is missing: {fragment}")
 
     figure_names = re.findall(r"\\includegraphics(?:\[[^]]*\])?\{([^}]+)\}", all_text)
     required_figures = {
@@ -151,6 +163,11 @@ def main() -> None:
     if "no PDF-page cropping or extraction" not in figure_provenance.get("method", ""):
         raise RuntimeError("Figure provenance does not exclude page cropping")
     plotted = figure_provenance.get("figures", {})
+    plotting_script = root / figure_provenance["plotting_script"]["path"]
+    plotting_text = plotting_script.read_text(encoding="utf-8")
+    for forbidden in ("Mean planets per star (%)", "DR25 local support = FAIL"):
+        if forbidden in plotting_text:
+            raise RuntimeError(f"Misleading figure wording remains: {forbidden}")
     for name in required_figures:
         expected = plotted.get(name, {}).get("sha256")
         actual = sha256(paper / "figures" / name)

@@ -51,6 +51,19 @@ def require_source_fields(source: dict[str, Any]) -> None:
         raise RuntimeError(f"Malformed DOI for {source['key']}")
 
 
+def require_bryson_gstar_anchor(source: dict[str, Any]) -> None:
+    """Require the temperature-matched Table 5 source-fidelity benchmark."""
+    if source.get("key") != "Bryson2021":
+        raise RuntimeError("Bryson source-model anchor has the wrong key")
+    definition = str(source.get("definition", ""))
+    result = str(source.get("reported_result", ""))
+    if "5300--6000 K" not in definition or "Table 5" not in definition:
+        raise RuntimeError("Bryson benchmark is not the temperature-matched Table 5 result")
+    for anchor in ("0.38", "0.63", "constant-extrapolation", "zero-extrapolation"):
+        if anchor not in result:
+            raise RuntimeError(f"Bryson G-star benchmark lacks {anchor}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--numerical-freeze", required=True, type=Path)
@@ -80,6 +93,8 @@ def main() -> None:
         raise RuntimeError("Duplicate literature source key")
     if "Bryson2021" not in keys:
         raise RuntimeError("Source-model anchor Bryson2021 is missing")
+    bryson = next(source for source in sources if source["key"] == "Bryson2021")
+    require_bryson_gstar_anchor(bryson)
     transport_keys = {"Dai2021", "BashiZucker2022", "Sayeed2025", "Frankel2020"}
     missing_transport = sorted(transport_keys.difference(keys))
     if missing_transport:
@@ -122,7 +137,7 @@ def main() -> None:
         "primary_sources": sources,
         "comparison_findings": [
             "No listed literature value has the same radius, instellation, climate-intersection, host-temperature, and catalog definition as v4.",
-            "Bryson et al. (2021) is the source model for the reconstructed v4 posterior and is therefore a source-fidelity check, not independent validation.",
+            "The Bryson et al. (2021) Table 5 G-star values of 0.38 and 0.63 are the temperature-matched source-fidelity benchmark for the reconstructed v4 broad-HZ medians of 0.388 and 0.659; this is not independent validation.",
             "The v4 mean occurrence is numerically below broad-HZ literature estimates, as expected for its much narrower integrated phase-space box.",
             "The absence of nominal DR25 candidates in the exact v4 box prevents a direct candidate-supported interpretation.",
             "Published literature supports treating occurrence-model form and long-period extrapolation as material epistemic uncertainty not included in the v4 posterior interval.",

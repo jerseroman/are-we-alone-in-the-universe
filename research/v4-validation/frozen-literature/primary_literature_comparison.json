@@ -14,7 +14,7 @@
     },
     "primary_literature_registry": {
       "path": "research\\v4-validation\\primary_literature_sources.json",
-      "sha256": "48e19c94f149bdc3c5a6d8d26f9181eeed44fbfc38e8d0a02135f219955850be"
+      "sha256": "adf04b78e0f857c1d42b193721713fc2d3b8aff2d9556b4a62d5f036ae4f28f5"
     }
   },
   "v4_estimand": {
@@ -112,11 +112,11 @@
       "journal": "The Astronomical Journal",
       "doi": "10.3847/1538-3881/abc418",
       "primary_url": "https://arxiv.org/abs/2010.14812",
-      "quantity": "eta_Earth",
-      "definition": "0.5--1.5 R_earth in the conservative habitable zone around 4800--6300 K stars",
-      "reported_result": "0.37 (-0.21,+0.48) planets per star under high completeness and 0.60 (-0.36,+0.90) under low completeness; optimistic HZ values are 0.58 and 0.88.",
+      "quantity": "G-star conservative-HZ source-fidelity anchor",
+      "definition": "Table 5 Model 1 hab2 Poisson result with input uncertainties: 0.5--1.5 R_earth in the conservative habitable zone around 5300--6000 K stars",
+      "reported_result": "0.38 (-0.22,+0.50) planets per star for the constant-extrapolation low bound and 0.63 (-0.38,+0.94) for the zero-extrapolation high bound. The broader 4800--6300 K eta_Earth context is 0.37 and 0.60.",
       "comparison_role": "source_model_anchor",
-      "comparability": "The v4 posterior is reconstructed from this DR25 model and therefore is not an independent replication. Bryson's radius, HZ, and temperature domain is much broader than the v4 target."
+      "comparability": "The 5300--6000 K temperature range matches v4, while Bryson's radius and full conservative-HZ domains remain much broader. The v4 posterior is reconstructed from this DR25 model, so agreement tests source fidelity rather than independent replication."
     },
     {
       "key": "KunimotoMatthews2020",
@@ -225,7 +225,7 @@
   ],
   "comparison_findings": [
     "No listed literature value has the same radius, instellation, climate-intersection, host-temperature, and catalog definition as v4.",
-    "Bryson et al. (2021) is the source model for the reconstructed v4 posterior and is therefore a source-fidelity check, not independent validation.",
+    "The Bryson et al. (2021) Table 5 G-star values of 0.38 and 0.63 are the temperature-matched source-fidelity benchmark for the reconstructed v4 broad-HZ medians of 0.388 and 0.659; this is not independent validation.",
     "The v4 mean occurrence is numerically below broad-HZ literature estimates, as expected for its much narrower integrated phase-space box.",
     "The absence of nominal DR25 candidates in the exact v4 box prevents a direct candidate-supported interpretation.",
     "Published literature supports treating occurrence-model form and long-period extrapolation as material epistemic uncertainty not included in the v4 posterior interval.",

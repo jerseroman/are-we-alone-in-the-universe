@@ -99,7 +99,7 @@ def posterior_figure(quantiles_path: Path, output: Path) -> None:
 
     fig, axes = plt.subplots(1, 2, figsize=(7.3, 3.15), constrained_layout=True)
     for ax, frame, title, xlabel in (
-        (axes[0], occurrence, "Narrow-domain occurrence", "Mean planets per star (%)"),
+        (axes[0], occurrence, "Narrow-domain occurrence", "Expected planets per 100 stars"),
         (axes[1], counts, "7-9 kpc population expectation", "Expected planets (millions)"),
     ):
         for y, (branch, _, color) in zip((1.0, 0.0), branches):
@@ -303,7 +303,7 @@ def sensitivity_figure(register_path: Path, output: Path) -> None:
     fig.text(
         0.01,
         -0.01,
-        "Categorical gates: DR25 local support = FAIL; metallicity-dependent TAMS test = FAIL / excluded.",
+        "Categorical findings: direct local DR25 support = ABSENT; metallicity-dependent TAMS test = EXCLUDED.",
         color=RED,
         fontsize=8,
         fontweight="bold",
@@ -335,6 +335,25 @@ def load_occurrence_model(root: Path) -> Any:
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def inner_target_crossing_k(model: Any) -> float:
+    """Solve the 1-Earth-mass runaway-greenhouse crossing S_eff = 1.1."""
+    def residual(teff: float) -> float:
+        return float(model.seff(np.asarray([teff]), model.RUNAWAY_1MEARTH)[0] - 1.1)
+
+    lower, upper = 5300.0, 6000.0
+    f_lower, f_upper = residual(lower), residual(upper)
+    if f_lower * f_upper >= 0.0:
+        raise RuntimeError("HZ crossing is not bracketed over 5300--6000 K")
+    for _ in range(80):
+        midpoint = 0.5 * (lower + upper)
+        f_midpoint = residual(midpoint)
+        if f_lower * f_midpoint <= 0.0:
+            upper, f_upper = midpoint, f_midpoint
+        else:
+            lower, f_lower = midpoint, f_midpoint
+    return 0.5 * (lower + upper)
 
 
 def deterministic_outer_subsample(
@@ -428,8 +447,7 @@ def hz_boundary_figure(root: Path, output: Path) -> None:
     target_lower = np.maximum(0.9, outer)
     target_upper = np.minimum(1.1, inner)
     valid = target_upper > target_lower
-    crossing_index = int(np.argmin(np.abs(inner - 1.1)))
-    crossing_teff = teff[crossing_index]
+    crossing_teff = inner_target_crossing_k(model)
 
     fig, ax = plt.subplots(figsize=(7.3, 3.55), constrained_layout=True)
     ax.fill_between(teff, outer, inner, color=BLUE, alpha=0.13, label="Conservative HZ")
@@ -448,7 +466,7 @@ def hz_boundary_figure(root: Path, output: Path) -> None:
     ax.axhline(1.1, color=GREEN, linestyle="--", linewidth=1.0)
     ax.axvline(crossing_teff, color=GRAY, linestyle=":", linewidth=1.0)
     ax.annotate(
-        rf"$S_{{\rm in}}=1.1$ near {crossing_teff:.0f} K",
+        rf"$S_{{\rm in}}=1.1$ at {crossing_teff:.1f} K",
         (crossing_teff, 1.1),
         xytext=(-112, 22),
         textcoords="offset points",
@@ -498,6 +516,7 @@ def occurrence_teff_figure(
         branch: occurrence_curve_quantiles(samples, teff, model)
         for branch, (samples, _, _) in branches.items()
     }
+    crossing_teff = inner_target_crossing_k(model)
 
     fig, axes = plt.subplots(1, 2, figsize=(7.3, 3.55), constrained_layout=True)
     for ax, quantity, title, ylabel in (
@@ -520,7 +539,7 @@ def occurrence_teff_figure(
         ax.set_title(title, loc="left", fontweight="bold")
         ax.grid(axis="both", alpha=0.22)
         ax.set_ylim(bottom=0.0)
-    axes[1].axvline(5727, color=GRAY, linestyle=":", linewidth=1.0)
+    axes[1].axvline(crossing_teff, color=GRAY, linestyle=":", linewidth=1.0)
     axes[0].legend(frameon=False, loc="upper left")
     fig.suptitle("Temperature-dependent occurrence from the frozen corrected posterior", x=0.02, ha="left", fontweight="bold")
     fig.text(

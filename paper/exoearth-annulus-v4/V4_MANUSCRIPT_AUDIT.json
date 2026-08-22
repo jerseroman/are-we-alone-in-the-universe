@@ -5,7 +5,7 @@
     "numerical_freeze": "e37a4add5f0fbbb7363252adb2f85a41b0fbd1f4572761f90dc285ddd2b476eb",
     "dr25_support_audit": "920c61fcbf873cd460ade6dd88870fd2c30ce835de10314ea44d519a5168b909",
     "sensitivity_freeze": "31fb1eb492644c0272eda0452be2dd022c2d07da1d04e0fb881a807acae29d99",
-    "literature_comparison": "c4523d69c20f9ec3fb448789d6e891ee750ac103d2305dcdfab1d6648145444d"
+    "literature_comparison": "70f314de494e5f46b6d59aa79538d072d6884feeef766ba6f4a0288e053cf4f1"
   },
   "source_provenance": {
     "archived_predecessor_commit": "5a3528aea6d6f28da8e9db4d40f0c84cbb43d501",
@@ -26,13 +26,13 @@
   },
   "figures": {
     "v4_dr25_local_support.pdf": "7f407b37a8a49f6d4cc265d4956ee11e70f7a1be40430fd22b2cf778d4c57b32",
-    "v4_hz_boundaries.pdf": "1d42f1552d6399c98e369e15a85d075f9e96b032500f808432de89151b708583",
-    "v4_occurrence_vs_teff.pdf": "a0a3fdd6f463baf6d9d07ac61526ed559e0f0637e63e771cf60a9f7d1d46905a",
-    "v4_posterior_intervals.pdf": "22d4164277182825e700f81fb4ec585f33a3486a528047a3213e03572c20d3ed",
+    "v4_hz_boundaries.pdf": "814177c28df1829d7bdbd307a440742bae92f8cc2ebacd0894dfb7b475b23b45",
+    "v4_occurrence_vs_teff.pdf": "0eb2ea7643dbf981d5696ed5bbc6e904c02799707135478fc4d8bb2248e0f7d8",
+    "v4_posterior_intervals.pdf": "36686c1ac1e20aff7314d33f038755eba56b353e4080e8fd0a57cec93f3fb022",
     "v4_radial_annulus.pdf": "5a7f1bf7fe2b7620aba89e6f472a0fba763bb60e7918010719a71418e1e6080b",
-    "v4_sensitivity_register.pdf": "c0c8c93af4e9fee06505246628fa28b46cbffb2597346feb3bac7436f0cf5b5e"
+    "v4_sensitivity_register.pdf": "59abfe55feba66a3006db5c0d856aaeb05b55b8f9bc22773215b45016543511f"
   },
-  "figure_provenance_sha256": "1dba356009bb5bc7077623ab19912483254ef48a9e8787756e8882758cb44505",
+  "figure_provenance_sha256": "e0dc0f7f6af0879aa61759710e794795f95a8fb887a0dffd730791c92fe8318c",
   "required_numerical_anchors": {
     "host_count": "263{,}061{,}992.37",
     "constant_median_millions": "3.224",
@@ -48,5 +48,5 @@
     "low_mass_climate_change": "-57.28",
     "branch_median_change": "41.83"
   },
-  "source_manifest_sha256": "3f277827085a9d587a1931a78cc4cafce2e45b1654b54ff7c559a285d9649023"
+  "source_manifest_sha256": "458a8f11714d8251b9ee8e8e8279b82f660b825ab23698825ae559736557531b"
 }

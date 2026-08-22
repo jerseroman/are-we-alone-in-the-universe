@@ -5,7 +5,7 @@
   "method": "Six standalone vector PDFs generated directly by the plotting script; no PDF-page cropping or extraction.",
   "plotting_script": {
     "path": "research/v4-validation/make_v4_figures.py",
-    "sha256": "e762789fb690bb8638d828223efeeeefc194e00f49ccff02961b88bfd4fd499f"
+    "sha256": "92fa085ebfd13c8eb105de9832c97eae7c34c02740d98a7b6377cc33538d866b"
   },
   "temperature_curve_sampling": {
     "method": "Deterministic equally spaced row indices within every equalized outer realization",
@@ -94,8 +94,8 @@
   "figures": {
     "v4_posterior_intervals.pdf": {
       "path": "paper/exoearth-annulus-v4/figures/v4_posterior_intervals.pdf",
-      "sha256": "22d4164277182825e700f81fb4ec585f33a3486a528047a3213e03572c20d3ed",
-      "bytes": 22037
+      "sha256": "36686c1ac1e20aff7314d33f038755eba56b353e4080e8fd0a57cec93f3fb022",
+      "bytes": 21806
     },
     "v4_dr25_local_support.pdf": {
       "path": "paper/exoearth-annulus-v4/figures/v4_dr25_local_support.pdf",
@@ -104,12 +104,12 @@
     },
     "v4_hz_boundaries.pdf": {
       "path": "paper/exoearth-annulus-v4/figures/v4_hz_boundaries.pdf",
-      "sha256": "1d42f1552d6399c98e369e15a85d075f9e96b032500f808432de89151b708583",
-      "bytes": 35339
+      "sha256": "814177c28df1829d7bdbd307a440742bae92f8cc2ebacd0894dfb7b475b23b45",
+      "bytes": 35329
     },
     "v4_occurrence_vs_teff.pdf": {
       "path": "paper/exoearth-annulus-v4/figures/v4_occurrence_vs_teff.pdf",
-      "sha256": "a0a3fdd6f463baf6d9d07ac61526ed559e0f0637e63e771cf60a9f7d1d46905a",
+      "sha256": "0eb2ea7643dbf981d5696ed5bbc6e904c02799707135478fc4d8bb2248e0f7d8",
       "bytes": 37877
     },
     "v4_radial_annulus.pdf": {
@@ -119,8 +119,8 @@
     },
     "v4_sensitivity_register.pdf": {
       "path": "paper/exoearth-annulus-v4/figures/v4_sensitivity_register.pdf",
-      "sha256": "c0c8c93af4e9fee06505246628fa28b46cbffb2597346feb3bac7436f0cf5b5e",
-      "bytes": 29791
+      "sha256": "59abfe55feba66a3006db5c0d856aaeb05b55b8f9bc22773215b45016543511f",
+      "bytes": 30709
     }
   }
 }

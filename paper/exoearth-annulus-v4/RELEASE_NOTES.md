@@ -29,7 +29,8 @@ uncertainty budget, or an estimate of inhabited worlds.
 ## Audit trail
 
 - pilot run: 32470830404;
-- corrected production run: 32472776218;
+- superseded partially failed production attempt: 32472776218 (successful
+  constant aggregate retained; failed 20,000-step zero aggregate excluded);
 - extended zero-completeness run: 32506666772;
 - constant-branch Galactic propagation run: 32527877921;
 - archived fixed-vector predecessor commit:
