@@ -1,4 +1,4 @@
-\documentclass[twocolumn]{aastex701}
+\documentclass[twocolumn]{aastex702}
 
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -30,9 +30,11 @@
 \begin{document}
 
 \hypersetup{
+  unicode=true,
   pdftitle={A Posterior Model Projection of Narrow-domain ExoEarth Candidates in the Milky Way's 7--9 kpc Annulus},
-  pdfauthor={Roman Jerse},
-  pdfsubject={Posterior model projection of narrow-domain ExoEarth candidates around old G dwarfs}
+  pdfauthor={Roman Jerše},
+  pdfsubject={Posterior model projection of narrow-domain ExoEarth candidates around old G dwarfs},
+  pdfkeywords={Exoplanet occurrence; Kepler DR25; Milky Way disk; habitable zone; Bayesian inference}
 }
 
 \title{A Posterior Model Projection of Narrow-domain ExoEarth Candidates in the Milky Way's 7--9 kpc Annulus}
@@ -89,13 +91,17 @@ expectation requires a second measure describing eligible stars and an
 assumption that the Kepler-calibrated occurrence law can be transported to
 that population.
 
-Version~3 of this analysis implemented that transport with fixed median
-parameter vectors. The present work replaces those plug-in values with a newly
-reconstructed, corrected joint posterior; validates the host and TAMS
-selection; audits direct DR25 support in the exact target; and freezes numerical,
-model, climate, and spatial sensitivities before interpreting the result. The
-constant- and zero-completeness treatments remain separate scenarios and are
-never pooled into a confidence interval.
+Version~3 of this analysis already propagated separately reconstructed,
+branch-specific correlated occurrence ensembles through the frozen Galactic
+estimator; its principal calculation was not limited to fixed median vectors.
+The present work reruns that reconstruction with corrected two-sided
+measurement-error propagation, adaptive convergence gates, equalized
+within-realization sampling, independent seed-family checks, and explicit
+ESS/MCSE diagnostics. It also validates the host and TAMS selection, audits
+direct DR25 support in the exact target, and freezes numerical, model, climate,
+and spatial sensitivities before interpretation. The constant- and
+zero-completeness treatments remain separate scenarios and are never pooled
+into a confidence interval.
 
 The demonstration intentionally answers a narrow astronomical question. It
 does not infer inhabited planets, biospheres, continuously habitable worlds,
@@ -121,7 +127,7 @@ A \emph{narrow-domain ExoEarth candidate} satisfies
 \end{equation}
 and lies in the present-day conservative circumstellar habitable zone of its
 host, evaluated with the $1\,\Mearth$ inner-boundary prescription of
-\citet{Kopparapu2013,Kopparapu2014}. The modifier ``narrow-domain'' is
+\citet{Kopparapu2013,Kopparapu2013Erratum,Kopparapu2014}. The modifier ``narrow-domain'' is
 essential because ExoEarth has no unique radius convention across the
 literature.
 
@@ -165,6 +171,5 @@ model, climate prescription, radial domain, and quadrature.
 \input{sections/06_discussion}
 \input{sections/07_conclusions_data}
 \input{sections/08_appendices}
-\input{sections/09_philosophical_opinion}
 
 \end{document}

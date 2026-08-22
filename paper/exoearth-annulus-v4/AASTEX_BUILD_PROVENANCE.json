@@ -1,8 +1,13 @@
 {
-  "class": "aastex701.cls",
-  "version": "7.0.1",
-  "source": "MiKTeX aastex package; official American Astronomical Society class-file release",
-  "url": "https://journals.aas.org/wp-content/uploads/2025/05/aastex701.cls",
-  "installed": "2026-08-22",
-  "sha256": "c1bb436807f8bb37eb5203056db5a5a60e1c9ae6a3feb6501d7c414b9b08b062"
+  "class": "aastex702.cls",
+  "version": "7.0.2",
+  "source": "Official American Astronomical Society AASTeX full distribution",
+  "release_date": "2026-06-01",
+  "downloaded": "2026-08-22",
+  "distribution_url": "https://journals.aas.org/wp-content/uploads/2026/06/aastex702.zip",
+  "distribution_sha256": "008ed27b62a3b1689a256a53893df05080cd01b754b206f4833f864cb16fc25f",
+  "sha256": "0ee51ff72a4d0b608a1885e87cddad4bcb41efacb852889de97637671c74d8ad",
+  "bibliography_style": "aasjournalv7.1.bst",
+  "bibliography_style_url": "https://journals.aas.org/wp-content/uploads/2026/06/aasjournalv7.1.bst",
+  "bibliography_style_sha256": "7e4375aff3c06a4702f9272821e70a444ea9ed4b4db51b34933fa3ee44f2a385"
 }

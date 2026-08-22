@@ -2,7 +2,7 @@
   "status": "PASS_ESTIMAND_AWARE_COMPARISON",
   "scientific_interpretation": "CONDITIONAL_MODEL_PROJECTION_ONLY",
   "search_cutoff": "2026-08-22",
-  "inclusion_policy": "Primary peer-reviewed occurrence-rate studies with an Earth-analog, habitable-zone, or directly relevant FGK occurrence estimand. Reviews are excluded from the numerical comparison.",
+  "inclusion_policy": "Primary peer-reviewed occurrence-rate studies with an Earth-analog, habitable-zone, or directly relevant FGK occurrence estimand, plus primary empirical Galactic-dynamics studies that directly test the source-to-target transport assumptions. Reviews are excluded.",
   "inputs": {
     "numerical_freeze": {
       "path": "research\\bryson-joint-posterior\\frozen-v4\\V4_NUMERICAL_FREEZE.json",
@@ -14,7 +14,7 @@
     },
     "primary_literature_registry": {
       "path": "research\\v4-validation\\primary_literature_sources.json",
-      "sha256": "178cba9f36af0bcc2da5ae6b24ade2671ad7e47664ba8b2e402de71ff5de2e76"
+      "sha256": "48e19c94f149bdc3c5a6d8d26f9181eeed44fbfc38e8d0a02135f219955850be"
     }
   },
   "v4_estimand": {
@@ -169,6 +169,58 @@
       "reported_result": "Gamma_Earth = 15% (+6%,-4%) per natural-log period by natural-log radius area.",
       "comparison_role": "independent_density_not_integral",
       "comparability": "Gamma_Earth is a local density, not an integrated planets-per-star value for the v4 box. Converting it requires an explicit integration domain and model assumptions."
+    },
+    {
+      "key": "Dai2021",
+      "authors": "Dai et al.",
+      "year": 2021,
+      "journal": "The Astronomical Journal",
+      "doi": "10.3847/1538-3881/ac00ad",
+      "primary_url": "https://doi.org/10.3847/1538-3881/ac00ad",
+      "quantity": "Kepler planet occurrence conditioned on stellar tangential velocity",
+      "definition": "0.5--20 R_earth planets over branch-specific period ranges around single FGK main-sequence Kepler stars grouped by Gaia tangential velocity",
+      "reported_result": "High-velocity stars show lower 1--4 R_earth, P<100 day occurrence than low-velocity stars; the reported separation depends on the stellar-property correction and is about 1.55--2.55 sigma.",
+      "comparison_role": "empirical_kinematic_transport_warning",
+      "comparability": "The result concerns close-in, much broader-radius planets and velocity groups rather than the old 0.9--1.1 R_earth HZ target. It motivates a transport sensitivity but supplies no correction for v4."
+    },
+    {
+      "key": "BashiZucker2022",
+      "authors": "Bashi and Zucker",
+      "year": 2022,
+      "journal": "Monthly Notices of the Royal Astronomical Society",
+      "doi": "10.1093/mnras/stab3596",
+      "primary_url": "https://doi.org/10.1093/mnras/stab3596",
+      "quantity": "Planet occurrence in thin-disc, thick-disc, and halo Kepler samples",
+      "definition": "Kepler planets around chemically and kinematically classified Galactic populations, including 1--2 R_earth planets at 1--100 days",
+      "reported_result": "Young, slow, metal-rich thin-disc stars have higher close-in super-Earth occurrence than the older thick-disc sample; the thick-disc and halo planet samples are small and stellar age, chemistry, and kinematics are correlated.",
+      "comparison_role": "empirical_galactic_population_transport_warning",
+      "comparability": "This is a direct Galactic-context occurrence comparison but not an HZ or narrow-instellation measurement. Its correlated covariates and sparse thick-disc sample prevent a transferable multiplicative factor."
+    },
+    {
+      "key": "Sayeed2025",
+      "authors": "Sayeed et al.",
+      "year": 2025,
+      "journal": "The Astronomical Journal",
+      "doi": "10.3847/1538-3881/ada8a1",
+      "primary_url": "https://doi.org/10.3847/1538-3881/ada8a1",
+      "quantity": "Kepler DR25 occurrence as a function of isochrone and gyrochronology age",
+      "definition": "0.2--20 R_earth, 0.2--100 day planets around 1.5--8 Gyr FGK stars",
+      "reported_result": "No statistically significant overall age trend; only a slight 1.5--2.5 sigma decrease appears for the low-mass, metal-rich stars dominating the sample, with conclusions limited by age precision and sample size.",
+      "comparison_role": "empirical_age_transport_counterweight",
+      "comparability": "The sample is contemporary and DR25-based but covers short periods and a very broad radius range. It cautions against assuming either a nonzero age correction or age invariance for the narrow HZ target."
+    },
+    {
+      "key": "Frankel2020",
+      "authors": "Frankel et al.",
+      "year": 2020,
+      "journal": "The Astrophysical Journal",
+      "doi": "10.3847/1538-4357/ab910c",
+      "primary_url": "https://doi.org/10.3847/1538-4357/ab910c",
+      "quantity": "Radial orbit migration in the low-alpha Milky Way disk",
+      "definition": "Action-, age-, and chemistry-based dynamical model fitted to APOGEE red-clump stars with survey selection and measurement uncertainties",
+      "reported_result": "Angular-momentum redistribution is much stronger than radial heating, so present-day Galactocentric radius can differ materially from stellar birth radius.",
+      "comparison_role": "empirical_spatial_transport_warning",
+      "comparability": "This is not an exoplanet occurrence estimate. It directly invalidates interpreting the present-day 7--9 kpc mask as a birth-environment selection unless migration is modeled."
     }
   ],
   "comparison_findings": [
@@ -176,12 +228,16 @@
     "Bryson et al. (2021) is the source model for the reconstructed v4 posterior and is therefore a source-fidelity check, not independent validation.",
     "The v4 mean occurrence is numerically below broad-HZ literature estimates, as expected for its much narrower integrated phase-space box.",
     "The absence of nominal DR25 candidates in the exact v4 box prevents a direct candidate-supported interpretation.",
-    "Published literature supports treating occurrence-model form and long-period extrapolation as material epistemic uncertainty not included in the v4 posterior interval."
+    "Published literature supports treating occurrence-model form and long-period extrapolation as material epistemic uncertainty not included in the v4 posterior interval.",
+    "Modern age and kinematic studies do not establish a transferable correction: Dai et al. (2021) and Bashi and Zucker (2022) report conditional close-in trends, whereas Sayeed et al. (2025) find no significant overall FGK age trend.",
+    "Frankel et al. (2020) show that radial migration mixes present-day radius and birth radius; the 7--9 kpc mask is therefore a present-day spatial estimand, not a birth-environment selection."
   ],
   "prohibited_inferences": [
     "Do not call literature values inconsistent with v4 solely because their point estimates differ.",
     "Do not convert Gamma_Earth to an integrated eta value without specifying and applying an integration model.",
     "Do not describe v4 as an independent reproduction of Bryson et al. (2021).",
-    "Do not treat the literature spread as a statistical confidence interval."
+    "Do not treat the literature spread as a statistical confidence interval.",
+    "Do not convert close-in age or kinematic trends into an HZ correction factor without a matched occurrence model and selection function.",
+    "Do not interpret the present-day annulus as a sharply bounded stellar birth annulus."
   ]
 }

@@ -32,8 +32,15 @@ uncertainty budget, or an estimate of inhabited worlds.
 - corrected production run: 32472776218;
 - extended zero-completeness run: 32506666772;
 - constant-branch Galactic propagation run: 32527877921;
-- immutable v3 source commit: `5a3528aea6d6f28da8e9db4d40f0c84cbb43d501`;
-- persistent project concept DOI: `10.5281/zenodo.20474527`.
+- archived fixed-vector predecessor commit:
+  `5a3528aea6d6f28da8e9db4d40f0c84cbb43d501` (not the exact source of the
+  attached current v3 PDF);
+- current v3 reference PDF SHA-256:
+  `0cdbfae23478b2bc28477b0cb26746e0f486ec584f803b1517336d35ebf13f29`;
+- the previously cited concept DOI `10.5281/zenodo.20474527` belongs to the
+  Earth-like Planet Calculator and is not used as this manuscript's project
+  DOI. The manuscript-specific Zenodo identifier will be inserted only after
+  the audited RC2 draft exists.
 
 The attached release audit and archive manifest provide the exact v4 source
 commit and SHA-256 checksum for every distributed file.

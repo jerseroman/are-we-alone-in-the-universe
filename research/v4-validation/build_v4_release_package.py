@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import subprocess
 import zipfile
 from pathlib import Path
@@ -65,9 +66,10 @@ def main() -> None:
     parser.add_argument(
         "--pdf",
         type=Path,
-        default=Path("output/pdf/ExoEarth_Annulus_Manuscript_v4.pdf"),
+        default=Path("output/pdf/ExoEarth_Annulus_Manuscript_v4_RC2.pdf"),
     )
     parser.add_argument("--out", type=Path, default=Path("output/release"))
+    parser.add_argument("--release-doi", required=True)
     args = parser.parse_args()
 
     repo = args.repo_root.resolve()
@@ -78,6 +80,27 @@ def main() -> None:
         raise RuntimeError("Tracked working tree is dirty")
     if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=repo).returncode != 0:
         raise RuntimeError("Index is dirty")
+    if re.fullmatch(r"10\.5281/zenodo\.\d+", args.release_doi) is None:
+        raise RuntimeError("A manuscript-specific reserved Zenodo DOI is required")
+
+    paper = repo / "paper" / "exoearth-annulus-v4"
+    main_text = (paper / "main.tex").read_text(encoding="utf-8")
+    if "\\email{}" in main_text or "orcid=" not in main_text:
+        raise RuntimeError("RC2 author email and ORCID are not complete")
+    zenodo_metadata = json.loads((paper / "zenodo-v4-metadata.json").read_text(encoding="utf-8"))
+    creators = zenodo_metadata.get("creators", [])
+    if len(creators) != 1 or not creators[0].get("orcid") or not creators[0].get("affiliation"):
+        raise RuntimeError("RC2 Zenodo author metadata are not complete")
+    manuscript_audit = json.loads((paper / "V4_MANUSCRIPT_AUDIT.json").read_text(encoding="utf-8"))
+    pdf_preflight = json.loads((paper / "PDF_PREFLIGHT.json").read_text(encoding="utf-8"))
+    aastex = json.loads((paper / "AASTEX_BUILD_PROVENANCE.json").read_text(encoding="utf-8"))
+    v3_provenance = json.loads((paper / "V3_SOURCE_PROVENANCE.json").read_text(encoding="utf-8"))
+    if manuscript_audit.get("status") != "PASS_STATIC_PRECOMPILE":
+        raise RuntimeError("Manuscript static audit is not PASS")
+    if pdf_preflight.get("status") != "PASS_HIDDEN_TEXT_OBJECT_PREFLIGHT":
+        raise RuntimeError("PDF technical preflight is not PASS")
+    if aastex.get("version") != "7.0.2":
+        raise RuntimeError("RC2 was not built with AASTeX 7.0.2")
 
     commit = git(repo, "rev-parse", "HEAD")
     tracked = git(repo, "ls-files", "--", *TRACKED_INPUTS).splitlines()
@@ -86,22 +109,31 @@ def main() -> None:
     pdf = args.pdf if args.pdf.is_absolute() else repo / args.pdf
     if not pdf.is_file():
         raise FileNotFoundError(pdf)
-    pdf_name = "output/pdf/ExoEarth_Annulus_Manuscript_v4.pdf"
+    if pdf_preflight.get("sha256") != sha256_file(pdf):
+        raise RuntimeError("Final PDF hash does not match PDF preflight")
+    pdf_name = "output/pdf/ExoEarth_Annulus_Manuscript_v4_RC2.pdf"
     files.append((pdf_name, pdf))
     files.sort(key=lambda item: item[0])
 
     checksums = {name: sha256_file(path) for name, path in files}
     manifest = {
-        "status": "AUDITED_DRAFT_RELEASE_PACKAGE",
+        "status": "AUDITED_RC2_DRAFT_RELEASE_PACKAGE",
         "scientific_interpretation": "CONDITIONAL_MODEL_PROJECTION_ONLY",
         "local_empirical_support": "FAIL_EXACT_DR25_TARGET_ZERO_CANDIDATES",
         "repository": "https://github.com/jerseroman/are-we-alone-in-the-universe",
         "branch": branch,
         "source_commit": commit,
-        "persistent_concept_doi": "10.5281/zenodo.20474527",
+        "manuscript_release_doi": args.release_doi,
         "production_github_actions_runs": PRODUCTION_RUNS,
-        "v3_source_commit": "5a3528aea6d6f28da8e9db4d40f0c84cbb43d501",
+        "archived_fixed_vector_predecessor_commit": v3_provenance["archived_predecessor"]["source_commit"],
+        "current_v3_pdf_sha256": v3_provenance["current_v3_pdf_reference"]["sha256"],
+        "current_v3_exact_latex_source_available": False,
         "v3_pdf_reconstruction_used": False,
+        "aastex": {
+            "version": aastex["version"],
+            "class_sha256": aastex["sha256"],
+            "bibliography_style_sha256": aastex["bibliography_style_sha256"],
+        },
         "file_count": len(files),
         "files_sha256": checksums,
     }

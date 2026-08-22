@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "created_utc": "2026-08-22T00:00:00Z",
+  "method": "Six standalone vector PDFs generated directly by the plotting script; no PDF-page cropping or extraction.",
+  "plotting_script": {
+    "path": "research/v4-validation/make_v4_figures.py",
+    "sha256": "e762789fb690bb8638d828223efeeeefc194e00f49ccff02961b88bfd4fd499f"
+  },
+  "temperature_curve_sampling": {
+    "method": "Deterministic equally spaced row indices within every equalized outer realization",
+    "outer_realizations_per_branch": 400,
+    "available_draws_per_outer_realization": 512,
+    "selected_draws_per_outer_realization": 128,
+    "selected_draws_per_branch": 51200,
+    "interval": "central 68 percent (q16-q84)"
+  },
+  "statistical_baseline": {
+    "label": "exoearth-v4-statistical-baseline-20260822",
+    "audit_sha256": "c41654fd5911c6c8b8abc6acff7602a57ad78dcafb53feaa2111d7651f296683",
+    "actions_runs": {
+      "pilot_seed_stability": 32470830404,
+      "initial_production": 32472776218,
+      "zero_extended_rerun": 32506666772,
+      "constant_galactic_propagation": 32527877921
+    },
+    "selected_artifacts": {
+      "constant_seed_stability": {
+        "run_id": 32470830404,
+        "artifact_id": 9443107354,
+        "github_archive_digest": "sha256:fcfe785dde462ce9ab800480e43ca2bb5e9a2eb9898e1dc7c1c8834300723f70"
+      },
+      "zero_seed_stability": {
+        "run_id": 32470830404,
+        "artifact_id": 9443107657,
+        "github_archive_digest": "sha256:cf8f5a54e8b3267bf541e74324d00b31ce6ffb9ef93ed81d522ec7800122d872"
+      },
+      "constant_posterior": {
+        "run_id": 32472776218,
+        "artifact_id": 9454764527,
+        "github_archive_digest": "sha256:6fbd662da9376e360e45c925f4e78bdeb58a5e2f5420a3ca725683a3a56ee37a"
+      },
+      "zero_posterior": {
+        "run_id": 32506666772,
+        "artifact_id": 9462011443,
+        "github_archive_digest": "sha256:aebdc142b0bda3fe74542052ebbd7ac2f03f3857d8680ba51dd7e3f8453f6016"
+      },
+      "constant_galactic": {
+        "run_id": 32527877921,
+        "artifact_id": 9462827799,
+        "github_archive_digest": "sha256:d99906b4117740cc8c679be2026b5761410931336e8ab522c83609990c73d1a0"
+      },
+      "zero_galactic": {
+        "run_id": 32506666772,
+        "artifact_id": 9462029866,
+        "github_archive_digest": "sha256:2051314d6da5f92bdffcfe9d1334f2d8fc9e0d6281a06bff720fab3fa71f2cdb"
+      }
+    }
+  },
+  "inputs": {
+    "posterior_quantiles": {
+      "path": "research/bryson-joint-posterior/frozen-v4/v4_galactic_quantiles.csv",
+      "sha256": "8d38fe2680de64d994590e83a4e7b8f6376ba063f913856f9e236d935afcac59"
+    },
+    "dr25_nominal_near_support": {
+      "path": "research/v4-validation/frozen-dr25-support/dr25_nominal_near_support.csv",
+      "sha256": "df5e1e75c375da0599d366bd539aeb8bf25e3f6fabc5d4773bcf35d7f7a1d17c"
+    },
+    "dr25_perturbed_candidate_frequency": {
+      "path": "research/v4-validation/frozen-dr25-support/dr25_perturbed_candidate_frequency.csv",
+      "sha256": "144798558096aa883bd0b88dbb17f156732fb83a77878bb0bbf9c113b0f7d66a"
+    },
+    "sensitivity_register": {
+      "path": "research/v4-validation/frozen-sensitivities/v4_sensitivity_register.csv",
+      "sha256": "e01a7808408b2418a01821f22d9c3b66471220193d3aeec5336d4b04404c768b"
+    },
+    "constant_equalized_galactic_draws": {
+      "path": "local-artifacts/v4/statistical-baseline-reaudit-20260822/constant-galactic/galactic_posterior_draws_constant.csv.gz",
+      "sha256": "373a48596ad280da35161aa0dbf89daa082105fa31f3cd6471e846d99560f0fa"
+    },
+    "zero_equalized_galactic_draws": {
+      "path": "local-artifacts/v4/statistical-baseline-reaudit-20260822/zero-galactic/galactic_posterior_draws_zero.csv.gz",
+      "sha256": "d0130302ff9086e56dfe4d28dd8e0ae7d89dc900ed27f4dc40453ac09bd17f34"
+    },
+    "canonical_radial_profile": {
+      "path": "local-artifacts/v4/host-canonical/tams_ab_radial.csv",
+      "sha256": "4229430b804ba751e4d75f5d68ebd3acf0f8a44fd3d33c3092c2ef3b19262ec0"
+    },
+    "occurrence_propagation_model": {
+      "path": "research/bryson-joint-posterior/propagate_hab2_joint_posterior.py",
+      "sha256": "dfba288f57c150e5f32575493a31314538575505637d5a74d0e5a7e1e721e42c"
+    }
+  },
+  "figures": {
+    "v4_posterior_intervals.pdf": {
+      "path": "paper/exoearth-annulus-v4/figures/v4_posterior_intervals.pdf",
+      "sha256": "22d4164277182825e700f81fb4ec585f33a3486a528047a3213e03572c20d3ed",
+      "bytes": 22037
+    },
+    "v4_dr25_local_support.pdf": {
+      "path": "paper/exoearth-annulus-v4/figures/v4_dr25_local_support.pdf",
+      "sha256": "7f407b37a8a49f6d4cc265d4956ee11e70f7a1be40430fd22b2cf778d4c57b32",
+      "bytes": 30851
+    },
+    "v4_hz_boundaries.pdf": {
+      "path": "paper/exoearth-annulus-v4/figures/v4_hz_boundaries.pdf",
+      "sha256": "1d42f1552d6399c98e369e15a85d075f9e96b032500f808432de89151b708583",
+      "bytes": 35339
+    },
+    "v4_occurrence_vs_teff.pdf": {
+      "path": "paper/exoearth-annulus-v4/figures/v4_occurrence_vs_teff.pdf",
+      "sha256": "a0a3fdd6f463baf6d9d07ac61526ed559e0f0637e63e771cf60a9f7d1d46905a",
+      "bytes": 37877
+    },
+    "v4_radial_annulus.pdf": {
+      "path": "paper/exoearth-annulus-v4/figures/v4_radial_annulus.pdf",
+      "sha256": "5a7f1bf7fe2b7620aba89e6f472a0fba763bb60e7918010719a71418e1e6080b",
+      "bytes": 29223
+    },
+    "v4_sensitivity_register.pdf": {
+      "path": "paper/exoearth-annulus-v4/figures/v4_sensitivity_register.pdf",
+      "sha256": "c0c8c93af4e9fee06505246628fa28b46cbffb2597346feb3bac7436f0cf5b5e",
+      "bytes": 29791
+    }
+  }
+}

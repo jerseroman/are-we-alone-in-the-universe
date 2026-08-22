@@ -4,9 +4,11 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import hashlib
 import json
 from pathlib import Path
+import re
 from typing import Any
 
 from pypdf import PdfReader
@@ -169,6 +171,7 @@ def main() -> None:
     if isinstance(names, DictionaryObject):
         forbidden_name_entries = [key for key in ("/EmbeddedFiles", "/JavaScript") if key in names]
 
+    metadata = {str(key): str(value) for key, value in (reader.metadata or {}).items()}
     audit: dict[str, Any] = {
         "status": "PENDING",
         "pdf": pdf_label,
@@ -191,6 +194,9 @@ def main() -> None:
         "form_xobjects": 0,
         "xobject_subtypes": {},
         "annotations": {},
+        "document_metadata": metadata,
+        "external_uris": [],
+        "doi_uris": [],
         "page_text_characters": [],
         "page_boxes_points": [],
         "empty_text_pages": [],
@@ -199,8 +205,11 @@ def main() -> None:
     visited_xobjects: set[tuple[int, int]] = set()
     forbidden_actions = {"/JavaScript", "/Launch", "/SubmitForm", "/ImportData", "/GoToR"}
     active_action_hits: list[dict[str, Any]] = []
+    page_texts: list[str] = []
+    external_uris: list[str] = []
     for page_number, page in enumerate(reader.pages, start=1):
         text = page.extract_text() or ""
+        page_texts.append(text)
         audit["page_text_characters"].append(len(text))
         if not text.strip():
             audit["empty_text_pages"].append(page_number)
@@ -228,8 +237,63 @@ def main() -> None:
                 action_type = str(action.get("/S", "unknown"))
                 if action_type in forbidden_actions:
                     active_action_hits.append({"page": page_number, "type": action_type})
+                if action_type == "/URI" and action.get("/URI"):
+                    external_uris.append(str(action["/URI"]))
 
     audit["active_action_hits"] = active_action_hits
+    all_text = "\n".join(page_texts)
+    figure_counts = Counter(re.findall(r"Figure\s+(\d+)\.", all_text))
+    table_counts = Counter(re.findall(r"Table\s+(\d+)\.", all_text))
+    expected_figures = [str(number) for number in range(1, 7)]
+    expected_tables = [str(number) for number in range(1, 5)]
+    required_numerical_anchors = [
+        "263,061,992.37",
+        "3.224",
+        "4.572",
+        "1.522",
+        "6.189",
+        "2.103",
+        "8.912",
+        "95.75",
+        "96.75",
+        "-28.58",
+        "-29.58",
+        "-57.28",
+        "41.83",
+    ]
+    missing_numerical_anchors = [
+        anchor for anchor in required_numerical_anchors if anchor not in all_text
+    ]
+    doi_uris = [uri for uri in external_uris if "doi.org/" in uri]
+    malformed_doi_uris = [
+        uri
+        for uri in doi_uris
+        if re.fullmatch(r"https?://doi\.org/10\.\d{4,9}/\S+", uri) is None
+    ]
+    expected_metadata = {
+        "/Title": "A Posterior Model Projection of Narrow-domain ExoEarth Candidates in the Milky Way's 7–9 kpc Annulus",
+        "/Author": "Roman Jerše",
+        "/Subject": "Posterior model projection of narrow-domain ExoEarth candidates around old G dwarfs",
+    }
+    metadata_mismatches = {
+        key: {"expected": expected, "actual": metadata.get(key)}
+        for key, expected in expected_metadata.items()
+        if metadata.get(key) != expected
+    }
+    if not metadata.get("/Keywords", "").strip():
+        metadata_mismatches["/Keywords"] = {
+            "expected": "non-empty",
+            "actual": metadata.get("/Keywords"),
+        }
+    audit["external_uris"] = external_uris
+    audit["doi_uris"] = doi_uris
+    audit["malformed_doi_uris"] = malformed_doi_uris
+    audit["caption_number_counts"] = dict(sorted(figure_counts.items()))
+    audit["table_number_counts"] = dict(sorted(table_counts.items()))
+    audit["expected_caption_numbers"] = expected_figures
+    audit["expected_table_numbers"] = expected_tables
+    audit["missing_numerical_anchors"] = missing_numerical_anchors
+    audit["metadata_mismatches"] = metadata_mismatches
     failures: list[str] = []
     if forbidden_root_entries or forbidden_name_entries:
         failures.append("forbidden document-level active or hidden objects")
@@ -245,6 +309,16 @@ def main() -> None:
         failures.append("unembedded font resource")
     if audit["empty_text_pages"]:
         failures.append("page with no extractable text")
+    if sorted(figure_counts) != expected_figures or any(count != 1 for count in figure_counts.values()):
+        failures.append("missing or duplicated figure caption number")
+    if sorted(table_counts) != expected_tables or any(count != 1 for count in table_counts.values()):
+        failures.append("missing or duplicated table caption number")
+    if missing_numerical_anchors:
+        failures.append("frozen numerical anchor missing from extracted PDF text")
+    if malformed_doi_uris:
+        failures.append("malformed DOI hyperlink")
+    if metadata_mismatches:
+        failures.append("missing or incorrect PDF metadata")
     audit["failures"] = failures
     audit["status"] = "PASS_HIDDEN_TEXT_OBJECT_PREFLIGHT" if not failures else "FAIL"
 

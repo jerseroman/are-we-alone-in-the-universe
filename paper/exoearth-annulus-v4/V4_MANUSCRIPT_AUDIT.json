@@ -5,27 +5,34 @@
     "numerical_freeze": "e37a4add5f0fbbb7363252adb2f85a41b0fbd1f4572761f90dc285ddd2b476eb",
     "dr25_support_audit": "920c61fcbf873cd460ade6dd88870fd2c30ce835de10314ea44d519a5168b909",
     "sensitivity_freeze": "31fb1eb492644c0272eda0452be2dd022c2d07da1d04e0fb881a807acae29d99",
-    "literature_comparison": "e372303a52eebc73cabe81b40566fc60e5a66885401bfbf392afb2a6a0ef96e9"
+    "literature_comparison": "c4523d69c20f9ec3fb448789d6e891ee750ac103d2305dcdfab1d6648145444d"
   },
   "source_provenance": {
-    "v3_commit": "5a3528aea6d6f28da8e9db4d40f0c84cbb43d501",
-    "v3_tree": "5a8596716297fbef47bef55b262341806780a990",
+    "archived_predecessor_commit": "5a3528aea6d6f28da8e9db4d40f0c84cbb43d501",
+    "archived_predecessor_tree": "5a8596716297fbef47bef55b262341806780a990",
+    "current_v3_pdf_sha256": "0cdbfae23478b2bc28477b0cb26746e0f486ec584f803b1517336d35ebf13f29",
+    "current_v3_exact_latex_source_available": false,
     "pdf_reconstruction_used": false,
-    "aastex701_sha256": "c1bb436807f8bb37eb5203056db5a5a60e1c9ae6a3feb6501d7c414b9b08b062"
+    "aastex702_sha256": "0ee51ff72a4d0b608a1885e87cddad4bcb41efacb852889de97637671c74d8ad",
+    "aasjournalv7_1_sha256": "7e4375aff3c06a4702f9272821e70a444ea9ed4b4db51b34933fa3ee44f2a385"
   },
   "cross_references": {
-    "citation_key_count": 28,
-    "label_count": 55,
-    "reference_count": 13,
+    "citation_key_count": 35,
+    "label_count": 58,
+    "reference_count": 15,
     "missing_citations": [],
     "duplicate_labels": [],
     "undefined_references": []
   },
   "figures": {
-    "v4_posterior_intervals.pdf": "22d4164277182825e700f81fb4ec585f33a3486a528047a3213e03572c20d3ed",
     "v4_dr25_local_support.pdf": "7f407b37a8a49f6d4cc265d4956ee11e70f7a1be40430fd22b2cf778d4c57b32",
+    "v4_hz_boundaries.pdf": "1d42f1552d6399c98e369e15a85d075f9e96b032500f808432de89151b708583",
+    "v4_occurrence_vs_teff.pdf": "a0a3fdd6f463baf6d9d07ac61526ed559e0f0637e63e771cf60a9f7d1d46905a",
+    "v4_posterior_intervals.pdf": "22d4164277182825e700f81fb4ec585f33a3486a528047a3213e03572c20d3ed",
+    "v4_radial_annulus.pdf": "5a7f1bf7fe2b7620aba89e6f472a0fba763bb60e7918010719a71418e1e6080b",
     "v4_sensitivity_register.pdf": "c0c8c93af4e9fee06505246628fa28b46cbffb2597346feb3bac7436f0cf5b5e"
   },
+  "figure_provenance_sha256": "1dba356009bb5bc7077623ab19912483254ef48a9e8787756e8882758cb44505",
   "required_numerical_anchors": {
     "host_count": "263{,}061{,}992.37",
     "constant_median_millions": "3.224",
@@ -41,5 +48,5 @@
     "low_mass_climate_change": "-57.28",
     "branch_median_change": "41.83"
   },
-  "source_manifest_sha256": "6336b169ad67bf3203229ceaa8ba7fe9100fad9723835b2f83a17e04c80587f5"
+  "source_manifest_sha256": "3f277827085a9d587a1931a78cc4cafce2e45b1654b54ff7c559a285d9649023"
 }

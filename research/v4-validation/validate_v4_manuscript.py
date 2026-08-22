@@ -45,6 +45,8 @@ def main() -> None:
     literature = load_json(literature_path)
     provenance = load_json(paper / "V3_SOURCE_PROVENANCE.json")
     aastex = load_json(paper / "AASTEX_BUILD_PROVENANCE.json")
+    figure_provenance_path = paper / "figures" / "V4_FIGURE_PROVENANCE.json"
+    figure_provenance = load_json(figure_provenance_path)
     if numerical.get("status") != "PASS":
         raise RuntimeError("Numerical freeze is not PASS")
     if dr25.get("status") != "FAIL_LOCAL_EMPIRICAL_SUPPORT":
@@ -53,12 +55,24 @@ def main() -> None:
         raise RuntimeError("Sensitivity scientific-readiness state changed")
     if literature.get("status") != "PASS_ESTIMAND_AWARE_COMPARISON":
         raise RuntimeError("Literature comparison is not frozen PASS")
-    if provenance.get("source_commit") != "5a3528aea6d6f28da8e9db4d40f0c84cbb43d501":
-        raise RuntimeError("Unexpected v3 source commit")
+    if provenance.get("status") != "ARCHIVED_PREDECESSOR_IMPORTED_CURRENT_V3_SOURCE_UNAVAILABLE":
+        raise RuntimeError("Unexpected v3 provenance state")
+    predecessor = provenance.get("archived_predecessor", {})
+    if predecessor.get("source_commit") != "5a3528aea6d6f28da8e9db4d40f0c84cbb43d501":
+        raise RuntimeError("Unexpected archived predecessor commit")
+    v3_pdf = provenance.get("current_v3_pdf_reference", {})
+    if v3_pdf.get("sha256") != "0cdbfae23478b2bc28477b0cb26746e0f486ec584f803b1517336d35ebf13f29":
+        raise RuntimeError("Unexpected current v3 reference PDF")
+    if v3_pdf.get("exact_latex_source_available") is not False:
+        raise RuntimeError("Current v3 exact-source availability is misrepresented")
+    if v3_pdf.get("verified_content", {}).get("fixed_vector_only") is not False:
+        raise RuntimeError("Current v3 ensemble history is misrepresented")
     if provenance.get("pdf_reconstruction_used") is not False:
         raise RuntimeError("Source provenance permits PDF reconstruction")
-    if aastex.get("class") != "aastex701.cls" or aastex.get("version") != "7.0.1":
+    if aastex.get("class") != "aastex702.cls" or aastex.get("version") != "7.0.2":
         raise RuntimeError("Unexpected AASTeX build dependency")
+    if aastex.get("bibliography_style") != "aasjournalv7.1.bst":
+        raise RuntimeError("Unexpected AASTeX bibliography dependency")
 
     tex_paths = [paper / "main.tex", *sorted((paper / "sections").glob("*.tex"))]
     all_text = "\n".join(path.read_text(encoding="utf-8") for path in tex_paths)
@@ -105,17 +119,51 @@ def main() -> None:
         raise RuntimeError("Retracted metallicity-TAMS value remains in manuscript")
     if "cannot be reconstructed from the published marginal summaries alone" in all_text:
         raise RuntimeError("Obsolete no-posterior statement remains in manuscript")
+    if "implemented that transport with fixed median parameter vectors" in all_text:
+        raise RuntimeError("Obsolete fixed-vector-only v3 history remains in manuscript")
+    if "The immutable manuscript-v3 source is commit" in all_text:
+        raise RuntimeError("Archived predecessor is still misrepresented as exact v3 source")
+    if "Personal Philosophical Opinion" in all_text:
+        raise RuntimeError("Personal philosophical section remains in manuscript")
+    if "\\documentclass[twocolumn]{aastex702}" not in all_text:
+        raise RuntimeError("Manuscript does not request AASTeX 7.0.2")
+    if "\\bibliographystyle{aasjournalv7.1}" not in all_text:
+        raise RuntimeError("Manuscript does not request aasjournalv7.1")
+    if "10.5281/zenodo.20474527" in all_text:
+        raise RuntimeError("Unrelated calculator DOI remains in manuscript")
 
     figure_names = re.findall(r"\\includegraphics(?:\[[^]]*\])?\{([^}]+)\}", all_text)
+    required_figures = {
+        "v4_posterior_intervals.pdf",
+        "v4_dr25_local_support.pdf",
+        "v4_hz_boundaries.pdf",
+        "v4_occurrence_vs_teff.pdf",
+        "v4_radial_annulus.pdf",
+        "v4_sensitivity_register.pdf",
+    }
+    if set(figure_names) != required_figures or len(figure_names) != len(required_figures):
+        raise RuntimeError(f"Unexpected manuscript figure set: {figure_names}")
     missing_figures = [name for name in figure_names if not (paper / "figures" / name).is_file()]
     if missing_figures:
         raise RuntimeError(f"Referenced figures are missing: {missing_figures}")
+    if figure_provenance.get("status") != "PASS":
+        raise RuntimeError("Figure provenance is not PASS")
+    if "no PDF-page cropping or extraction" not in figure_provenance.get("method", ""):
+        raise RuntimeError("Figure provenance does not exclude page cropping")
+    plotted = figure_provenance.get("figures", {})
+    for name in required_figures:
+        expected = plotted.get(name, {}).get("sha256")
+        actual = sha256(paper / "figures" / name)
+        if expected != actual:
+            raise RuntimeError(f"Figure provenance hash mismatch: {name}")
 
     source_files = [
         *tex_paths,
         bib_path,
         paper / "V3_SOURCE_PROVENANCE.json",
         paper / "AASTEX_BUILD_PROVENANCE.json",
+        figure_provenance_path,
+        paper / "figures" / "SHA256SUMS_figures.txt",
     ]
     source_manifest = paper / "SHA256SUMS_source.txt"
     write_lf(
@@ -135,10 +183,13 @@ def main() -> None:
             "literature_comparison": sha256(literature_path),
         },
         "source_provenance": {
-            "v3_commit": provenance["source_commit"],
-            "v3_tree": provenance["source_tree"],
+            "archived_predecessor_commit": predecessor["source_commit"],
+            "archived_predecessor_tree": predecessor["source_tree"],
+            "current_v3_pdf_sha256": v3_pdf["sha256"],
+            "current_v3_exact_latex_source_available": v3_pdf["exact_latex_source_available"],
             "pdf_reconstruction_used": provenance["pdf_reconstruction_used"],
-            "aastex701_sha256": aastex["sha256"],
+            "aastex702_sha256": aastex["sha256"],
+            "aasjournalv7_1_sha256": aastex["bibliography_style_sha256"],
         },
         "cross_references": {
             "citation_key_count": len(set(citation_keys)),
@@ -148,7 +199,8 @@ def main() -> None:
             "duplicate_labels": duplicate_labels,
             "undefined_references": undefined_references,
         },
-        "figures": {name: sha256(paper / "figures" / name) for name in figure_names},
+        "figures": {name: sha256(paper / "figures" / name) for name in sorted(figure_names)},
+        "figure_provenance_sha256": sha256(figure_provenance_path),
         "required_numerical_anchors": required_fragments,
         "source_manifest_sha256": sha256(source_manifest),
     }

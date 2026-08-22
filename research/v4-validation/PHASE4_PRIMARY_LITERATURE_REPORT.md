@@ -2,9 +2,11 @@
 
 Status: **PASS ESTIMAND-AWARE COMPARISON; NOT AN INDEPENDENT VALIDATION**
 
-This gate compares the frozen v4 occurrence result only with traceable primary
-occurrence-rate studies. It does not pool unlike definitions, and it does not
-treat the spread among publications as a statistical uncertainty interval.
+This gate compares the frozen v4 occurrence result with traceable primary
+occurrence-rate studies and tests its source-to-target assumptions against
+primary Galactic age, kinematic, and radial-migration studies. It does not pool
+unlike definitions or treat the spread among publications as a statistical
+uncertainty interval.
 
 ## Frozen v4 occurrence estimand
 
@@ -45,6 +47,10 @@ literature values without implying a scientific conflict.
 | Burke et al. (2015), doi:10.1088/0004-637X/809/1/8 | `zeta_1.0` about 0.1, with an allowed 0.01--2 range | Period replaces instellation, Q1--Q16 rather than DR25, large systematic range |
 | Pascucci et al. (2019), doi:10.3847/2041-8213/ab3dac | Preferred broad-HZ extrapolation around 5--10% | Different domain and model; mainly demonstrates model-form sensitivity in sparse extrapolation |
 | Bergsten et al. (2022), doi:10.3847/1538-3881/ac8fea | `Gamma_Earth = 15% (+6%,-4%)` | Differential density per log-period/log-radius area, not an integrated occurrence for the v4 box |
+| Dai et al. (2021), doi:10.3847/1538-3881/ac00ad | Lower close-in 1--4 `R_earth` occurrence for high-velocity than low-velocity Kepler stars; correction-dependent separation about 1.55--2.55 sigma | Close-in, broad-radius kinematic comparison; no HZ correction follows |
+| Bashi & Zucker (2022), doi:10.1093/mnras/stab3596 | More close-in super-Earths in the younger thin-disk than older thick-disk sample | Age, chemistry, and kinematics covary; thick-disk and halo planet samples are sparse |
+| Sayeed et al. (2025), doi:10.3847/1538-3881/ada8a1 | No significant overall DR25 occurrence--age trend for 1.5--8 Gyr FGK stars | Short-period, very broad-radius sample; provides an empirical counterweight rather than proof of age invariance in the HZ |
+| Frankel et al. (2020), doi:10.3847/1538-4357/ab910c | Radial angular-momentum redistribution dominates heating in the low-alpha disk | Not an occurrence estimate; shows that present 7--9 kpc is not a stellar birth-annulus selection |
 
 No listed primary result simultaneously matches the v4 radius, instellation,
 climate intersection, host-temperature range, and catalog/model definition.
@@ -63,7 +69,10 @@ The literature comparison strengthens two manuscript requirements:
   corroboration;
 - keep occurrence-model form and long-period/local-support uncertainty outside
   the reported posterior interval and identify them as material epistemic
-  limitations.
+  limitations;
+- do not convert close-in age or kinematic trends into an HZ correction factor;
+- define 7--9 kpc as the present-day spatial estimand, not a sharply bounded
+  birth environment.
 
 Machine-readable source definitions, results, comparison roles, and prohibited
 inferences are frozen in `frozen-literature/primary_literature_comparison.json`.

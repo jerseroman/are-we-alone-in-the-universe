@@ -42,9 +42,9 @@ python -m pip install -r paper/exoearth-annulus-v4/requirements-v4.txt
 ```
 
 The JJ population runs additionally use `askenja/jjmodel` commit
-`2828a2e8bfc379ba9c8ef4b4d0477ab5febe3b54`. The manuscript build used
-AASTeX 7.0.1; its official source URL and local class-file SHA-256 are recorded
-in `AASTEX_BUILD_PROVENANCE.json`.
+`2828a2e8bfc379ba9c8ef4b4d0477ab5febe3b54`. The manuscript build uses
+AASTeX 7.0.2 and the official `aasjournalv7.1.bst`; their official source URLs
+and local SHA-256 checksums are recorded in `AASTEX_BUILD_PROVENANCE.json`.
 
 ## Verification commands
 

@@ -30,28 +30,32 @@ astrophysical uncertainty budget.
 
 \section{Data and Software Availability}\label{sec:data}
 
-The public project repository is
-\url{https://github.com/jerseroman/are-we-alone-in-the-universe}.
-The persistent project concept DOI is
-\href{https://doi.org/10.5281/zenodo.20474527}{10.5281/zenodo.20474527}; exact
-reproduction additionally requires the v4 release record and commit identified
-in its checksum manifest.
+The public software and reproducibility repository is
+\url{https://github.com/jerseroman/are-we-alone-in-the-universe}
+\citep{ExoEarthV4Repository}. The manuscript-specific Zenodo DOI will be
+inserted only after the audited RC2 archive is created; no DOI from a different
+project is used here. Exact reproduction requires the RC2 release record and
+commit identified in its checksum manifest.
 
-The immutable manuscript-v3 source is commit
-\hashid{5a3528aea6d6f28da8e9db4d40f0c84cbb43d501}. The v4 source-provenance
-manifest records the source tree and every imported LaTeX/BibTeX blob before
-editing. The Bryson research-code source is
+Commit \hashid{5a3528aea6d6f28da8e9db4d40f0c84cbb43d501} is an immutable
+archived fixed-vector predecessor, not the exact source of the current v3
+reference PDF. An exhaustive repository and local-package search did not find
+the exact current-v3 LaTeX; the provenance manifest records that negative
+result, the 16-page PDF's SHA-256, and that no PDF-to-LaTeX reconstruction was
+used. The Bryson research-code source is
 \hashid{d200f54b6f0df49e0dae530e69983cdce5397bfb}. Corrected-posterior execution
 is recorded by GitHub Actions runs 32470830404, 32472776218, 32506666772, and
 32527877921. The release evidence contains the frozen numerical, host/TAMS,
 DR25-support, sensitivity, and primary-literature records together with
 SHA-256 manifests.
 
-The analysis uses Python, NumPy \citep{Harris2020}, pandas
+The analysis uses Python, NumPy \citep{Harris2020}, SciPy
+\citep{Virtanen2020}, pandas
 \citep{McKinney2010}, Matplotlib \citep{Hunter2007}, Astropy
 \citep{Astropy2022}, \texttt{emcee} \citep{ForemanMackey2013}, and
 \texttt{jjmodel} \citep{Sysoliatina2022}. The manuscript figures are generated
-only from committed frozen CSV/JSON artifacts. Local raw production artifacts
+only from committed frozen CSV/JSON artifacts and the plotting-script
+provenance manifest. Local raw production artifacts
 are represented by their recorded hashes and GitHub Actions run identifiers;
 the reproducibility archive supplies the compact frozen outputs required to
 audit every reported number.

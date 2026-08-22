@@ -104,7 +104,7 @@ For a climatic boundary, the effective stellar flux is
  T'={}&T-5780\ {\rm K},
  \label{eq:kopparapu}
 \end{align}
-using \citet{Kopparapu2013}. The canonical conservative HZ uses the
+using the corrected coefficients of \citet{Kopparapu2013,Kopparapu2013Erratum}. The canonical conservative HZ uses the
 $1\,\Mearth$ runaway-greenhouse inner boundary from \citet{Kopparapu2014} and
 the maximum-greenhouse outer boundary. ``Conservative'' names this prescribed
 boundary pair; it is not a universal lower bound over climate models.
@@ -127,6 +127,18 @@ with an empty domain when the upper limit does not exceed the lower. Across
 boundary crosses $I=1.1$ near 5727 K and clips the inner edge at lower
 temperatures.
 
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.96\textwidth]{v4_hz_boundaries.pdf}
+\caption{Conservative habitable-zone boundaries over the selected stellar
+temperature range. The broad shaded region lies between the
+maximum-greenhouse and $1\,\Mearth$ runaway-greenhouse flux limits. The darker
+region is the resulting climate-clipped intersection with the fixed
+$0.9\leq I\leq1.1$ narrow target; its hot-side behavior changes where the
+runaway boundary crosses $I=1.1$.}
+\label{fig:hzboundaries}
+\end{figure*}
+
 \subsection{Posterior Galactic estimator}
 
 For $k\in\{{\rm HZ},{\rm EE}\}$ and posterior draw $s$, the expected planets
@@ -145,7 +157,7 @@ The propagated estimator is
 \begin{equation}
  \boxed{
  \Lambda_{k,s}^{(\Delta R)}
- =10^6\Delta R\sum_{j=0}^{4}c_j,2\pi R_j
+ =10^6\Delta R\sum_{j=0}^{4}c_j\,2\pi R_j
  \sum_i H_{ij}w_{ij}f_{k,s}(T_{ij}) .}
  \label{eq:galactic_estimator}
 \end{equation}
@@ -153,3 +165,15 @@ Posterior summaries are quantiles of $\{\Lambda_{k,s}\}$ after equalizing the
 outer-realization mixture. Equation~(\ref{eq:galactic_estimator}) preserves the
 temperature dependence of both occurrence and HZ clipping; it is not a single
 rate multiplied by a host count.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.96\textwidth]{v4_occurrence_vs_teff.pdf}
+\caption{Temperature-dependent broad-HZ and narrow-target occurrence implied
+by the frozen corrected posterior. Lines are posterior medians and shaded
+bands are central 68\% intervals. For plotting only, each branch uses a
+deterministic 128-draw subsample from every one of its 400 equally weighted
+outer realizations (51,200 draws per branch); the numerical tables and
+headline posterior summaries remain those of the full frozen propagation.}
+\label{fig:occurrence-teff}
+\end{figure*}

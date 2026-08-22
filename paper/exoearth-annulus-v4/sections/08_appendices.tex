@@ -81,6 +81,17 @@ $T_{\rm eff}$ (K) & $R_{\rm TAMS}/R_\odot$\\
 
 \section{Frozen Verification Checklist}\label{app:checks}
 
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.95\textwidth]{v4_sensitivity_register.pdf}
+\caption{Frozen one-at-a-time sensitivity register. Colors distinguish
+numerical checks, scenarios, model alternatives, and alternative prescriptions.
+Spatial-domain changes are shown separately because they redefine the target
+population. The DR25 local-support failure and excluded metallicity-TAMS test
+are categorical findings, not plotted numerical error bars.}
+\label{fig:sensitivity}
+\end{figure*}
+
 The v4 freeze requires: (1) input and artifact checksums; (2) bitwise legacy
 measurement regression and corrected quantile recovery; (3) post-perturbation
 source-domain filtering; (4) 400 of 400 converged adaptive chains in each
@@ -102,4 +113,4 @@ distinctions prevent engineering reproducibility from being mislabeled as
 observational validation.
 
 \bibliography{references}
-\bibliographystyle{aasjournalv7}
+\bibliographystyle{aasjournalv7.1}

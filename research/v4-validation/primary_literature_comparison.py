@@ -80,6 +80,10 @@ def main() -> None:
         raise RuntimeError("Duplicate literature source key")
     if "Bryson2021" not in keys:
         raise RuntimeError("Source-model anchor Bryson2021 is missing")
+    transport_keys = {"Dai2021", "BashiZucker2022", "Sayeed2025", "Frankel2020"}
+    missing_transport = sorted(transport_keys.difference(keys))
+    if missing_transport:
+        raise RuntimeError(f"Modern source-to-target transport sources are missing: {missing_transport}")
 
     galactic = numerical["galactic_results"]
     comparison: dict[str, Any] = {
@@ -122,12 +126,16 @@ def main() -> None:
             "The v4 mean occurrence is numerically below broad-HZ literature estimates, as expected for its much narrower integrated phase-space box.",
             "The absence of nominal DR25 candidates in the exact v4 box prevents a direct candidate-supported interpretation.",
             "Published literature supports treating occurrence-model form and long-period extrapolation as material epistemic uncertainty not included in the v4 posterior interval.",
+            "Modern age and kinematic studies do not establish a transferable correction: Dai et al. (2021) and Bashi and Zucker (2022) report conditional close-in trends, whereas Sayeed et al. (2025) find no significant overall FGK age trend.",
+            "Frankel et al. (2020) show that radial migration mixes present-day radius and birth radius; the 7--9 kpc mask is therefore a present-day spatial estimand, not a birth-environment selection.",
         ],
         "prohibited_inferences": [
             "Do not call literature values inconsistent with v4 solely because their point estimates differ.",
             "Do not convert Gamma_Earth to an integrated eta value without specifying and applying an integration model.",
             "Do not describe v4 as an independent reproduction of Bryson et al. (2021).",
             "Do not treat the literature spread as a statistical confidence interval.",
+            "Do not convert close-in age or kinematic trends into an HZ correction factor without a matched occurrence model and selection function.",
+            "Do not interpret the present-day annulus as a sharply bounded stellar birth annulus.",
         ],
     }
 
