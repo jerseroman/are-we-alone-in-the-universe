@@ -40,8 +40,11 @@ uncertainty budget, or an estimate of inhabited worlds.
   `0cdbfae23478b2bc28477b0cb26746e0f486ec584f803b1517336d35ebf13f29`;
 - the previously cited concept DOI `10.5281/zenodo.20474527` belongs to the
   Earth-like Planet Calculator and is not used as this manuscript's project
-  DOI. The manuscript-specific Zenodo identifier will be inserted only after
-  the audited RC2 draft exists.
+  DOI;
+- the analysis software and reproducibility materials are archived as
+  `ExoEarth Annulus v4 Software`, version 4.0.2, under the version-specific DOI
+  `10.5281/zenodo.22070762`. The corresponding public source release is tag
+  `v4.0.2` in `jerseroman/exoearth-annulus-v4-software`.
 
 The attached release audit and archive manifest provide the exact v4 source
 commit and SHA-256 checksum for every distributed file.

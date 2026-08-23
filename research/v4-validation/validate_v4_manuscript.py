@@ -135,6 +135,17 @@ def main() -> None:
         raise RuntimeError("Manuscript does not override bibliography DOI links to HTTPS")
     if "10.5281/zenodo.20474527" in all_text:
         raise RuntimeError("Unrelated calculator DOI remains in manuscript")
+    if "https://github.com/jerseroman/are-we-alone-in-the-universe" in all_text:
+        raise RuntimeError("Obsolete calculator repository remains in manuscript")
+    for fragment in (
+        "10.5281/zenodo.22070762",
+        "https://github.com/jerseroman/exoearth-annulus-v4-software",
+        "\\texttt{v4.0.2}",
+    ):
+        if fragment not in all_text:
+            raise RuntimeError(f"Required v4.0.2 software citation is missing: {fragment}")
+    if "Jerse2026ExoEarthSoftware" not in citation_keys:
+        raise RuntimeError("Version-specific Zenodo software citation is not cited")
     for fragment in (
         "0.38^{+0.50}_{-0.22}",
         "0.63^{+0.94}_{-0.38}",

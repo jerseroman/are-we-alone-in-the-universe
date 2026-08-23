@@ -8,5 +8,10 @@
 *.yml text eol=lf
 *.yaml text eol=lf
 *.cff text eol=lf
+paper/exoearth-annulus-v4/*.bib text eol=lf
+paper/exoearth-annulus-v4/*.tex text eol=lf
+paper/exoearth-annulus-v4/sections/*.tex text eol=lf
+paper/exoearth-annulus-v4/SHA256SUMS_source.txt text eol=lf
+research/v4-validation/validate_v4_manuscript.py text eol=lf
 .gitattributes text eol=lf
 .gitignore text eol=lf
